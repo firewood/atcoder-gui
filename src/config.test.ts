@@ -1,7 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { ConfigManager } from './config.js';
 import * as fs from 'fs';
-import * as path from 'path';
 
 describe('ConfigManager', () => {
   const testConfigPath = 'test-config.json5';

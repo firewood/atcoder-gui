@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 
+import * as readline from 'readline';
 import { BrowserManager } from './browser.js';
 import { ConfigManager } from './config.js';
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
   private configManager: ConfigManager;
+  private rl: readline.Interface | null = null;
 
   constructor() {
     this.browserManager = new BrowserManager();
@@ -33,7 +35,6 @@ export class AtCoderGUI {
       console.log(`Opened URL: ${url}`);
     } catch (error) {
       console.error(`Failed to open URL ${url}:`, error);
-      throw error;
     }
   }
 
@@ -41,6 +42,9 @@ export class AtCoderGUI {
    * Close the application
    */
   async close(): Promise<void> {
+    if (this.rl) {
+      this.rl.close();
+    }
     await this.browserManager.close();
     console.log('AtCoder GUI closed');
   }
@@ -51,87 +55,133 @@ export class AtCoderGUI {
   getConfig(): unknown {
     return this.configManager.getConfig();
   }
-}
 
-/**
- * Parse command line arguments and execute commands
- */
-async function parseAndExecuteCommand(): Promise<void> {
-  const args = process.argv.slice(2);
-  const app = new AtCoderGUI();
+  /**
+   * Start interactive CLI
+   */
+  async startInteractiveCLI(): Promise<void> {
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      prompt: 'command> '
+    });
 
-  // Handle graceful shutdown
-  process.on('SIGINT', async () => {
-    console.log('\nShutting down...');
-    await app.close();
-    process.exit(0);
-  });
+    console.log('AtCoder GUI Interactive CLI');
+    console.log('Type "help" for available commands or "exit" to quit');
+    this.rl.prompt();
 
-  try {
-    if (args.length === 0) {
-      // No arguments - show help
-      showHelp();
-      return;
-    }
+    this.rl.on('line', async (input: string) => {
+      const trimmedInput = input.trim();
 
+      if (trimmedInput === '') {
+        this.rl!.prompt();
+        return;
+      }
+
+      await this.handleCommand(trimmedInput);
+      this.rl!.prompt();
+    });
+
+    this.rl.on('close', async () => {
+      console.log('\nGoodbye!');
+      await this.close();
+      process.exit(0);
+    });
+
+    // Handle Ctrl+C
+    process.on('SIGINT', async () => {
+      console.log('\nShutting down...');
+      await this.close();
+      process.exit(0);
+    });
+  }
+
+  /**
+   * Handle CLI commands
+   */
+  private async handleCommand(input: string): Promise<void> {
+    const args = input.split(' ').filter(arg => arg.length > 0);
     const command = args[0].toLowerCase();
 
-    switch (command) {
-      case 'open':
-        if (args.length < 2) {
-          console.error('Error: URL is required for open command');
-          console.error('Usage: atcoder-gui open <URL>');
-          process.exit(1);
-        }
-        await app.openUrl(args[1]);
-        break;
+    try {
+      switch (command) {
+        case 'open':
+          if (args.length < 2) {
+            console.log('Error: URL is required for open command');
+            console.log('Usage: open <URL>');
+            return;
+          }
+          await this.openUrl(args[1]);
+          break;
 
-      case 'config':
-        console.log('Current configuration:');
-        console.log(JSON.stringify(app.getConfig(), null, 2));
-        await app.close();
-        break;
+        case 'config':
+          console.log('Current configuration:');
+          console.log(JSON.stringify(this.getConfig(), null, 2));
+          break;
 
-      case 'help':
-      case '--help':
-      case '-h':
-        showHelp();
-        break;
+        case 'close':
+          if (this.browserManager.isRunning()) {
+            await this.browserManager.close();
+            console.log('Browser closed');
+          } else {
+            console.log('Browser is not running');
+          }
+          break;
 
-      default:
-        console.error(`Unknown command: ${command}`);
-        showHelp();
-        process.exit(1);
+        case 'status':
+          console.log(`Browser status: ${this.browserManager.isRunning() ? 'Running' : 'Not running'}`);
+          break;
+
+        case 'help':
+          this.showHelp();
+          break;
+
+        case 'exit':
+        case 'quit':
+          this.rl?.close();
+          break;
+
+        default:
+          console.log(`Unknown command: ${command}`);
+          console.log('Type "help" for available commands');
+      }
+    } catch (error) {
+      console.error('Error:', error);
     }
-  } catch (error) {
-    console.error('Error:', error);
-    await app.close();
-    process.exit(1);
+  }
+
+  /**
+   * Show help message
+   */
+  private showHelp(): void {
+    console.log(`
+Available commands:
+  open <URL>    Open a URL in the browser
+  config        Show current configuration
+  close         Close the browser (if running)
+  status        Show browser status
+  help          Show this help message
+  exit          Exit the application
+
+Examples:
+  open https://atcoder.jp
+  open https://atcoder.jp/contests/abc123
+`);
   }
 }
 
 /**
- * Show help message
+ * Main function to start the interactive CLI
  */
-function showHelp(): void {
-  console.log(`
-AtCoder GUI - Browser automation tool for AtCoder
-
-Usage:
-  atcoder-gui open <URL>    Open a URL in the browser
-  atcoder-gui config        Show current configuration
-  atcoder-gui help          Show this help message
-
-Examples:
-  atcoder-gui open https://atcoder.jp
-  atcoder-gui open https://atcoder.jp/contests/abc123
-
-Options:
-  -h, --help                Show help
-`);
+async function main(): Promise<void> {
+  const app = new AtCoderGUI();
+  await app.startInteractiveCLI();
 }
 
 // Run the CLI if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  parseAndExecuteCommand();
+  main().catch((error) => {
+    console.error('Fatal error:', error);
+    process.exit(1);
+  });
 }
