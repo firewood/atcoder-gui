@@ -1,120 +1,100 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import JSON5 from 'json5';
+import Conf from 'conf';
 
 export interface AppConfig {
-  browser: {
-    headless: boolean;
-    devtools: boolean;
-    viewport: {
-      width: number;
-      height: number;
-    };
+  theme?: 'light' | 'dark';
+  autoStart?: boolean;
+  defaultUrl?: string;
+  windowSize?: {
+    width: number;
+    height: number;
   };
-  defaultUrl: string;
-  timeout: number;
+  headless?: boolean;
+  devtools?: boolean;
 }
 
-const DEFAULT_CONFIG: AppConfig = {
-  browser: {
-    headless: false,
-    devtools: true,
-    viewport: {
-      width: 1280,
-      height: 720
-    }
-  },
-  defaultUrl: 'https://atcoder.jp',
-  timeout: 30000
-};
-
 export class ConfigManager {
-  private config: AppConfig;
-  private configPath: string;
+  private conf: Conf<AppConfig>;
 
-  constructor(configPath: string = 'config/config.json5') {
-    this.configPath = path.resolve(configPath);
-    this.config = this.loadConfig();
-  }
-
-  /**
-   * Load configuration from file or use defaults
-   */
-  private loadConfig(): AppConfig {
-    try {
-      if (fs.existsSync(this.configPath)) {
-        const configContent = fs.readFileSync(this.configPath, 'utf8');
-        const userConfig = JSON5.parse(configContent);
-
-        // Merge user config with defaults
-        return this.mergeConfigs(DEFAULT_CONFIG, userConfig);
-      } else {
-        // Create default config file if it doesn't exist
-        this.saveConfig(DEFAULT_CONFIG);
-        return DEFAULT_CONFIG;
+  constructor() {
+    this.conf = new Conf<AppConfig>({
+      projectName: 'atcoder-gui',
+      projectVersion: '0.1.0',
+      defaults: {
+        theme: 'light',
+        autoStart: false,
+        defaultUrl: 'https://atcoder.jp',
+        windowSize: {
+          width: 1200,
+          height: 800
+        },
+        headless: false,
+        devtools: true
       }
-    } catch (error) {
-      console.warn(`Failed to load config from ${this.configPath}:`, error);
-      console.warn('Using default configuration');
-      return DEFAULT_CONFIG;
-    }
+    });
   }
 
   /**
-   * Deep merge configuration objects
-   */
-  private mergeConfigs(defaultConfig: AppConfig, userConfig: Partial<AppConfig>): AppConfig {
-    return {
-      browser: {
-        ...defaultConfig.browser,
-        ...userConfig.browser,
-        viewport: {
-          ...defaultConfig.browser.viewport,
-          ...userConfig.browser?.viewport
-        }
-      },
-      defaultUrl: userConfig.defaultUrl ?? defaultConfig.defaultUrl,
-      timeout: userConfig.timeout ?? defaultConfig.timeout
-    };
-  }
-
-  /**
-   * Save configuration to file
-   */
-  private saveConfig(config: AppConfig): void {
-    try {
-      const configDir = path.dirname(this.configPath);
-      if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
-      }
-
-      const configContent = JSON5.stringify(config, null, 2);
-      fs.writeFileSync(this.configPath, configContent, 'utf8');
-    } catch (error) {
-      console.error(`Failed to save config to ${this.configPath}:`, error);
-    }
-  }
-
-  /**
-   * Get the current configuration
+   * Get the entire configuration object
    */
   getConfig(): AppConfig {
-    return this.config;
+    return this.conf.store;
   }
 
   /**
-   * Update configuration and save to file
+   * Get a specific configuration value
    */
-  updateConfig(newConfig: Partial<AppConfig>): void {
-    this.config = this.mergeConfigs(this.config, newConfig);
-    this.saveConfig(this.config);
+  get<K extends keyof AppConfig>(key: K): AppConfig[K] {
+    return this.conf.get(key);
   }
 
   /**
-   * Reset configuration to defaults
+   * Set a specific configuration value
    */
-  resetConfig(): void {
-    this.config = DEFAULT_CONFIG;
-    this.saveConfig(this.config);
+  set<K extends keyof AppConfig>(key: K, value: AppConfig[K]): void {
+    this.conf.set(key, value);
+  }
+
+  /**
+   * Set multiple configuration values
+   */
+  setMultiple(config: Partial<AppConfig>): void {
+    for (const [key, value] of Object.entries(config)) {
+      this.conf.set(key as keyof AppConfig, value);
+    }
+  }
+
+  /**
+   * Delete a configuration value (revert to default)
+   */
+  delete<K extends keyof AppConfig>(key: K): void {
+    this.conf.delete(key);
+  }
+
+  /**
+   * Clear all configuration (revert to defaults)
+   */
+  clear(): void {
+    this.conf.clear();
+  }
+
+  /**
+   * Check if a configuration key exists
+   */
+  has<K extends keyof AppConfig>(key: K): boolean {
+    return this.conf.has(key);
+  }
+
+  /**
+   * Get the path to the configuration file
+   */
+  getConfigPath(): string {
+    return this.conf.path;
+  }
+
+  /**
+   * Get the configuration file size
+   */
+  getSize(): number {
+    return this.conf.size;
   }
 }
