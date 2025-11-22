@@ -132,6 +132,25 @@ export class AtCoderGUI {
           console.log(`Browser status: ${this.browserManager.isRunning() ? 'Running' : 'Not running'}`);
           break;
 
+        case 'session':
+          const sessionInfo = this.browserManager.getSessionInfo();
+          console.log('Session information:');
+          console.log(`- Has session: ${sessionInfo.hasSession}`);
+          console.log(`- Cookies: ${sessionInfo.cookieCount}`);
+          console.log(`- Origins: ${sessionInfo.originCount}`);
+          if (sessionInfo.lastSaved) {
+            console.log(`- Last saved: ${sessionInfo.lastSaved}`);
+          }
+          break;
+
+        case 'save':
+          await this.browserManager.saveSession();
+          break;
+
+        case 'clearsession':
+          this.browserManager.clearSession();
+          break;
+
         case 'help':
           this.showHelp();
           break;
@@ -156,16 +175,21 @@ export class AtCoderGUI {
   private showHelp(): void {
     console.log(`
 Available commands:
-  open <URL>    Open a URL in the browser
-  config        Show current configuration
-  close         Close the browser (if running)
-  status        Show browser status
-  help          Show this help message
-  exit          Exit the application
+  open <URL>      Open a URL in the browser
+  config          Show current configuration
+  close           Close the browser (if running)
+  status          Show browser status
+  session         Show session information
+  save            Manually save current session state
+  clearsession    Clear stored session data
+  help            Show this help message
+  exit            Exit the application
 
 Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
+  session
+  save
 `);
   }
 }
