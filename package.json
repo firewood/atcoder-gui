@@ -1,10 +1,21 @@
 {
   "name": "atcoder-gui",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Browser automation tool for AtCoder with CLI interface",
+  "type": "module",
+  "main": "dist/main.js",
+  "bin": {
+    "atcoder-gui": "dist/main.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "start": "node dist/main.js",
+    "clean": "rm -rf dist"
   },
   "repository": {
     "type": "git",
@@ -17,14 +28,16 @@
     "url": "https://github.com/firewood/atcoder-gui/issues"
   },
   "homepage": "https://github.com/firewood/atcoder-gui#readme",
+  "dependencies": {
+    "json5": "^2.2.3",
+    "playwright": "^1.56.1"
+  },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",
     "eslint": "^9.39.1",
-    "json5": "^2.2.3",
-    "playwright": "^1.56.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.13"
   }
