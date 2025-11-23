@@ -2,26 +2,23 @@ import Conf from 'conf';
 import { BrowserContext } from 'playwright';
 
 export interface SessionData {
-  storageState?: {
-    cookies?: Array<{
+  cookies?: Array<{
+    name: string;
+    value: string;
+    domain: string;
+    path: string;
+    expires?: number;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: 'Strict' | 'Lax' | 'None';
+  }>;
+  origins?: Array<{
+    origin: string;
+    localStorage?: Array<{
       name: string;
       value: string;
-      domain: string;
-      path: string;
-      expires?: number;
-      httpOnly?: boolean;
-      secure?: boolean;
-      sameSite?: 'Strict' | 'Lax' | 'None';
     }>;
-    origins?: Array<{
-      origin: string;
-      localStorage?: Array<{
-        name: string;
-        value: string;
-      }>;
-    }>;
-  };
-  lastSaved?: string;
+  }>;
 }
 
 export class SessionManager {
@@ -32,10 +29,8 @@ export class SessionManager {
       projectName: 'atcoder-gui',
       configName: 'session',
       defaults: {
-        storageState: {
-          cookies: [],
-          origins: []
-        }
+        cookies: [],
+        origins: []
       }
     });
   }
@@ -44,7 +39,7 @@ export class SessionManager {
    * Get the stored browser state for restoration
    */
   getStorageState(): any {
-    const sessionData = this.conf.get('storageState');
+    const sessionData = this.conf.store;
     if (!sessionData || (!sessionData.cookies?.length && !sessionData.origins?.length)) {
       return undefined;
     }
@@ -58,8 +53,9 @@ export class SessionManager {
     try {
       const storageState = await context.storageState();
 
-      this.conf.set('storageState', storageState);
-      this.conf.set('lastSaved', new Date().toISOString());
+      // Save cookies and origins directly at top level
+      this.conf.set('cookies', storageState.cookies || []);
+      this.conf.set('origins', storageState.origins || []);
 
       console.log('Browser state saved successfully');
     } catch (error) {
@@ -79,22 +75,22 @@ export class SessionManager {
    * Check if session data exists
    */
   hasSession(): boolean {
-    const storageState = this.conf.get('storageState');
-    return !!(storageState && (storageState.cookies?.length || storageState.origins?.length));
+    const cookies = this.conf.get('cookies');
+    const origins = this.conf.get('origins');
+    return !!(cookies?.length || origins?.length);
   }
 
   /**
    * Get session information
    */
-  getSessionInfo(): { hasSession: boolean; lastSaved?: string; cookieCount: number; originCount: number } {
-    const storageState = this.conf.get('storageState');
-    const lastSaved = this.conf.get('lastSaved');
+  getSessionInfo(): { hasSession: boolean; cookieCount: number; originCount: number } {
+    const cookies = this.conf.get('cookies');
+    const origins = this.conf.get('origins');
 
     return {
       hasSession: this.hasSession(),
-      lastSaved,
-      cookieCount: storageState?.cookies?.length || 0,
-      originCount: storageState?.origins?.length || 0
+      cookieCount: cookies?.length || 0,
+      originCount: origins?.length || 0
     };
   }
 

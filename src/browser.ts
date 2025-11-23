@@ -126,7 +126,7 @@ export class BrowserManager {
   /**
    * Get session information
    */
-  getSessionInfo(): { hasSession: boolean; lastSaved?: string; cookieCount: number; originCount: number } {
+  getSessionInfo(): { hasSession: boolean; cookieCount: number; originCount: number } {
     return this.sessionManager.getSessionInfo();
   }
 }

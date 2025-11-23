@@ -138,9 +138,6 @@ export class AtCoderGUI {
           console.log(`- Has session: ${sessionInfo.hasSession}`);
           console.log(`- Cookies: ${sessionInfo.cookieCount}`);
           console.log(`- Origins: ${sessionInfo.originCount}`);
-          if (sessionInfo.lastSaved) {
-            console.log(`- Last saved: ${sessionInfo.lastSaved}`);
-          }
           break;
 
         case 'save':
