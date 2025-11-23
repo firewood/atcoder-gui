@@ -22,8 +22,8 @@ export class ConfigManager {
       projectVersion: '0.1.0',
       configName: 'config',
       fileExtension: 'json5',
-      serialize: (value: any) => JSON5.stringify(value, null, 2),
-      deserialize: (text: string) => JSON5.parse(text),
+      serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
+      deserialize: (text: string): AppConfig => JSON5.parse(text),
       defaults: {}
     });
 
