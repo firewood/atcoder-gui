@@ -153,8 +153,26 @@ export class AtCoderGUI {
           await this.submitManager.submitSolution();
           break;
 
-        case 'export-cookies':
-          await this.cookieExporter.exportCookies();
+        case 'export':
+          if (args.length < 2) {
+            console.log('Error: Target is required for export command');
+            console.log('Usage: export <target>');
+            console.log('Available targets:');
+            console.log('  atcoder-tools    Export cookies to atcoder-tools cookie.txt');
+            return;
+          }
+
+          {
+            const target = args[1].toLowerCase();
+            switch (target) {
+              case 'atcoder-tools':
+                await this.cookieExporter.exportCookies();
+                break;
+              default:
+                console.log(`Unknown export target: ${target}`);
+                console.log('Available targets: atcoder-tools');
+            }
+          }
           break;
 
         default:
@@ -172,19 +190,22 @@ export class AtCoderGUI {
   private showHelp(): void {
     console.log(`
 Available commands:
-  open <URL>      Open a URL in the browser
-  config          Show current configuration
-  submit          Submit solution to AtCoder (requires metadata.json and main.cpp)
-  export-cookies  Export browser cookies to atcoder-tools cookie.txt
-  close           Close the browser (if running)
-  help            Show this help message
-  exit            Exit the application
+  open <URL>           Open a URL in the browser
+  config               Show current configuration
+  submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
+  export <target>      Export data to external tools
+  close                Close the browser (if running)
+  help                 Show this help message
+  exit                 Exit the application
+
+Export targets:
+  atcoder-tools        Export browser cookies to atcoder-tools cookie.txt
 
 Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
-  submit          (run from atcoder-tools directory)
-  export-cookies  (export REVEL_FLASH and REVEL_SESSION cookies)
+  submit               (run from atcoder-tools directory)
+  export atcoder-tools (export REVEL_FLASH and REVEL_SESSION cookies)
 `);
   }
 }

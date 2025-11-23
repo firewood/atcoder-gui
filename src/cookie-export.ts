@@ -1,4 +1,4 @@
-import { writeFileSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { BrowserManager } from './browser.js';
@@ -133,24 +133,23 @@ export class CookieExporter {
 
   /**
    * Write cookie content to atcoder-tools cookie.txt file
+   * Only overwrites existing cookie.txt files
    */
   private async writeCookieFile(content: string): Promise<void> {
     const cookiePath = join(homedir(), '.local', 'share', 'atcoder-tools', 'cookie.txt');
-    const cookieDir = join(homedir(), '.local', 'share', 'atcoder-tools');
 
-    // Ensure directory exists
-    if (!existsSync(cookieDir)) {
-      mkdirSync(cookieDir, { recursive: true });
-      console.log(`Created directory: ${cookieDir}`);
+    // Check if cookie.txt file exists
+    if (!existsSync(cookiePath)) {
+      throw new Error(`Cookie file does not exist: ${cookiePath}\nPlease ensure atcoder-tools is installed and has been used at least once to create the cookie.txt file.`);
     }
 
-    // Write cookie file
+    // Write cookie file (overwrite existing)
     writeFileSync(cookiePath, content, {
       encoding: 'utf-8',
       mode: 0o600 // Set file permissions (readable/writable by owner only)
     });
 
-    console.log(`Cookie file written to: ${cookiePath}`);
+    console.log(`Cookie file updated: ${cookiePath}`);
   }
 
   /**
