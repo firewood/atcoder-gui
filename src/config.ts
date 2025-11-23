@@ -1,16 +1,16 @@
 import Conf from 'conf';
 import JSON5 from 'json5';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 export interface AppConfig {
   theme?: 'light' | 'dark';
-  autoStart?: boolean;
   defaultUrl?: string;
   windowSize?: {
     width: number;
     height: number;
   };
-  headless?: boolean;
-  devtools?: boolean;
 }
 
 export class ConfigManager {
@@ -24,17 +24,39 @@ export class ConfigManager {
       fileExtension: 'json5',
       serialize: (value: any) => JSON5.stringify(value, null, 2),
       deserialize: (text: string) => JSON5.parse(text),
-      defaults: {
-        theme: 'light',
-        autoStart: false,
-        defaultUrl: 'https://atcoder.jp',
-        windowSize: {
-          width: 1200,
-          height: 800
-        },
-        headless: false,
-      }
+      defaults: {}
     });
+
+    // Initialize user config with default template on first launch
+    this.initializeUserConfigIfNeeded();
+  }
+
+  /**
+   * Initialize user config file with default template if it doesn't exist
+   */
+  private initializeUserConfigIfNeeded(): void {
+    try {
+      // Check if user config file already exists
+      if (!existsSync(this.conf.path)) {
+        console.log('First launch detected, creating config file with default template...');
+
+        // Ensure config directory exists
+        const configDir = dirname(this.conf.path);
+        if (!existsSync(configDir)) {
+          mkdirSync(configDir, { recursive: true });
+        }
+
+        // Read default config.json5 template
+        const defaultConfigPath = dirname(fileURLToPath(import.meta.url));
+        const defaultTemplate = readFileSync(join(defaultConfigPath, 'config.json5'), 'utf-8');
+
+        // Write the template directly to user config path using fs
+        writeFileSync(this.conf.path, defaultTemplate, 'utf-8');
+        console.log(`Config file created at: ${this.conf.path}`);
+      }
+    } catch (error) {
+      console.warn('Failed to initialize user config file:', error);
+    }
   }
 
   /**
