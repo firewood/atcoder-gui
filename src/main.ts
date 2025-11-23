@@ -19,6 +19,12 @@ export class AtCoderGUI {
    */
   async init(): Promise<void> {
     await this.browserManager.launch();
+
+    await this.browserManager.openUrl(this.getConfig().defaultUrl);
+    this.browserManager.getCurrentPage()?.on('close', () => {
+      this.close();
+    });
+
     console.log('AtCoder GUI initialized successfully');
   }
 
@@ -120,35 +126,6 @@ export class AtCoderGUI {
         case 'config':
           console.log('Current configuration:');
           console.log(JSON.stringify(this.getConfig(), null, 2));
-          break;
-
-        case 'close':
-          if (this.browserManager.isRunning()) {
-            await this.browserManager.close();
-            console.log('Browser closed');
-          } else {
-            console.log('Browser is not running');
-          }
-          break;
-
-        case 'status':
-          console.log(`Browser status: ${this.browserManager.isRunning() ? 'Running' : 'Not running'}`);
-          break;
-
-        case 'session':
-          const sessionInfo = this.browserManager.getSessionInfo();
-          console.log('Session information:');
-          console.log(`- Has session: ${sessionInfo.hasSession}`);
-          console.log(`- Cookies: ${sessionInfo.cookieCount}`);
-          console.log(`- Origins: ${sessionInfo.originCount}`);
-          break;
-
-        case 'save':
-          await this.browserManager.saveSession();
-          break;
-
-        case 'clearsession':
-          this.browserManager.clearSession();
           break;
 
         case 'help':
