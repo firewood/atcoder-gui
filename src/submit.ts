@@ -114,26 +114,16 @@ export class SubmitManager {
         throw new Error('No active page found');
       }
 
-      // Wait for the page to load
-      await page.waitForLoadState('networkidle');
-
       // Find the source code textarea (common selectors for AtCoder)
       const textareaSelector = 'textarea[name="sourceCode"], textarea#editor, .ace_text-input';
-
       await page.waitForSelector(textareaSelector, { timeout: 10000 });
 
       // Clear existing content and paste source code
       await page.fill(textareaSelector, sourceCode);
 
-      console.log('✓ Source code has been copied to the submission form');
-      console.log('Please review the code and submit manually when ready');
-
+      console.log('✓ Copied!');
     } catch (error) {
       console.error('Failed to fill source code area:', error);
-      console.log('Please manually copy the source code to the submission form');
-
-      // Note about manual copy
-      console.log('Note: You can manually copy the source code from main.cpp');
     }
   }
 }
