@@ -2,7 +2,7 @@
 
 import * as readline from 'readline';
 import { BrowserManager } from './browser.js';
-import { ConfigManager } from './config.js';
+import { ConfigManager, AppConfig } from './config.js';
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
@@ -20,7 +20,7 @@ export class AtCoderGUI {
   async init(): Promise<void> {
     await this.browserManager.launch();
 
-    await this.browserManager.openUrl(this.getConfig().defaultUrl);
+    await this.browserManager.openUrl(this.getConfig().defaultUrl || 'https://atcoder.jp');
     this.browserManager.getCurrentPage()?.on('close', () => {
       this.close();
     });
@@ -58,7 +58,7 @@ export class AtCoderGUI {
   /**
    * Get the current configuration
    */
-  getConfig(): unknown {
+  getConfig(): AppConfig {
     return this.configManager.getConfig();
   }
 
