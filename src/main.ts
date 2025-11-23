@@ -3,16 +3,19 @@
 import * as readline from 'readline';
 import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
+import { SubmitManager } from './submit.js';
 import { execSync } from 'child_process';
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
   private configManager: ConfigManager;
+  private submitManager: SubmitManager;
   private rl: readline.Interface | null = null;
 
   constructor() {
     this.browserManager = new BrowserManager();
     this.configManager = new ConfigManager();
+    this.submitManager = new SubmitManager(this.browserManager);
   }
 
   /**
@@ -143,6 +146,10 @@ export class AtCoderGUI {
           }
           break;
 
+        case 'submit':
+          await this.submitManager.submitSolution();
+          break;
+
         default:
           console.log(`Unknown command: ${command}`);
           console.log('Type "help" for available commands');
@@ -160,6 +167,7 @@ export class AtCoderGUI {
 Available commands:
   open <URL>      Open a URL in the browser
   config          Show current configuration
+  submit          Submit solution to AtCoder (requires metadata.json and main.cpp)
   close           Close the browser (if running)
   help            Show this help message
   exit            Exit the application
@@ -167,6 +175,7 @@ Available commands:
 Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
+  submit          (run from atcoder-tools directory)
 `);
   }
 }
