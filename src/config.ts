@@ -1,4 +1,5 @@
 import Conf from 'conf';
+import JSON5 from 'json5';
 
 export interface AppConfig {
   theme?: 'light' | 'dark';
@@ -19,6 +20,10 @@ export class ConfigManager {
     this.conf = new Conf<AppConfig>({
       projectName: 'atcoder-gui',
       projectVersion: '0.1.0',
+      configName: 'config',
+      fileExtension: 'json5',
+      serialize: (value: any) => JSON5.stringify(value, null, 2),
+      deserialize: (text: string) => JSON5.parse(text),
       defaults: {
         theme: 'light',
         autoStart: false,
@@ -28,7 +33,6 @@ export class ConfigManager {
           height: 800
         },
         headless: false,
-        devtools: true
       }
     });
   }
