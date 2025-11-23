@@ -2,6 +2,7 @@ import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { BrowserManager } from './browser.js';
+import { formatLWPDate } from './utils.js';
 
 interface PlaywrightCookie {
   name: string;
@@ -115,9 +116,9 @@ export class CookieExporter {
     if (cookie.expires === -1 || cookie.expires < Date.now() / 1000) {
       parts.push('discard');
     } else {
-      // Convert Unix timestamp to LWP format (if needed)
+      // Convert Unix timestamp to Python LWPCookieJar format: "YYYY-MM-DD hh:mm:ssZ"
       const expiresDate = new Date(cookie.expires * 1000);
-      parts.push(`expires="${expiresDate.toUTCString()}"`);
+      parts.push(`expires="${formatLWPDate(expiresDate)}"`);
     }
 
     // HttpOnly
