@@ -60,6 +60,9 @@ export class AtCoderGUI {
    * Start interactive CLI
    */
   async startInteractiveCLI(): Promise<void> {
+    // Launch browser automatically on startup
+    await this.init();
+
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
