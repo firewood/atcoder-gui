@@ -159,6 +159,7 @@ export class AtCoderGUI {
             console.log('Usage: export <target>');
             console.log('Available targets:');
             console.log('  atcoder-tools    Export cookies to atcoder-tools cookie.txt');
+            console.log('  oj               Export cookies to online-judge-tools cookie.jar');
             return;
           }
 
@@ -166,11 +167,14 @@ export class AtCoderGUI {
             const target = args[1].toLowerCase();
             switch (target) {
               case 'atcoder-tools':
-                await this.cookieExporter.exportCookies();
+                await this.cookieExporter.exportCookiesForAtCoderTools();
+                break;
+              case 'oj':
+                await this.cookieExporter.exportCookiesForOj();
                 break;
               default:
                 console.log(`Unknown export target: ${target}`);
-                console.log('Available targets: atcoder-tools');
+                console.log('Available targets: atcoder-tools, oj');
             }
           }
           break;
@@ -200,12 +204,14 @@ Available commands:
 
 Export targets:
   atcoder-tools        Export browser cookies to atcoder-tools cookie.txt
+  oj                   Export browser cookies to online-judge-tools cookie.jar
 
 Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
   submit               (run from atcoder-tools directory)
   export atcoder-tools (export REVEL_FLASH and REVEL_SESSION cookies)
+  export oj            (export cookies to online-judge-tools)
 `);
   }
 }

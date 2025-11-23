@@ -1,6 +1,7 @@
 import { writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { execSync } from 'child_process';
 import { BrowserManager } from './browser.js';
 import { formatLWPDate } from './utils.js';
 
@@ -23,54 +24,88 @@ export class CookieExporter {
   }
 
   /**
+   * Get the oj (online-judge-tools) cookie path by running oj command
+   */
+  private static getOjCookiePath(): string {
+    try {
+      // Run oj command to get help output which includes the default cookie path
+      const output = execSync('oj --help', { encoding: 'utf-8', timeout: 5000 });
+
+      // Parse the output to find the cookie path line
+      const match = output.match(/path to cookie\.\s*\(default:\s*([^)]+)\)/);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+
+      throw new Error('Could not parse oj cookie path from command output');
+    } catch (error) {
+      throw new Error(`Failed to get oj cookie path: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
+   * Get AtCoder cookies from current browser session
+   */
+  private async getAtCoderCookies(): Promise<PlaywrightCookie[]> {
+    // Ensure browser is running and we have current session
+    if (!this.browserManager.isRunning()) {
+      throw new Error('Browser is not running. Please open a browser session first.');
+    }
+
+    // Save current session to get latest cookies
+    await this.browserManager.saveSession();
+
+    // Get cookies from session manager
+    const sessionManager = this.browserManager.getSessionManager();
+    const sessionData = sessionManager.getStorageState();
+
+    if (!sessionData || !sessionData.cookies.length) {
+      throw new Error('No cookies found in current session');
+    }
+
+    // Filter AtCoder cookies (REVEL_FLASH and REVEL_SESSION)
+    const atcoderCookies = sessionData.cookies.filter(cookie =>
+      cookie.domain.includes('atcoder.jp') &&
+      (cookie.name === 'REVEL_FLASH' || cookie.name === 'REVEL_SESSION')
+    );
+
+    if (atcoderCookies.length === 0) {
+      throw new Error('No AtCoder cookies (REVEL_FLASH or REVEL_SESSION) found. Make sure you are logged in to AtCoder in the browser');
+    }
+
+    return atcoderCookies;
+  }
+
+  /**
    * Export cookies to atcoder-tools cookie.txt file
    */
-  async exportCookies(): Promise<void> {
+  async exportCookiesForAtCoderTools(): Promise<void> {
+    await this.exportCookies(CookieExporter.getAtCoderToolsCookiePath());
+    console.log('✓ Cookies exported successfully to atcoder-tools');
+  }
+
+  /**
+   * Export cookies to oj (online-judge-tools) cookie.jar file
+   */
+  async exportCookiesForOj(): Promise<void> {
+    await this.exportCookies(CookieExporter.getOjCookiePath());
+    console.log('✓ Cookies exported successfully to oj (online-judge-tools)');
+  }
+
+  /**
+   * Export cookies to oj (online-judge-tools) cookie.jar file
+   */
+  async exportCookies(cookiePath: string): Promise<void> {
     try {
-      // Ensure browser is running and we have current session
-      if (!this.browserManager.isRunning()) {
-        console.error('Error: Browser is not running. Please open a browser session first.');
-        return;
-      }
-
-      // Save current session to get latest cookies
-      await this.browserManager.saveSession();
-
-      // Get cookies from session manager
-      const sessionManager = this.browserManager.getSessionManager();
-      const sessionData = sessionManager.getStorageState();
-
-      if (!sessionData || !sessionData.cookies.length) {
-        console.error('Error: No cookies found in current session');
-        return;
-      }
-
-      // Filter AtCoder cookies (REVEL_FLASH and REVEL_SESSION)
-      const atcoderCookies = sessionData.cookies.filter(cookie =>
-        cookie.domain.includes('atcoder.jp') &&
-        (cookie.name === 'REVEL_FLASH' || cookie.name === 'REVEL_SESSION')
-      );
-
-      if (atcoderCookies.length === 0) {
-        console.error('Error: No AtCoder cookies (REVEL_FLASH or REVEL_SESSION) found');
-        console.log('Make sure you are logged in to AtCoder in the browser');
-        return;
-      }
+      const atcoderCookies = await this.getAtCoderCookies();
 
       // Generate LWP-Cookies-2.0 format content
       const cookieContent = this.generateLWPCookiesContent(atcoderCookies);
 
-      // Write to atcoder-tools cookie.txt
-      await this.writeCookieFile(cookieContent);
-
-      console.log('✓ Cookies exported successfully to atcoder-tools');
-      console.log(`Found ${atcoderCookies.length} AtCoder cookies:`);
-      atcoderCookies.forEach(cookie => {
-        console.log(`  - ${cookie.name} (${cookie.domain})`);
-      });
-
+      // Write to oj cookie.jar file
+      await this.writeCookieFile(cookiePath, cookieContent);
     } catch (error) {
-      console.error('Error during cookie export:', error);
+      console.error('Error during oj cookie export:', error);
     }
   }
 
@@ -136,9 +171,7 @@ export class CookieExporter {
    * Write cookie content to atcoder-tools cookie.txt file
    * Only overwrites existing cookie.txt files
    */
-  private async writeCookieFile(content: string): Promise<void> {
-    const cookiePath = join(homedir(), '.local', 'share', 'atcoder-tools', 'cookie.txt');
-
+  private async writeCookieFile(cookiePath: string, content: string): Promise<void> {
     // Check if cookie.txt file exists
     if (!existsSync(cookiePath)) {
       throw new Error(`Cookie file does not exist: ${cookiePath}\nPlease ensure atcoder-tools is installed and has been used at least once to create the cookie.txt file.`);
@@ -154,17 +187,9 @@ export class CookieExporter {
   }
 
   /**
-   * Check if atcoder-tools directory exists
-   */
-  static checkAtCoderToolsSetup(): boolean {
-    const atcoderToolsDir = join(homedir(), '.local', 'share', 'atcoder-tools');
-    return existsSync(atcoderToolsDir);
-  }
-
-  /**
    * Get the path to atcoder-tools cookie.txt file
    */
-  static getCookiePath(): string {
+  static getAtCoderToolsCookiePath(): string {
     return join(homedir(), '.local', 'share', 'atcoder-tools', 'cookie.txt');
   }
 }
