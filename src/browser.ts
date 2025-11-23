@@ -6,6 +6,7 @@ export class BrowserManager {
   private context: BrowserContext | null = null;
   private page: Page | null = null;
   private sessionManager: SessionManager;
+  public closeCallback: any;
 
   constructor() {
     this.sessionManager = new SessionManager();
@@ -31,6 +32,14 @@ export class BrowserManager {
     });
 
     this.page = await this.context.newPage();
+    this.page.on('close', async () => {
+      console.log("ON CLOSE");
+      await this.saveSession();
+      this.page = null;
+      if (this.closeCallback) {
+        this.closeCallback();
+      }
+    });
 
     // Log session restoration status
     const sessionInfo = this.sessionManager.getSessionInfo();
@@ -70,12 +79,8 @@ export class BrowserManager {
    * Close the browser
    */
   async close(): Promise<void> {
-    // Save storage state before closing
-    if (this.context) {
-      await this.sessionManager.saveStorageState(this.context);
-    }
-
     if (this.page) {
+      await this.saveSession();
       await this.page.close();
       this.page = null;
     }

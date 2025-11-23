@@ -21,9 +21,10 @@ export class AtCoderGUI {
     await this.browserManager.launch();
 
     await this.browserManager.openUrl(this.getConfig().defaultUrl || 'https://atcoder.jp');
-    this.browserManager.getCurrentPage()?.on('close', () => {
+
+    this,this.browserManager.closeCallback = () => {
       this.close();
-    });
+    };
 
     console.log('AtCoder GUI initialized successfully');
   }
@@ -52,7 +53,6 @@ export class AtCoderGUI {
       this.rl.close();
     }
     await this.browserManager.close();
-    console.log('AtCoder GUI closed');
   }
 
   /**
@@ -155,18 +155,12 @@ Available commands:
   open <URL>      Open a URL in the browser
   config          Show current configuration
   close           Close the browser (if running)
-  status          Show browser status
-  session         Show session information
-  save            Manually save current session state
-  clearsession    Clear stored session data
   help            Show this help message
   exit            Exit the application
 
 Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
-  session
-  save
 `);
   }
 }
