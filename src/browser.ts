@@ -6,10 +6,17 @@ export class BrowserManager {
   private context: BrowserContext | null = null;
   private page: Page | null = null;
   private sessionManager: SessionManager;
-  public closeCallback: any;
+  private onPageClose: (() => void) | null = null;
 
   constructor() {
     this.sessionManager = new SessionManager();
+  }
+
+  /**
+   * Set the callback function to be called when the browser page closes
+   */
+  setOnPageClose(callback: (() => void) | null): void {
+    this.onPageClose = callback;
   }
 
   /**
@@ -33,12 +40,9 @@ export class BrowserManager {
 
     this.page = await this.context.newPage();
     this.page.on('close', async () => {
-      console.log("ON CLOSE");
       await this.saveSession();
       this.page = null;
-      if (this.closeCallback) {
-        this.closeCallback();
-      }
+      this.onPageClose?.();
     });
 
     // Log session restoration status

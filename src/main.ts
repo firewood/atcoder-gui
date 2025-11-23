@@ -19,14 +19,11 @@ export class AtCoderGUI {
    */
   async init(): Promise<void> {
     await this.browserManager.launch();
-
-    await this.browserManager.openUrl(this.getConfig().defaultUrl || 'https://atcoder.jp');
-
-    this,this.browserManager.closeCallback = () => {
+    const url = this.getConfig().defaultUrl || 'https://atcoder.jp';
+    await this.browserManager.openUrl(url);
+    this.browserManager.setOnPageClose(() => {
       this.close();
-    };
-
-    console.log('AtCoder GUI initialized successfully');
+    });
   }
 
   /**
@@ -75,7 +72,6 @@ export class AtCoderGUI {
       prompt: 'command> '
     });
 
-    console.log('AtCoder GUI Interactive CLI');
     console.log('Type "help" for available commands or "exit" to quit');
     this.rl.prompt();
 
