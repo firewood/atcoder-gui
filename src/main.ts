@@ -21,9 +21,6 @@ export class AtCoderGUI {
     await this.browserManager.launch();
     const url = this.getConfig().defaultUrl || 'https://atcoder.jp';
     await this.browserManager.openUrl(url);
-    this.browserManager.setOnPageClose(() => {
-      this.close();
-    });
   }
 
   /**
@@ -70,6 +67,10 @@ export class AtCoderGUI {
       input: process.stdin,
       output: process.stdout,
       prompt: 'command> '
+    });
+
+    this.browserManager.setOnPageClose(() => {
+      this.rl?.close();
     });
 
     console.log('Type "help" for available commands or "exit" to quit');

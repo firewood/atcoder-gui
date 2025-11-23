@@ -16,7 +16,15 @@ export class BrowserManager {
    * Set the callback function to be called when the browser page closes
    */
   setOnPageClose(callback: (() => void) | null): void {
-    this.onPageClose = callback;
+    if (this.page) {
+      if (this.onPageClose) {
+        this.page.off('close', this.onPageClose);
+      }
+      this.onPageClose = callback;
+      if (callback) {
+        this.page.on('close', callback);
+      }
+    }
   }
 
   /**
@@ -39,11 +47,6 @@ export class BrowserManager {
     });
 
     this.page = await this.context.newPage();
-    this.page.on('close', async () => {
-      await this.saveSession();
-      this.page = null;
-      this.onPageClose?.();
-    });
 
     // Log session restoration status
     const sessionInfo = this.sessionManager.getSessionInfo();
@@ -84,6 +87,7 @@ export class BrowserManager {
    */
   async close(): Promise<void> {
     if (this.page) {
+      this.setOnPageClose(null);
       await this.saveSession();
       await this.page.close();
       this.page = null;
