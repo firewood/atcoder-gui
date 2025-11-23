@@ -31,7 +31,15 @@ export default [
       ...tsPlugin.configs.recommended.rules,
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/explicit-function-return-type': 'warn',
-      '@typescript-eslint/no-explicit-any': 'warn'
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Ban unknown types using TypeScript AST selector
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'TSUnknownKeyword',
+          message: 'Avoid using unknown type. Use a more specific type instead.'
+        }
+      ]
     }
   },
   {
