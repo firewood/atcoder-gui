@@ -1,0 +1,15 @@
+{
+  // atcoder-gui configuration
+
+  // UI Theme: 'light' or 'dark'
+  theme: 'light',
+
+  // Default URL to navigate to
+  defaultUrl: 'https://atcoder.jp',
+
+  // Browser window size
+  windowSize: {
+    width: 1200,
+    height: 800,
+  },
+}
