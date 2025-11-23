@@ -37,7 +37,9 @@ export class BrowserManager {
 
     this.browser = await chromium.launch({
       headless: false, // UI mode
-      devtools: true
+      args: [
+            '--disable-blink-features=AutomationControlled',
+        ],
     });
 
     // Create context with existing storage state if available

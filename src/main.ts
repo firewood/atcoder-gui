@@ -3,6 +3,7 @@
 import * as readline from 'readline';
 import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
+import { execSync } from 'child_process';
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
@@ -132,6 +133,14 @@ export class AtCoderGUI {
         case 'exit':
         case 'quit':
           this.rl?.close();
+          break;
+
+        case 'acc':
+          {
+            const command_line = args.join(' ');
+            const output = execSync(command_line, { encoding: 'utf-8' });
+            console.log(`result: ${output}`);
+          }
           break;
 
         default:
