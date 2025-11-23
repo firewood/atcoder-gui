@@ -4,18 +4,21 @@ import * as readline from 'readline';
 import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
+import { CookieExporter } from './cookie-export.js';
 import { execSync } from 'child_process';
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
   private configManager: ConfigManager;
   private submitManager: SubmitManager;
+  private cookieExporter: CookieExporter;
   private rl: readline.Interface | null = null;
 
   constructor() {
     this.browserManager = new BrowserManager();
     this.configManager = new ConfigManager();
     this.submitManager = new SubmitManager(this.browserManager);
+    this.cookieExporter = new CookieExporter(this.browserManager);
   }
 
   /**
@@ -150,6 +153,10 @@ export class AtCoderGUI {
           await this.submitManager.submitSolution();
           break;
 
+        case 'export-cookies':
+          await this.cookieExporter.exportCookies();
+          break;
+
         default:
           console.log(`Unknown command: ${command}`);
           console.log('Type "help" for available commands');
@@ -168,6 +175,7 @@ Available commands:
   open <URL>      Open a URL in the browser
   config          Show current configuration
   submit          Submit solution to AtCoder (requires metadata.json and main.cpp)
+  export-cookies  Export browser cookies to atcoder-tools cookie.txt
   close           Close the browser (if running)
   help            Show this help message
   exit            Exit the application
@@ -176,6 +184,7 @@ Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
   submit          (run from atcoder-tools directory)
+  export-cookies  (export REVEL_FLASH and REVEL_SESSION cookies)
 `);
   }
 }
