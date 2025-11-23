@@ -1,0 +1,28 @@
+# Source files
+src/
+*.ts
+!dist/**/*.ts
+
+# Development files
+.claude/
+
+# Test files
+**/*.test.*
+**/*.spec.*
+vitest.config.ts
+
+# Development configuration
+eslint.config.js
+tsconfig.json
+
+# Git and development
+.git/
+.gitignore
+.node-version
+
+# Node modules (should not be needed with files field)
+node_modules/
+
+# Build artifacts that shouldn't be published
+*.log
+*.tmp

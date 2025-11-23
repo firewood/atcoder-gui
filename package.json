@@ -4,8 +4,17 @@
   "description": "Browser automation tool for AtCoder with CLI interface",
   "type": "module",
   "main": "dist/main.js",
+  "types": "dist/main.d.ts",
   "bin": {
     "atcoder-gui": "dist/main.js"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
     "build": "tsc && cp src/config.json5 dist/",
@@ -16,15 +25,16 @@
     "lint:fix": "eslint src/**/*.ts --fix",
     "start": "tsx src/main.ts",
     "start:built": "node dist/main.js",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run test:run && npm run lint"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/firewood/atcoder-gui.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["atcoder", "browser-automation", "cli", "competitive-programming", "playwright", "typescript"],
+  "author": "firewood <174658+firewood@users.noreply.github.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/firewood/atcoder-gui/issues"
   },
