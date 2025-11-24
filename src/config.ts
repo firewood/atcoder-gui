@@ -118,6 +118,13 @@ export class ConfigManager {
   }
 
   /**
+   * Get the path to the configuration directory
+   */
+  getConfigDirPath(): string {
+    return dirname(this.conf.path);
+  }
+
+  /**
    * Get the configuration file size
    */
   getSize(): number {

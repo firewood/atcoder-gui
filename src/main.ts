@@ -218,12 +218,36 @@ Examples:
   }
 }
 
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json');
+
 /**
  * Main function to start the interactive CLI
  */
-async function main(): Promise<void> {
+async function ui_main(): Promise<void> {
   const app = new AtCoderGUI();
   await app.startInteractiveCLI();
+}
+
+/**
+ * Main function
+ */
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+
+  if (args.includes('version') || args.includes('--version') || args.includes('-v')) {
+    console.log(version);
+    return;
+  }
+
+  if (args.includes('config-dir') || args.includes('--config-dir')) {
+    const configManager = new ConfigManager();
+    console.log(configManager.getConfigDirPath());
+    return;
+  }
+
+  await ui_main();
 }
 
 // Run the CLI if this file is executed directly
