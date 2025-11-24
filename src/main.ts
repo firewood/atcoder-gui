@@ -2,6 +2,7 @@
 
 import * as readline from 'readline';
 import { pathToFileURL } from 'url';
+import * as fs from 'fs';
 import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
@@ -226,7 +227,7 @@ async function main(): Promise<void> {
 }
 
 // Run the CLI if this file is executed directly
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
