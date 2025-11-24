@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as readline from 'readline';
+import { pathToFileURL } from 'url';
 import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
@@ -225,7 +226,7 @@ async function main(): Promise<void> {
 }
 
 // Run the CLI if this file is executed directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error('Fatal error:', error);
     process.exit(1);
