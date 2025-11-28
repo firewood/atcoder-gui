@@ -7,6 +7,7 @@ import { BrowserManager } from './browser.js';
 import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
 import { CookieExporter } from './cookie-export.js';
+import { GenManager } from './gen.js';
 import { execSync } from 'child_process';
 
 export class AtCoderGUI {
@@ -14,6 +15,7 @@ export class AtCoderGUI {
   private configManager: ConfigManager;
   private submitManager: SubmitManager;
   private cookieExporter: CookieExporter;
+  private genManager: GenManager;
   private rl: readline.Interface | null = null;
 
   constructor() {
@@ -21,6 +23,7 @@ export class AtCoderGUI {
     this.configManager = new ConfigManager();
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
+    this.genManager = new GenManager();
   }
 
   /**
@@ -181,6 +184,10 @@ export class AtCoderGUI {
           }
           break;
 
+        case 'gen':
+          this.genManager.run(args);
+          break;
+
         default:
           console.log(`Unknown command: ${command}`);
           console.log('Type "help" for available commands');
@@ -199,6 +206,7 @@ Available commands:
   open <URL>           Open a URL in the browser
   config               Show current configuration
   submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
+  gen <args>           Generate sample cases using atcoder-tools
   export <target>      Export data to external tools
   close                Close the browser (if running)
   help                 Show this help message
@@ -212,6 +220,7 @@ Examples:
   open https://atcoder.jp
   open https://atcoder.jp/contests/abc123
   submit               (run from atcoder-tools directory)
+  gen https://atcoder.jp/contests/abc123/tasks/abc123_a
   export atcoder-tools (export REVEL_FLASH and REVEL_SESSION cookies)
   export oj            (export cookies to online-judge-tools)
 `);
