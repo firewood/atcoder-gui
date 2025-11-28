@@ -6,7 +6,7 @@ export class GenManager {
    */
   isAtCoderToolsInstalled(): boolean {
     try {
-      execSync('atcoder-tools --version', { stdio: 'ignore' });
+      execSync('atcoder-tools version', { stdio: 'ignore' });
       return true;
     } catch (error) {
       return false;
