@@ -150,7 +150,11 @@ export class AtCoderGUI {
         case 'oj':
           {
             const command_line = args.join(' ');
-            execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+            try {
+              execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+            } catch (_) {
+              ;
+            }
           }
           break;
 
@@ -187,7 +191,11 @@ export class AtCoderGUI {
         case 'make':
           {
             const command_line = args.join(' ');
-            execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+            try {
+              execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+            } catch (_) {
+              ;
+            }
           }
           break;
 
@@ -198,7 +206,11 @@ export class AtCoderGUI {
           {
             const testCommand = this.getConfig().testCommand;
             if (testCommand) {
-              execSync(testCommand, { encoding: 'utf-8', stdio: 'inherit' });
+              try {
+                execSync(testCommand, { encoding: 'utf-8', stdio: 'inherit' });
+              } catch (_) {
+                ;
+              }
             } else {
               console.log('Error: testCommand is not configured in config.json5');
             }
@@ -262,6 +274,7 @@ Examples:
 }
 
 import { createRequire } from 'module';
+import { ENOENT } from 'constants';
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json');
 
