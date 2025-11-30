@@ -11,5 +11,6 @@
   windowSize: {
     width: 1200,
     height: 800,
-  },
-}
+
+  testCommand: 'make test',
+}}

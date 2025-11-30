@@ -11,6 +11,7 @@ export interface AppConfig {
     width: number;
     height: number;
   };
+  testCommand?: string;
 }
 
 export class ConfigManager {
