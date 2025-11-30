@@ -150,7 +150,7 @@ export class AtCoderGUI {
           {
             const command_line = args.join(' ');
             const output = execSync(command_line, { encoding: 'utf-8' });
-            console.log(`result: ${output}`);
+            console.log(output);
           }
           break;
 
@@ -188,6 +188,26 @@ export class AtCoderGUI {
           this.genManager.run(args);
           break;
 
+        case 'make':
+          {
+            const command_line = args.join(' ');
+            const output = execSync(command_line, { encoding: 'utf-8' });
+            console.log(output);
+          }
+          break;
+
+        case 'test':
+          {
+            const testCommand = this.getConfig().testCommand;
+            if (testCommand) {
+              const output = execSync(testCommand, { encoding: 'utf-8' });
+              console.log(output);
+            } else {
+              console.log('Error: testCommand is not configured in config.json5');
+            }
+          }
+          break;
+
         case 'cd':
           if (args.length < 2) {
             console.log('Error: Directory is required for cd command');
@@ -221,6 +241,8 @@ Available commands:
   config               Show current configuration
   submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
   gen <args>           Generate sample cases using atcoder-tools
+  make <args>          Execute make command
+  test                 Execute test command
   export <target>      Export data to external tools
   cd <directory>       Change current directory
   close                Close the browser (if running)
