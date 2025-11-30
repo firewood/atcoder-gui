@@ -114,6 +114,9 @@ export class SubmitManager {
         throw new Error('No active page found');
       }
 
+      // Wait for the page to load
+      await page.waitForLoadState('domcontentloaded');
+
       // Find the source code textarea (common selectors for AtCoder)
       const textareaSelector = '#editor .ace_text-input';
       await page.waitForSelector(textareaSelector, { timeout: 10000 });
