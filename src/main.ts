@@ -147,15 +147,11 @@ export class AtCoderGUI {
           break;
 
         case 'acc':
+        case 'oj':
           {
             const command_line = args.join(' ');
-            const output = execSync(command_line, { encoding: 'utf-8' });
-            console.log(output);
+            execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
           }
-          break;
-
-        case 'submit':
-          await this.submitManager.submitSolution();
           break;
 
         case 'export':
@@ -191,17 +187,18 @@ export class AtCoderGUI {
         case 'make':
           {
             const command_line = args.join(' ');
-            const output = execSync(command_line, { encoding: 'utf-8' });
-            console.log(output);
+            execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
           }
           break;
 
+        case 'submit':
+          await this.submitManager.submitSolution();
+        // eslint-disable-next-line no-fallthrough
         case 'test':
           {
             const testCommand = this.getConfig().testCommand;
             if (testCommand) {
-              const output = execSync(testCommand, { encoding: 'utf-8' });
-              console.log(output);
+              execSync(testCommand, { encoding: 'utf-8', stdio: 'inherit' });
             } else {
               console.log('Error: testCommand is not configured in config.json5');
             }
