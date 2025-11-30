@@ -115,8 +115,11 @@ export class SubmitManager {
       }
 
       // Find the source code textarea (common selectors for AtCoder)
-      const textareaSelector = 'textarea[name="sourceCode"], textarea#editor, .ace_text-input';
+      const textareaSelector = '#editor .ace_text-input';
       await page.waitForSelector(textareaSelector, { timeout: 10000 });
+
+      // Set min-height for the editor textarea
+      await page.addStyleTag({ content: `div#editor { min-height: 200px !important; }` });
 
       // Clear existing content and paste source code
       await page.fill(textareaSelector, sourceCode);
