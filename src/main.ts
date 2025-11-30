@@ -188,6 +188,20 @@ export class AtCoderGUI {
           this.genManager.run(args);
           break;
 
+        case 'cd':
+          if (args.length < 2) {
+            console.log('Error: Directory is required for cd command');
+            console.log('Usage: cd <directory>');
+            return;
+          }
+          try {
+            process.chdir(args[1]);
+            console.log(`Current directory: ${process.cwd()}`);
+          } catch (err) {
+            console.error(`Error changing directory: ${err}`);
+          }
+          break;
+
         default:
           console.log(`Unknown command: ${command}`);
           console.log('Type "help" for available commands');
@@ -208,6 +222,7 @@ Available commands:
   submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
   gen <args>           Generate sample cases using atcoder-tools
   export <target>      Export data to external tools
+  cd <directory>       Change current directory
   close                Close the browser (if running)
   help                 Show this help message
   exit                 Exit the application
