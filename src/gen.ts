@@ -8,7 +8,7 @@ export class GenManager {
     try {
       execSync('atcoder-tools version', { stdio: 'ignore' });
       return true;
-    } catch (error) {
+    } catch (_) {
       return false;
     }
   }
@@ -25,12 +25,9 @@ export class GenManager {
 
     try {
       const command_line = 'atcoder-tools ' + args.join(' ');
-      const output = execSync(command_line, { encoding: 'utf-8' });
-      console.log(output);
-    } catch (error) {
-      // Don't log the error object itself, as it might contain sensitive information
-      // or be too verbose. The command's output to stderr is usually sufficient.
-      console.error(`Error executing 'atcoder-tools ${args.join(' ')}'`);
+      execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+    } catch (_) {
+      ;
     }
   }
 }
