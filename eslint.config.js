@@ -29,7 +29,10 @@ export default [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['error', {
+         argsIgnorePattern: '^_',
+         caughtErrorsIgnorePattern: '^_'
+         }],
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       // Ban unknown types using TypeScript AST selector
