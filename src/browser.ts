@@ -1,5 +1,6 @@
 import { Browser, chromium, Page, BrowserContext } from 'playwright';
 import { SessionManager } from './session.js';
+import { AppConfig } from './config.js';
 
 export class BrowserManager {
   private browser: Browser | null = null;
@@ -30,22 +31,26 @@ export class BrowserManager {
   /**
    * Launch a new browser instance with UI
    */
-  async launch(): Promise<void> {
+  async launch(config: AppConfig): Promise<void> {
     if (this.browser) {
       await this.close();
     }
 
+    const windowSizeOption = config.windowSize ? `--window-size=${config.windowSize?.width},${config.windowSize?.height}` : '';
     this.browser = await chromium.launch({
       headless: false, // UI mode
       args: [
             '--disable-blink-features=AutomationControlled',
+            windowSizeOption,
         ],
     });
 
     // Create context with existing storage state if available
     const storageState = this.sessionManager.getStorageState();
     this.context = await this.browser.newContext({
-      storageState: storageState
+      storageState: storageState,
+      colorScheme: config.theme,
+      viewport: null,   // fit to window size
     });
 
     this.page = await this.context.newPage();

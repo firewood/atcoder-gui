@@ -30,7 +30,7 @@ export class AtCoderGUI {
    * Initialize the application
    */
   async init(): Promise<void> {
-    await this.browserManager.launch();
+    await this.browserManager.launch(this.getConfig());
     const url = this.getConfig().defaultUrl || 'https://atcoder.jp';
     await this.browserManager.openUrl(url);
   }
