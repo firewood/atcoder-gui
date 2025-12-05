@@ -31,7 +31,7 @@ atcoder-gui/
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   npm install
+   pnpm install
    ```
 3. Install Playwright browsers:
    ```bash
@@ -39,7 +39,7 @@ atcoder-gui/
    ```
 4. Build the project:
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 ## Usage
@@ -49,7 +49,7 @@ atcoder-gui/
 Start the interactive command prompt:
 
 ```bash
-npm run start
+pnpm run start
 ```
 
 This will start an interactive CLI with a command prompt where you can enter commands:
@@ -109,21 +109,21 @@ Session data is stored separately from configuration and is automatically restor
 
 ### Available Scripts
 
-- `npm run build` - Compile TypeScript to JavaScript
-- `npm run dev` - Watch mode compilation
-- `npm run test` - Run tests in watch mode
-- `npm run test:run` - Run tests once
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint issues automatically
-- `npm run start` - Run the compiled CLI application
-- `npm run clean` - Remove compiled output
+- `pnpm run build` - Compile TypeScript to JavaScript
+- `pnpm run dev` - Watch mode compilation
+- `pnpm run test` - Run tests in watch mode
+- `pnpm run test:run` - Run tests once
+- `pnpm run lint` - Run ESLint
+- `pnpm run lint:fix` - Fix ESLint issues automatically
+- `pnpm run start` - Run the compiled CLI application
+- `pnpm run clean` - Remove compiled output
 
 ### Testing
 
 Run tests with Vitest:
 
 ```bash
-npm run test
+pnpm run test
 ```
 
 ### Code Quality
@@ -131,8 +131,8 @@ npm run test
 The project uses ESLint with TypeScript-specific rules for code quality:
 
 ```bash
-npm run lint      # Check code quality
-npm run lint:fix  # Auto-fix issues where possible
+pnpm run lint      # Check code quality
+pnpm run lint:fix  # Auto-fix issues where possible
 ```
 
 ## Technology Stack
