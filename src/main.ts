@@ -192,7 +192,14 @@ export class AtCoderGUI {
           this.genManager.run(args);
           break;
 
+        case 'cp':
+        case 'copy':
+        case 'del':
+        case 'dir':
+        case 'ls':
         case 'make':
+        case 'pwd':
+        case 'rm':
           {
             const command_line = args.join(' ');
             try {
