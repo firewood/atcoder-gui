@@ -44,6 +44,19 @@ export class CookieExporter {
   }
 
   /**
+   * Get the atcoder-cli session.json path by running acc config-dir command
+   */
+  private static getAtCoderCliSessionPath(): string {
+    try {
+      // Run acc command to get config directory
+      const configDir = execSync('acc config-dir', { encoding: 'utf-8', timeout: 5000 }).trim();
+      return join(configDir, 'session.json');
+    } catch (error) {
+      throw new Error(`Failed to get atcoder-cli config directory: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  /**
    * Get AtCoder cookies from current browser session
    */
   private async getAtCoderCookies(): Promise<PlaywrightCookie[]> {
@@ -90,6 +103,40 @@ export class CookieExporter {
   async exportCookiesForOj(): Promise<void> {
     await this.exportCookies(CookieExporter.getOjCookiePath());
     console.log('✓ Cookies exported successfully to oj (online-judge-tools)');
+  }
+
+  /**
+   * Export cookies to atcoder-cli session.json file
+   */
+  async exportCookiesForAtCoderCli(): Promise<void> {
+    try {
+      const atcoderCookies = await this.getAtCoderCookies();
+      const sessionPath = CookieExporter.getAtCoderCliSessionPath();
+
+      // Check if session.json file exists
+      if (!existsSync(sessionPath)) {
+        throw new Error(`Session file does not exist: ${sessionPath}\nPlease ensure atcoder-cli is installed and has been used at least once to create the session.json file.`);
+      }
+
+      // Convert cookies to atcoder-cli format (array of "name=value" strings)
+      const cookieStrings = atcoderCookies.map(cookie => `${cookie.name}=${cookie.value}`);
+
+      // Create the session.json content
+      const sessionContent = {
+        cookies: cookieStrings
+      };
+
+      // Write to session.json file
+      writeFileSync(sessionPath, JSON.stringify(sessionContent, null, '\t'), {
+        encoding: 'utf-8',
+        mode: 0o600 // Set file permissions (readable/writable by owner only)
+      });
+
+      console.log(`✓ Cookies exported successfully to atcoder-cli session.json`);
+      console.log(`Session file updated: ${sessionPath}`);
+    } catch (error) {
+      console.error('Error during atcoder-cli cookie export:', error);
+    }
   }
 
   /**
