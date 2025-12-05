@@ -58,10 +58,6 @@ export class SubmitManager {
       const submitUrl = `https://atcoder.jp/contests/${contestId}/submit?taskScreenName=${problemId}`;
       console.log(`Opening submit page: ${submitUrl}`);
 
-      if (!this.browserManager.isRunning()) {
-        await this.browserManager.launch();
-      }
-
       await this.browserManager.openUrl(submitUrl);
 
       // Copy source code to clipboard and fill the textarea
