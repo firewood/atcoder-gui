@@ -274,7 +274,6 @@ Examples:
 }
 
 import { createRequire } from 'module';
-import { ENOENT } from 'constants';
 const require = createRequire(import.meta.url);
 const { version } = require('../package.json');
 
