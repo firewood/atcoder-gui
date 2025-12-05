@@ -26,7 +26,7 @@
     "start": "tsx src/main.ts",
     "start:built": "node dist/main.js",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build && npm run test:run && npm run lint"
+    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run test:run && pnpm run lint"
   },
   "repository": {
     "type": "git",
