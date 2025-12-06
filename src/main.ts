@@ -23,7 +23,7 @@ export class AtCoderGUI {
     this.configManager = new ConfigManager();
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
-    this.genManager = new GenManager();
+    this.genManager = new GenManager(this.browserManager);
   }
 
   /**
