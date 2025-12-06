@@ -203,6 +203,10 @@ export class AtCoderGUI {
           this.genManager.run(args);
           break;
 
+        case 'new':
+          this.genManager.runAtcoderCli(args);
+          break;
+
         case 'cp':
         case 'copy':
         case 'del':
@@ -271,7 +275,8 @@ Available commands:
   open <URL>           Open a URL in the browser
   config               Show current configuration
   submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
-  gen <args>           Generate sample cases using atcoder-tools
+  gen <contest-id>     Generate sample cases using atcoder-tools
+  new <contest-id>     Generate sample cases using atcoder-cli
   make <args>          Execute make command
   test                 Execute test command
   export <target>      Export data to external tools

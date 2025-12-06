@@ -21,6 +21,15 @@ export class GenManager {
     }
   }
 
+  isAtCoderCliInstalled(): boolean {
+    try {
+      execSync('acc -version', { stdio: 'ignore' });
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /**
    * Run atcoder-tools gen command
    */
@@ -44,7 +53,37 @@ export class GenManager {
         }, 250);
 
         if (fs.existsSync(contest_id)) {
-            process.chdir(contest_id);
+          process.chdir(contest_id);
+          console.log(`Current directory: ${process.cwd()}`);
+        }
+      }
+    } catch (_) {
+      ;
+    }
+  }
+
+  runAtcoderCli(args: string[]): void {
+    if (!this.isAtCoderCliInstalled()) {
+      console.error('Error: acc command not found.');
+      console.error('Please install atcoder-cli and ensure it is in your PATH.');
+      return;
+    }
+
+    try {
+      const command_line = 'acc ' + args.join(' ');
+      execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
+
+      const contest_id = args[1].match(/^[-\w]+$/)?.[0];
+      if (contest_id) {
+        const url = `https://atcoder.jp/contests/${contest_id}`;
+        // avoid 429 error
+        setTimeout(() => {
+          this.browserManager.openUrl(url);
+        }, 250);
+
+        if (fs.existsSync(contest_id)) {
+          process.chdir(contest_id);
+          console.log(`Current directory: ${process.cwd()}`);
         }
       }
     } catch (_) {
