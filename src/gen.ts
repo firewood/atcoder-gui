@@ -35,7 +35,7 @@ export class GenManager {
       const command_line = 'atcoder-tools ' + args.join(' ');
       execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
 
-      const contest_id = args[1].match(/^\w+\d+$/)?.[0];
+      const contest_id = args[1].match(/^[-\w]+$/)?.[0];
       if (contest_id) {
         const url = `https://atcoder.jp/contests/${contest_id}`;
         // avoid 429 error
