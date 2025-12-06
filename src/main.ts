@@ -8,6 +8,7 @@ import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
 import { CookieExporter } from './cookie-export.js';
 import { GenManager } from './gen.js';
+import { ProblemManager } from './problem.js';
 import { execSync } from 'child_process';
 
 export class AtCoderGUI {
@@ -16,6 +17,7 @@ export class AtCoderGUI {
   private submitManager: SubmitManager;
   private cookieExporter: CookieExporter;
   private genManager: GenManager;
+  private problemManager: ProblemManager;
   private rl: readline.Interface | null = null;
 
   constructor() {
@@ -24,6 +26,7 @@ export class AtCoderGUI {
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
     this.genManager = new GenManager(this.browserManager);
+    this.problemManager = new ProblemManager(this.browserManager);
   }
 
   /**
@@ -120,6 +123,14 @@ export class AtCoderGUI {
   private async handleCommand(input: string): Promise<void> {
     const args = input.split(' ').filter(arg => arg.length > 0);
     const command = args[0].toLowerCase();
+    if (command == '') {
+      return;
+    }
+
+    // Try to navigate to problem directory if command is a single letter
+    if (await this.problemManager.navigateToProblem(command)) {
+      return;
+    }
 
     try {
       switch (command) {
