@@ -32,7 +32,14 @@
     "type": "git",
     "url": "git+https://github.com/firewood/atcoder-gui.git"
   },
-  "keywords": ["atcoder", "browser-automation", "cli", "competitive-programming", "playwright", "typescript"],
+  "keywords": [
+    "atcoder",
+    "browser-automation",
+    "cli",
+    "competitive-programming",
+    "playwright",
+    "typescript"
+  ],
   "author": "firewood <174658+firewood@users.noreply.github.com>",
   "license": "MIT",
   "bugs": {
@@ -41,6 +48,7 @@
   "homepage": "https://github.com/firewood/atcoder-gui#readme",
   "dependencies": {
     "conf": "^15.0.2",
+    "globals": "^16.5.0",
     "json5": "^2.2.3",
     "playwright": "^1.56.1"
   },
