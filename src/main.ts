@@ -302,10 +302,6 @@ Examples:
   }
 }
 
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { version } = require('../package.json');
-
 /**
  * Main function to start the interactive CLI
  */
@@ -319,14 +315,14 @@ async function ui_main(): Promise<void> {
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
+  const configManager = new ConfigManager();
 
   if (args.includes('version') || args.includes('--version') || args.includes('-v')) {
-    console.log(version);
+    console.log(configManager.getVersion());
     return;
   }
 
   if (args.includes('config-dir') || args.includes('--config-dir')) {
-    const configManager = new ConfigManager();
     console.log(configManager.getConfigDirPath());
     return;
   }

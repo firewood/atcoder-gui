@@ -3,6 +3,9 @@ import JSON5 from 'json5';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { version } = require('../package.json');
 
 export interface AppConfig {
   theme?: 'light' | 'dark';
@@ -20,7 +23,7 @@ export class ConfigManager {
   constructor() {
     this.conf = new Conf<AppConfig>({
       projectName: 'atcoder-gui',
-      projectVersion: '0.1.0',
+      projectVersion: version,
       configName: 'config',
       fileExtension: 'json5',
       serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
@@ -130,5 +133,9 @@ export class ConfigManager {
    */
   getSize(): number {
     return this.conf.size;
+  }
+
+  getVersion(): string {
+    return version;
   }
 }
