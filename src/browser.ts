@@ -58,7 +58,7 @@ export class BrowserManager {
     // Log session restoration status
     const sessionInfo = this.sessionManager.getSessionInfo();
     if (sessionInfo.hasSession) {
-      console.log(`Session restored: ${sessionInfo.cookieCount} cookies, ${sessionInfo.originCount} origins`);
+      ;
     } else {
       console.log('Starting with fresh session');
     }

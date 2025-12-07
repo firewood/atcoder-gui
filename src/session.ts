@@ -56,8 +56,6 @@ export class SessionManager {
       // Save cookies and origins directly at top level
       this.conf.set('cookies', storageState.cookies || []);
       this.conf.set('origins', storageState.origins || []);
-
-      console.log('Browser state saved successfully');
     } catch (error) {
       console.error('Failed to save browser state:', error);
     }
