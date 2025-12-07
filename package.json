@@ -1,6 +1,6 @@
 {
   "name": "atcoder-gui",
-  "version": "0.1.7",
+  "version": "1.0.0",
   "description": "Browser automation tool for AtCoder with CLI interface",
   "type": "module",
   "main": "dist/main.js",
