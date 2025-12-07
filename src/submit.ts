@@ -1,5 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
+import * as path from 'path';
 import { BrowserManager } from './browser.js';
+import { AtCoderCliContestConfig, AtCoderToolsMetadata } from './types.js';
 
 interface MetadataJson {
   code_filename: string;
@@ -29,43 +31,51 @@ export class SubmitManager {
   /**
    * Submit solution to AtCoder
    */
-  async submitSolution(): Promise<void> {
+  async submitSolution(filename: string | undefined): Promise<boolean> {
     try {
-      // Check if required files exist in current directory
-      const metadataPath = './metadata.json';
-      const mainCppPath = './main.cpp';
-
-      if (!existsSync(metadataPath)) {
-        console.error('Error: metadata.json not found in current directory');
-        console.log('Make sure you are in a directory created by atcoder-tools');
-        return;
+      const atcoderToolsMetadataPath = './metadata.json';
+      const atcoderCliMetadataPath = '../contest.acc.json';
+      if (existsSync(atcoderToolsMetadataPath)) {
+        const metadata: AtCoderToolsMetadata = JSON.parse(readFileSync(atcoderToolsMetadataPath, 'utf-8'));
+        this.pasteToBrowser(metadata.problem.contest.contest_id, metadata.problem.problem_id, filename || metadata.code_filename);
+        return true;
+      } else if (existsSync(atcoderCliMetadataPath)) {
+        if (!filename) {
+          console.error('Error: filename is required');
+          return false;
+        }
+        const metadata: AtCoderCliContestConfig = JSON.parse(readFileSync(atcoderCliMetadataPath, 'utf-8'));
+        const problem_id = path.basename(process.cwd());
+        for (const task of metadata.tasks) {
+          if (task.directory?.path == problem_id) {
+            this.pasteToBrowser(metadata.contest.id, task.id, filename);
+            return true;
+          }
+        }
+      } else {
+        console.error('Error: metadata not found in current directory');
       }
-
-      if (!existsSync(mainCppPath)) {
-        console.error('Error: main.cpp not found in current directory');
-        return;
-      }
-
-      // Parse metadata.json to get contest_id and problem_id
-      const { contestId, problemId } = this.parseMetadata(metadataPath);
-      console.log(`Contest ID: ${contestId}, Problem ID: ${problemId}`);
-
-      // Read main.cpp content
-      const sourceCode = this.readSourceCode(mainCppPath);
-      console.log(`Source code loaded (${sourceCode.length} characters)`);
-
-      // Open AtCoder submit URL
-      const submitUrl = `https://atcoder.jp/contests/${contestId}/submit?taskScreenName=${problemId}`;
-      console.log(`Opening submit page: ${submitUrl}`);
-
-      await this.browserManager.openUrl(submitUrl);
-
-      // Copy source code to clipboard and fill the textarea
-      await this.fillSourceCodeArea(sourceCode);
-
     } catch (error) {
       console.error('Error during submission:', error);
     }
+    return false;
+  }
+
+  private async pasteToBrowser(contestId: string, problemId: string, sourceCodePath: string): Promise<void> {
+    if (!existsSync(sourceCodePath)) {
+      console.error(`Error: ${sourceCodePath} not found in current directory`);
+      return;
+    }
+    const sourceCode = this.readSourceCode(sourceCodePath);
+
+    console.log(`Contest ID: ${contestId}, Problem ID: ${problemId}`);
+
+    // Open AtCoder submit URL
+    const submitUrl = `https://atcoder.jp/contests/${contestId}/submit?taskScreenName=${problemId}`;
+    await this.browserManager.openUrl(submitUrl);
+
+    // Copy source code to clipboard and fill the textarea
+    await this.fillSourceCodeArea(sourceCode);
   }
 
   /**

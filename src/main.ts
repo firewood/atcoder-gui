@@ -226,7 +226,9 @@ export class AtCoderGUI {
           break;
 
         case 'submit':
-          await this.submitManager.submitSolution();
+          if (!(await this.submitManager.submitSolution(args[1]))) {
+            break;
+          }
         // eslint-disable-next-line no-fallthrough
         case 'test':
           {
@@ -274,7 +276,7 @@ export class AtCoderGUI {
 Available commands:
   open <URL>           Open a URL in the browser
   config               Show current configuration
-  submit               Submit solution to AtCoder (requires metadata.json and main.cpp)
+  submit <filename>    Submit solution to AtCoder
   gen <contest-id>     Generate sample cases using atcoder-tools
   new <contest-id>     Generate sample cases using atcoder-cli
   make <args>          Execute make command
