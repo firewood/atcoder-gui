@@ -54,18 +54,35 @@ export class Parser {
     const indices: ASTNode[] = [];
 
     // Check for subscripts
-    // Support A_i and A_i,j and A_{i,j} if lexer supports it
-    // My lexer setup: _ -> subscript.
-    // If we see subscript, we expect an index.
-
     while (this.peek().type === 'subscript') {
         this.consume(); // consume '_'
-        // Parse index expression
-        // It could be 'i', '1', 'N-1', '(N-1)'
-        // Or if comma separation is used: '_ i, j' (rare in raw subscript, usually _{i,j})
-        // Since lexer handles unicode subscripts by inserting _, let's assume one index per _ or sequence of indices?
-        // Usually A_i_j means A[i][j].
-        indices.push(this.parseExpression());
+
+        if (this.peek().type === 'lparen') {
+            this.consume(); // consume '{' or '('
+
+            // Handle empty braces
+            if (this.peek().type === 'rparen') {
+                this.consume();
+                continue;
+            }
+
+            // Parse list of expressions separated by commas
+            while (true) {
+                indices.push(this.parseExpression());
+                if (this.peek().type === 'comma') {
+                    this.consume();
+                } else {
+                    break;
+                }
+            }
+
+            if (this.peek().type === 'rparen') {
+                this.consume();
+            }
+        } else {
+            // Single expression index
+            indices.push(this.parseExpression());
+        }
     }
 
     return { type: 'item', name, indices };
