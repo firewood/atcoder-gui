@@ -21,8 +21,8 @@ export class Lexer {
     { type: 'number', regex: /^[0-9]+/ },
     { type: 'ident', regex: /^[a-zA-Z][a-zA-Z0-9]*/ },
     { type: 'binop', regex: /^[-+*/]/ },
-    { type: 'lparen', regex: /^[\(\{]/ }, // Match ( or {
-    { type: 'rparen', regex: /^[\)\}]/ }, // Match ) or }
+    { type: 'lparen', regex: /^[{([[]/ }, // Match (, {, or [  (fixed regex)
+    { type: 'rparen', regex: /^[})\]]/ }, // Match ), }, or ]
     { type: 'comma', regex: /^,/ },
   ];
 

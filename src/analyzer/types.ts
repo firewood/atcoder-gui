@@ -29,7 +29,16 @@ export interface FormatNode extends ASTNode {
   children: ASTNode[];
 }
 
-export type VarType = 'int' | 'float' | 'string';
+export const VarType = {
+  ValueInt: 'int',
+  IndexInt: 'index_int',
+  Float: 'float',
+  String: 'string',
+  Char: 'char',
+} as const;
+
+// eslint-disable-next-line no-redeclare
+export type VarType = typeof VarType[keyof typeof VarType];
 
 export interface ItemNode extends ASTNode {
   type: 'item';

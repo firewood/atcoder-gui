@@ -1,4 +1,4 @@
-import { FormatNode, ItemNode, ASTNode, LoopNode, DotsNode, BinOpNode } from './types';
+import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from './types';
 
 export class Analyzer {
   public analyze(root: FormatNode): FormatNode {
@@ -144,10 +144,13 @@ export class Analyzer {
           return true;
       }
       if (a.type === 'number') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return (a as any).value === (b as any).value;
       }
       if (a.type === 'binop') {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const ba = a as any;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const bb = b as any;
           return ba.op === bb.op && this.areNodesEqual(ba.left, bb.left) && this.areNodesEqual(ba.right, bb.right);
       }
