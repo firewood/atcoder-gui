@@ -19,8 +19,7 @@
   "scripts": {
     "build": "tsc && cp src/config.json5 dist/",
     "dev": "tsc --watch",
-    "test": "vitest",
-    "test:run": "vitest run",
+    "test": "vitest run",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "start": "tsx src/main.ts",
