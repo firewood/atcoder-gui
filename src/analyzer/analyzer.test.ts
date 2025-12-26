@@ -72,6 +72,10 @@ describe('Analyzer', () => {
         // Expected: a_1, Loop(2..n) or merged.
         // My implementation collapses around dots.
         // a_1, a_2, ..., a_n -> a_1, Loop(2..n).
+        // With loop extension, this might become Loop(1..n) if logic allows.
+        // a_1, a_2 ... a_n -> Detected Loop(2..n).
+        // Then we check a_1 against a_i (i=1). It matches.
+        // So Loop(1..n).
 
         const rawAST = parse(input);
         const analyzer = new Analyzer();
@@ -80,7 +84,8 @@ describe('Analyzer', () => {
         const loop = result.children.find(c => c.type === 'loop');
         expect(loop).toBeDefined();
         if (loop && loop.type === 'loop') {
-            expect((loop.start as any).value).toBe(2);
+            // Due to loop extension, start should now be 1
+            expect((loop.start as any).value).toBe(1);
             expect((loop.end as any).name).toBe('n');
         }
     });

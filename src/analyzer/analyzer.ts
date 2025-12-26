@@ -17,6 +17,11 @@ export class Analyzer {
         if (loop) {
           const { K, loopNode } = loop;
           for (let k = 0; k < K; k++) result.pop();
+
+          while (this.tryExtendLoop(result, loopNode)) {
+              // extended
+          }
+
           result.push(loopNode);
           i += K + 1; // Skip dots and right side (K items)
           continue;
@@ -27,6 +32,59 @@ export class Analyzer {
       i++;
     }
     return result;
+  }
+
+  private tryExtendLoop(result: ASTNode[], loopNode: LoopNode): boolean {
+      if (loopNode.start.type !== 'number') return false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const currentStart = (loopNode.start as any).value;
+      const prevIndexVal = currentStart - 1;
+
+      const K = loopNode.body.length;
+      if (result.length < K) return false;
+
+      const candidate = result.slice(result.length - K);
+
+      if (this.matchLoopBody(candidate, loopNode, prevIndexVal)) {
+          for(let k=0; k<K; k++) result.pop();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (loopNode.start as any).value = prevIndexVal;
+          return true;
+      }
+      return false;
+  }
+
+  private matchLoopBody(nodes: ASTNode[], loopNode: LoopNode, indexVal: number): boolean {
+     if (nodes.length !== loopNode.body.length) return false;
+
+     for(let i=0; i<nodes.length; i++) {
+         const node = nodes[i];
+         const template = loopNode.body[i];
+         if (!this.matchesTemplate(node, template, loopNode.variable, indexVal)) return false;
+     }
+     return true;
+  }
+
+  private matchesTemplate(node: ASTNode, template: ItemNode, loopVar: string, indexVal: number): boolean {
+      if (node.type !== 'item') return false;
+      const itemNode = node as ItemNode;
+      if (itemNode.name !== template.name) return false;
+      if (itemNode.indices.length !== template.indices.length) return false;
+
+      for(let j=0; j<itemNode.indices.length; j++) {
+          const nodeIdx = itemNode.indices[j];
+          const templIdx = template.indices[j];
+
+          // Check if templIdx is the loop variable
+          if (templIdx.type === 'item' && (templIdx as ItemNode).name === loopVar && (templIdx as ItemNode).indices.length === 0) {
+              // Should match indexVal
+              if (nodeIdx.type !== 'number' || (nodeIdx as any).value !== indexVal) return false;
+          } else {
+              // Should be identical
+              if (!this.areNodesEqual(nodeIdx, templIdx)) return false;
+          }
+      }
+      return true;
   }
 
   private detectLoop(nodes: ASTNode[], dotsIndex: number): { K: number, loopNode: LoopNode } | null {
@@ -50,7 +108,8 @@ export class Analyzer {
           const l = left[i];
           const r = right[i];
           if (l.type !== 'item' || r.type !== 'item') return false;
-          if (l.name !== r.name) return false;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if ((l as any).name !== (r as any).name) return false;
       }
       return true;
   }
