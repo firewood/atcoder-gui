@@ -29,10 +29,21 @@ export interface FormatNode extends ASTNode {
   children: ASTNode[];
 }
 
-export interface VariableNode extends ASTNode {
-  type: 'variable';
+export type VarType = 'int' | 'float' | 'string';
+
+export interface ItemNode extends ASTNode {
+  type: 'item';
   name: string;
   indices: ASTNode[]; // For array access like a[i]
+  inferredType?: VarType;
+}
+
+export interface DotsNode extends ASTNode {
+  type: 'dots';
+}
+
+export interface BreakNode extends ASTNode {
+  type: 'break';
 }
 
 export interface NumberNode extends ASTNode {
