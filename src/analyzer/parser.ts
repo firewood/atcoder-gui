@@ -1,16 +1,127 @@
-import { Token, FormatNode, ASTNode, TokenType, VariableNode, NumberNode, LoopNode, BinOpNode } from './types.js';
+/**
+ * Simple parser implementation for the format string.
+ * This should transform a stream of tokens into an AST (FormatNode).
+ */
+
+import { Token, TokenType, ASTNode, FormatNode, ItemNode, NumberNode, BinOpNode, LoopNode } from './types';
 
 export class Parser {
   private tokens: Token[];
-  private pos: number;
+  private pos: number = 0;
 
   constructor(tokens: Token[]) {
-    this.tokens = tokens;
-    this.pos = 0;
+    this.tokens = tokens.filter(t => t.type !== 'space');
   }
 
-  private isAtEnd(): boolean {
-    return this.pos >= this.tokens.length || this.tokens[this.pos].type === 'eof';
+  public parse(): FormatNode {
+    const children: ASTNode[] = [];
+    while (this.peek().type !== 'eof') {
+        const stmt = this.parseStatement();
+        if (stmt) children.push(stmt);
+    }
+    return { type: 'format', children };
+  }
+
+  private parseStatement(): ASTNode | null {
+    const token = this.peek();
+
+    if (token.type === 'ident') {
+        return this.parseItem();
+    }
+    if (token.type === 'newline') {
+        this.consume();
+        return { type: 'break' };
+    }
+    if (token.type === 'dots' || token.type === 'vdots') {
+        this.consume();
+        return { type: 'dots' };
+    }
+    // Skip commas
+    if (token.type === 'comma') {
+        this.consume();
+        return null; // Skip
+    }
+
+    // Skip unexpected? Or error?
+    // For now, consume and ignore to be robust
+    this.consume();
+    return null;
+  }
+
+  private parseItem(): ItemNode {
+    const token = this.consume(); // ident
+    const name = token.value as string;
+    const indices: ASTNode[] = [];
+
+    // Check for subscripts
+    // Support A_i and A_i,j and A_{i,j} if lexer supports it
+    // My lexer setup: _ -> subscript.
+    // If we see subscript, we expect an index.
+
+    while (this.peek().type === 'subscript') {
+        this.consume(); // consume '_'
+        // Parse index expression
+        // It could be 'i', '1', 'N-1', '(N-1)'
+        // Or if comma separation is used: '_ i, j' (rare in raw subscript, usually _{i,j})
+        // Since lexer handles unicode subscripts by inserting _, let's assume one index per _ or sequence of indices?
+        // Usually A_i_j means A[i][j].
+        indices.push(this.parseExpression());
+    }
+
+    return { type: 'item', name, indices };
+  }
+
+  private parseExpression(): ASTNode {
+    return this.parseAddSub();
+  }
+
+  private parseAddSub(): ASTNode {
+    let left = this.parseMulDiv();
+    while (this.peek().type === 'binop' && (this.peek().value === '+' || this.peek().value === '-')) {
+        const op = this.consume().value as string;
+        const right = this.parseMulDiv();
+        left = { type: 'binop', op, left, right } as BinOpNode;
+    }
+    return left;
+  }
+
+  private parseMulDiv(): ASTNode {
+    let left = this.parseAtom();
+    while (this.peek().type === 'binop' && (this.peek().value === '*' || this.peek().value === '/')) {
+        const op = this.consume().value as string;
+        const right = this.parseAtom();
+        left = { type: 'binop', op, left, right } as BinOpNode;
+    }
+    return left;
+  }
+
+  private parseAtom(): ASTNode {
+      const token = this.peek();
+      if (token.type === 'lparen') {
+          this.consume();
+          const expr = this.parseExpression();
+          if (this.peek().type === 'rparen') {
+              this.consume();
+          }
+          return expr;
+      }
+      if (token.type === 'ident') {
+          // If the identifier is followed by _, it's an ItemNode (variable with index?)
+          // But usually inside an index, we just have variables like 'i', 'N'.
+          // Does 'N' have indices? N_i? Usually not.
+          // But technically 'A_{B_i}' is possible.
+          // So recursively call parseItem?
+          return this.parseItem();
+      }
+      if (token.type === 'number') {
+          this.consume();
+          return { type: 'number', value: token.value as number };
+      }
+
+      // Error recovery
+      this.consume();
+      // Use 'item' type as fallback, but ideally should be error
+      return { type: 'item', name: 'ERROR', indices: [] };
   }
 
   private peek(): Token {
@@ -19,130 +130,5 @@ export class Parser {
 
   private consume(): Token {
     return this.tokens[this.pos++];
-  }
-
-  private match(type: TokenType): boolean {
-    if (this.isAtEnd()) return false;
-    return this.peek().type === type;
-  }
-
-  public parse(): FormatNode {
-    const children: ASTNode[] = [];
-    while (!this.isAtEnd()) {
-        if (this.match('newline')) {
-            this.consume();
-            continue;
-        }
-
-        // Try to parse a variable declaration
-        if (this.match('ident')) {
-            const node = this.parseVariable();
-
-            // If followed by dots, it's likely a loop
-            if (this.match('dots')) {
-               this.consume(); // eat dots
-
-               // Expect another variable of the same name
-               if (this.match('ident')) {
-                   const endNode = this.parseVariable();
-
-                   // Convert to LoopNode
-                   // Pattern: StartNode ... EndNode
-                   // Assume indices[0] is the loop variable
-
-                   const startVar = node as VariableNode;
-                   const endVar = endNode as VariableNode;
-
-                   if (startVar.name === endVar.name && startVar.indices.length > 0 && endVar.indices.length > 0) {
-                       // Heuristic:
-                       // startVar.indices[0] is start (e.g., 0)
-                       // endVar.indices[0] is end expression (e.g., n-1)
-
-                       // Typically loop is i=0 to n, access a[i]
-                       // If pattern is a_0 ... a_{n-1}
-                       // Loop var: i (generated)
-                       // Start: 0
-                       // End: n (derived from n-1)
-
-                       const loopVarName = 'i'; // Simplified
-
-                       // Construct LoopNode
-                       const loopNode: LoopNode = {
-                           type: 'loop',
-                           variable: loopVarName,
-                           start: startVar.indices[0],
-                           end: this.deriveLoopEnd(endVar.indices[0]),
-                           body: [{
-                               type: 'variable',
-                               name: startVar.name,
-                               indices: [{ type: 'variable', name: loopVarName, indices: [] } as VariableNode]
-                           } as VariableNode]
-                       };
-                       children.push(loopNode);
-                       continue;
-                   }
-               }
-
-               // If fallback, push start node.
-               // (Ideally we should handle error or partial match, but for now push start node)
-               children.push(node);
-            } else {
-                children.push(node);
-            }
-        } else {
-            this.consume();
-        }
-    }
-    return { type: 'format', children };
-  }
-
-  // Helper to convert n-1 to n
-  private deriveLoopEnd(endExpr: ASTNode): ASTNode {
-      if (endExpr.type === 'binop') {
-          const bin = endExpr as BinOpNode;
-          if (bin.op === '-' && bin.right.type === 'number' && (bin.right as NumberNode).value === 1) {
-              return bin.left;
-          }
-      }
-      // Fallback
-      return endExpr;
-  }
-
-  private parseVariable(): VariableNode {
-    const nameToken = this.consume(); // ident
-    const indices: ASTNode[] = [];
-
-    while (this.match('subscript')) {
-        this.consume(); // eat '_'
-        if (this.match('number')) {
-            const num = this.consume();
-            indices.push({ type: 'number', value: Number(num.value) } as NumberNode);
-        } else if (this.match('ident')) {
-            const id = this.consume();
-            let indexNode: ASTNode = { type: 'variable', name: String(id.value), indices: [] } as VariableNode;
-
-            // Handle simple binary op in index like n-1
-            if (this.match('binop')) {
-               const opToken = this.consume(); // eat op
-               if (this.match('number')) {
-                   const numToken = this.consume(); // eat number
-
-                   indexNode = {
-                       type: 'binop',
-                       op: String(opToken.value),
-                       left: indexNode,
-                       right: { type: 'number', value: Number(numToken.value) } as NumberNode
-                   } as BinOpNode;
-               }
-            }
-            indices.push(indexNode);
-        }
-    }
-
-    return {
-        type: 'variable',
-        name: String(nameToken.value),
-        indices
-    };
   }
 }

@@ -21,8 +21,8 @@ export class Lexer {
     { type: 'number', regex: /^[0-9]+/ },
     { type: 'ident', regex: /^[a-zA-Z][a-zA-Z0-9]*/ },
     { type: 'binop', regex: /^[-+*/]/ },
-    { type: 'lparen', regex: /^\(/ },
-    { type: 'rparen', regex: /^\)/ },
+    { type: 'lparen', regex: /^[\(\{]/ }, // Match ( or {
+    { type: 'rparen', regex: /^[\)\}]/ }, // Match ) or }
     { type: 'comma', regex: /^,/ },
   ];
 
@@ -49,31 +49,6 @@ export class Lexer {
   }
 
   private normalizeInput(input: string): string {
-    // Replace unicode subscripts with _{char} or similar
-    // However, the tokens in the example are: "ident(a)", "subscript()", "number(0)"
-    // So 'a₀' should become "a", "_", "0"
-    // We can just replace subscript chars with '_'+char, but we need to handle multi-char subscripts carefully?
-    // Actually, simple replacement is enough because the lexer will see '_' then '0'.
-
-    // First, handle subscript minus '₋' -> '_-' ? No, usually it's inside subscript like n-1
-    // If input is 'aₙ₋₁', we want tokens: ident(a), sub, ident(n), binop(-), number(1)
-    // If we replace 'ₙ' with '_n', '₋' with '_-', '₁' with '_1', we get:
-    // a _n _- _1 -> a, sub, n, sub, -, sub, 1. This is wrong. Too many subscripts.
-
-    // We need to insert a subscript token only at the start of a subscript sequence.
-    // But how to detect the start?
-    // Maybe we shouldn't replace with '_' but just handle them as special characters that imply a subscript state?
-    // But the lexer is stateless in the simple regex approach.
-
-    // Let's look at the example: aₙ₋₁
-    // We want: a, subscript, n, -, 1
-    // If we replace unicode subscripts with their normal equivalents, we lose the information that they are subscripts.
-    // Unless we assume that subscripts are always attached to the previous identifier?
-    // But 'n-1' in subscript is 'ₙ₋₁'.
-
-    // Alternative strategy: Pre-process to insert '_' before the first unicode subscript in a sequence,
-    // and convert all unicode subscripts to normal chars.
-
     let result = '';
     let inSubscript = false;
 
@@ -132,6 +107,8 @@ export class Lexer {
       }
 
       if (!matched) {
+        // Instead of throwing, skip the character?
+        // Or throw. The prompt implies normal inputs.
         throw new Error(`Unexpected character at line ${this.line}, column ${this.column}: ${rest[0]}`);
       }
     }
