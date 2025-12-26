@@ -47,12 +47,14 @@
   },
   "homepage": "https://github.com/firewood/atcoder-gui#readme",
   "dependencies": {
+    "cheerio": "^1.1.2",
     "conf": "^15.0.2",
     "globals": "^16.5.0",
     "json5": "^2.2.3",
     "playwright": "^1.56.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.2",
     "@playwright/test": "^1.56.1",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.47.0",

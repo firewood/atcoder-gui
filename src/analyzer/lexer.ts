@@ -55,8 +55,6 @@ export class Lexer {
     // We can just replace subscript chars with '_'+char, but we need to handle multi-char subscripts carefully?
     // Actually, simple replacement is enough because the lexer will see '_' then '0'.
 
-    let normalized = input;
-
     // First, handle subscript minus '₋' -> '_-' ? No, usually it's inside subscript like n-1
     // If input is 'aₙ₋₁', we want tokens: ident(a), sub, ident(n), binop(-), number(1)
     // If we replace 'ₙ' with '_n', '₋' with '_-', '₁' with '_1', we get:
