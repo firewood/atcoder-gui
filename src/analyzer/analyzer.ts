@@ -2,7 +2,8 @@ import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from './types';
 
 export class Analyzer {
   public analyze(root: FormatNode): FormatNode {
-    const newChildren = this.normalize(root.children);
+    const childrenWithoutBreaks = root.children.filter(n => n.type !== 'break');
+    const newChildren = this.normalize(childrenWithoutBreaks);
     return { ...root, children: newChildren };
   }
 

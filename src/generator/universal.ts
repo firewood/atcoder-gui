@@ -6,7 +6,6 @@ import {
   VarType,
   BinOpNode,
   NumberNode,
-  DotsNode,
 } from '../analyzer/types.js';
 import { CodeGeneratorConfig, TemplateContext } from './types.js';
 
@@ -238,9 +237,10 @@ export class UniversalGenerator {
 
           case 'item': return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
           case 'number': return String((node as NumberNode).value);
-          case 'binop':
+          case 'binop': {
             const bin = node as BinOpNode;
             return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(bin.right)}`;
+          }
           default:
             // Check if it has 'name' (ItemNode acting as variable reference)
             if ('name' in node) return (node as any).name;
