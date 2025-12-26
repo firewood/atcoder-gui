@@ -3,7 +3,7 @@
  * This should transform a stream of tokens into an AST (FormatNode).
  */
 
-import { Token, TokenType, ASTNode, FormatNode, ItemNode, NumberNode, BinOpNode, LoopNode } from './types';
+import { Token, ASTNode, FormatNode, ItemNode, BinOpNode } from './types';
 
 export class Parser {
   private tokens: Token[];

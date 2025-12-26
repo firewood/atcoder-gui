@@ -3,7 +3,7 @@ import { parseHtml } from './html-parser';
 import { Lexer } from './lexer';
 import { Parser } from './parser';
 import { Analyzer } from './analyzer';
-import { ItemNode, NumberNode, LoopNode } from './types';
+import { ItemNode, LoopNode } from './types';
 import fs from 'fs';
 import path from 'path';
 
