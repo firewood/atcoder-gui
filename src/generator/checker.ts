@@ -153,6 +153,7 @@ async function main() {
     console.log('Analyzing...');
     const analyzer = new Analyzer();
     const formatTree = analyzer.analyze(rawAst);
+    console.log('AST:', JSON.stringify(formatTree, null, 2));
 
     console.log('Inferring Types...');
     const sampleInputs = samples.map(s => s.input);
