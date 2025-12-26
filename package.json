@@ -22,6 +22,7 @@
     "test": "vitest run",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
+    "check": "tsx src/generator/checker.ts",
     "start": "tsx src/main.ts",
     "start:built": "node dist/main.js",
     "clean": "rm -rf dist",
