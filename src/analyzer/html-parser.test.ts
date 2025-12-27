@@ -9,7 +9,7 @@ import path from 'path';
 
 describe('htmlParser', () => {
   it('should parse problem-example.html', () => {
-    const htmlPath = path.resolve(__dirname, '../../resources/problem-example.html');
+    const htmlPath = path.resolve(__dirname, '../../test-resources/single-case-example.html');
     const html = fs.readFileSync(htmlPath, 'utf-8');
     const result = parseHtml(html);
 
@@ -26,7 +26,7 @@ describe('htmlParser', () => {
   });
 
   it('should parse input format into FormatNode using Analyzer', () => {
-    const htmlPath = path.resolve(__dirname, '../../resources/problem-example.html');
+    const htmlPath = path.resolve(__dirname, '../../test-resources/single-case-example.html');
     const html = fs.readFileSync(htmlPath, 'utf-8');
     const result = parseHtml(html);
 
