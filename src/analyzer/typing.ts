@@ -1,5 +1,5 @@
-import { FormatNode, VarType } from './types';
-import { matchFormat } from './match';
+import { FormatNode, VarType, ASTNode, LoopNode, ItemNode } from './types.js';
+import { matchFormat } from './match.js';
 
 export class TypingError extends Error {
   constructor(message: string) {
@@ -10,7 +10,6 @@ export class TypingError extends Error {
 
 function getVarType(value: any): VarType {
   if (typeof value === 'number') {
-    // Should not happen if parsing string tokens, but handled for completeness
     return Number.isInteger(value) ? VarType.ValueInt : VarType.Float;
   }
   if (typeof value === 'string') {
@@ -32,14 +31,14 @@ function unifyTypes(t1: VarType, t2: VarType): VarType {
   if (t1 === t2) return t1;
 
   if (t1 === VarType.String || t2 === VarType.String) return VarType.String;
-  if (t1 === VarType.Char || t2 === VarType.Char) return VarType.String; // Char + anything else -> String (except maybe Char + Char = Char which is caught by t1==t2)
+  if (t1 === VarType.Char || t2 === VarType.Char) return VarType.String;
 
   const types = new Set([t1, t2]);
   if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt)) return VarType.ValueInt;
   if (types.has(VarType.IndexInt) && types.has(VarType.Float)) return VarType.Float;
   if (types.has(VarType.ValueInt) && types.has(VarType.Float)) return VarType.Float;
 
-  return VarType.String; // Fallback
+  return VarType.String;
 }
 
 function getVarTypesFromMatchResult(values: Record<string, any>): Record<string, VarType> {
@@ -50,12 +49,10 @@ function getVarTypesFromMatchResult(values: Record<string, any>): Record<string,
     let candidateTypes: Set<VarType> = new Set();
 
     if (typeof val === 'object') {
-      // Map/Dictionary of values
       for (const k of Object.keys(val)) {
         candidateTypes.add(getVarType(val[k]));
       }
     } else {
-      // Scalar
       candidateTypes.add(getVarType(val));
     }
 
@@ -63,7 +60,6 @@ function getVarTypesFromMatchResult(values: Record<string, any>): Record<string,
         throw new TypingError(`Failed to infer type: ${name} has no values`);
     }
 
-    // Reduce types
     let currentType: VarType | null = null;
     for (const t of candidateTypes) {
         if (currentType === null) {
@@ -76,16 +72,6 @@ function getVarTypesFromMatchResult(values: Record<string, any>): Record<string,
         types[name] = currentType;
     }
   }
-
-  // TODO: Check for IndexInt usage.
-  // This requires AST analysis to see if variable is used as index.
-  // For now, we rely on value content. Integer values are ValueInt.
-  // If we had variable dependency info, we could promote to IndexInt if used as index but not declared as int?
-  // Actually, IndexInt is usually *stricter* than ValueInt?
-  // In Python code: "used as indices but the type is not an integer" -> Error.
-  // And "unify(IndexInt, ValueInt) -> ValueInt".
-  // So IndexInt is a subset?
-  // Here we just infer based on content.
 
   return types;
 }
@@ -106,29 +92,109 @@ function unifyVarTypes(t1: Record<string, VarType>, t2: Record<string, VarType>)
   return t3;
 }
 
-export function inferTypesFromInstances(node: FormatNode, instances: string[]): Record<string, VarType> {
-  if (instances.length === 0) return {};
+function collapseLoops(node: ASTNode): { collapsedAst: ASTNode; collapsedVars: Set<string> } {
+  const collapsedVars = new Set<string>();
 
-  let finalTypes: Record<string, VarType> | null = null;
-
-  for (const instance of instances) {
-    try {
-        const values = matchFormat(node, instance);
-        const types = getVarTypesFromMatchResult(values);
-
-        if (finalTypes === null) {
-            finalTypes = types;
-        } else {
-            finalTypes = unifyVarTypes(finalTypes, types);
-        }
-    } catch (e) {
-        // If match fails for one instance, we might want to warn and skip, or fail completely.
-        // For now, let's log and rethrow or ignore?
-        // Python version raises FormatMatchError.
-        console.warn(`Failed to match instance: ${e}`);
-        throw e;
+  function transform(n: ASTNode): ASTNode {
+    if (n.type === 'format') {
+      const fmt = n as FormatNode;
+      return { ...fmt, children: fmt.children.map(transform) };
     }
+    if (n.type === 'loop') {
+      const loop = n as LoopNode;
+      // Check if collapsible
+      // Condition: body contains exactly one ItemNode, possibly nested in FormatNodes
+      let item: ItemNode | null = null;
+      let isSimple = true;
+
+      const checkBody = (nodes: ASTNode[]) => {
+        for (const child of nodes) {
+          if (child.type === 'format') {
+            checkBody((child as FormatNode).children);
+          } else if (child.type === 'item') {
+            if (item) {
+              isSimple = false; // More than one item
+            } else {
+              item = child as ItemNode;
+            }
+          } else if (child.type === 'break' || child.type === 'dots') {
+             // Ignore break/dots
+          } else {
+             isSimple = false; // Other nodes like nested loops or binops
+          }
+        }
+      };
+
+      checkBody(loop.body);
+
+      if (isSimple && item) {
+        const originalItem = item as ItemNode;
+        // Find index that uses the loop variable
+        const loopVar = loop.variable;
+        const indexToRemove = originalItem.indices.findIndex(idx =>
+            idx.type === 'item' && (idx as ItemNode).name === loopVar
+        );
+
+        if (indexToRemove !== -1) {
+            // Collapsible!
+            const newIndices = [...originalItem.indices];
+            newIndices.splice(indexToRemove, 1);
+
+            collapsedVars.add(originalItem.name);
+            return {
+              ...originalItem,
+              indices: newIndices,
+            };
+        }
+      }
+
+      // If not collapsible, recurse
+      return {
+        ...loop,
+        body: loop.body.map(transform),
+      };
+    }
+    return n;
   }
 
-  return finalTypes || {};
+  const collapsedAst = transform(node);
+  return { collapsedAst, collapsedVars };
+}
+
+export function inferTypesFromInstances(
+    node: FormatNode,
+    instances: string[]
+): { types: Record<string, VarType>; collapsedVars: Set<string> } {
+  if (instances.length === 0) return { types: {}, collapsedVars: new Set() };
+
+  let firstError: any;
+  try {
+      let finalTypes: Record<string, VarType> | null = null;
+      for (const instance of instances) {
+          const values = matchFormat(node, instance);
+          const types = getVarTypesFromMatchResult(values);
+          finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
+      }
+      return { types: finalTypes || {}, collapsedVars: new Set() };
+  } catch (e) {
+      firstError = e;
+  }
+
+  const { collapsedAst, collapsedVars } = collapseLoops(node);
+  if (collapsedVars.size > 0) {
+       try {
+          let finalTypes: Record<string, VarType> | null = null;
+          for (const instance of instances) {
+              const values = matchFormat(collapsedAst as FormatNode, instance);
+              const types = getVarTypesFromMatchResult(values);
+              finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
+          }
+          return { types: finalTypes || {}, collapsedVars };
+      } catch (e) {
+          // Both failed. Throw the FIRST error usually.
+          throw firstError;
+      }
+  }
+
+  throw firstError;
 }

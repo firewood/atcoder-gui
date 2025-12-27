@@ -15,7 +15,7 @@ describe('inferTypesFromInstances', () => {
       ],
     };
     const instances = ['10 3.14 hello'];
-    const types = inferTypesFromInstances(format, instances);
+    const { types } = inferTypesFromInstances(format, instances);
 
     expect(types['N']).toBe(VarType.ValueInt);
     expect(types['M']).toBe(VarType.Float);
@@ -28,7 +28,7 @@ describe('inferTypesFromInstances', () => {
           children: [{ type: 'item', name: 'C', indices: [] } as ItemNode]
       };
       const instances = ['X'];
-      const types = inferTypesFromInstances(format, instances);
+      const { types } = inferTypesFromInstances(format, instances);
       expect(types['C']).toBe(VarType.Char);
   });
 
@@ -39,13 +39,13 @@ describe('inferTypesFromInstances', () => {
       };
 
       // int + float -> float
-      expect(inferTypesFromInstances(format, ['10', '3.14'])['A']).toBe(VarType.Float);
+      expect(inferTypesFromInstances(format, ['10', '3.14']).types['A']).toBe(VarType.Float);
 
       // int + string -> string
-      expect(inferTypesFromInstances(format, ['10', 'hello'])['A']).toBe(VarType.String);
+      expect(inferTypesFromInstances(format, ['10', 'hello']).types['A']).toBe(VarType.String);
 
       // char + string -> string
-      expect(inferTypesFromInstances(format, ['a', 'abc'])['A']).toBe(VarType.String);
+      expect(inferTypesFromInstances(format, ['a', 'abc']).types['A']).toBe(VarType.String);
   });
 
   it('should handle array types', () => {
@@ -74,7 +74,7 @@ describe('inferTypesFromInstances', () => {
       };
 
       const input = '3 1 2 3.5'; // Mixed int and float in array
-      const types = inferTypesFromInstances(format, [input]);
+      const { types } = inferTypesFromInstances(format, [input]);
 
       expect(types['N']).toBe(VarType.ValueInt);
       expect(types['A']).toBe(VarType.Float); // 1, 2, 3.5 -> Float
