@@ -1,0 +1,17 @@
+{
+  "multipleCases": true,
+  "variables": [
+    {
+      "name": "A",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "B",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    }
+  ]
+}
