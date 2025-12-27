@@ -99,15 +99,19 @@ class VariableExtractor {
 }
 
 async function main() {
-  const problemId = process.argv[2];
-  if (!problemId) {
-    console.error('Please provide a problem ID (e.g., abc400_a)');
+  const taskId = process.argv[2];
+  if (!taskId) {
+    console.error('Please provide a task ID (e.g., abc400_a)');
     process.exit(1);
   }
 
-  const cachePath = path.join(CACHE_DIR, `${problemId}.html`);
-  const cppPath = path.join(TEMP_DIR, `${problemId}.cpp`);
-  const resultPath = path.join(TEMP_DIR, `${problemId}.json`);
+  const problemId = taskId.split('_').at(-1) || '';
+  const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
+  const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
+
+  const cachePath = path.join(CACHE_DIR, `${taskId}.html`);
+  const cppPath = path.join(TEMP_DIR, `${taskId}.cpp`);
+  const resultPath = path.join(TEMP_DIR, `${taskId}.json`);
 
   let html: string;
 
@@ -115,13 +119,6 @@ async function main() {
     console.log(`Using cached HTML: ${cachePath}`);
     html = fs.readFileSync(cachePath, 'utf-8');
   } else {
-    // Construct URL
-    // Heuristic: abc400_a -> contest abc400
-    // If problemId has _, take first part. Else take problemId as contestId (unlikely for problem).
-    const parts = problemId.split('_');
-    const contestId = parts[0];
-    const url = `https://atcoder.jp/contests/${contestId}/tasks/${problemId}`;
-
     console.log(`Fetching ${url}...`);
     try {
       const response = await fetch(url);
@@ -174,7 +171,7 @@ async function main() {
     extractor.extract(formatTree);
     const variables = extractor.getVariables(types);
 
-    const parseResult = JSON.stringify({multipleCases, variables}, null, 2);
+    const parseResult = JSON.stringify({contestId, problemId, taskId, url, multipleCases, variables}, null, 2);
     console.log('Parse result:', parseResult);
     fs.writeFileSync(resultPath, parseResult);
 

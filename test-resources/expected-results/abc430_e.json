@@ -1,4 +1,8 @@
 {
+  "contestId": "abc430",
+  "problemId": "e",
+  "taskId": "abc430_e",
+  "url": "https://atcoder.jp/contests/abc430/tasks/abc430_e",
   "multipleCases": true,
   "variables": [
     {
