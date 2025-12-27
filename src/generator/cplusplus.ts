@@ -29,11 +29,10 @@ export class CPlusPlusGenerator {
   }
 
   generate(
-    format: FormatNode,
-    variables: { name: string; type: VarType; dims: number; indices: ASTNode[] }[],
+    parts: { variables: { name: string; type: VarType; dims: number; indices: ASTNode[] }[]; formatTree: FormatNode }[],
     multipleCases?: boolean,
   ): string {
-    const context = this.generator.generate(format, variables, multipleCases);
+    const context = this.generator.generate(parts, multipleCases);
     return nunjucks.renderString(this.template, context);
   }
 }

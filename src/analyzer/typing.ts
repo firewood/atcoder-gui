@@ -190,7 +190,7 @@ export function inferTypesFromInstances(
               finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
           }
           return { types: finalTypes || {}, collapsedVars };
-      } catch (e) {
+      } catch (_e) {
           // Both failed. Throw the FIRST error usually.
           throw firstError;
       }

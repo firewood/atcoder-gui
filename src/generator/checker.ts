@@ -32,17 +32,17 @@ async function main() {
     const html = await fetchProblemContent(taskId);
 
     // Pipeline
-    const { multipleCases, variables, formatTree } = generateParseResult(html, taskId, url);
+    const { multipleCases, parts } = generateParseResult(html, taskId, url);
 
-    const parseResult = JSON.stringify({contestId, problemId, taskId, url, multipleCases, variables}, null, 2);
+    const parseResult = JSON.stringify({contestId, problemId, taskId, url, multipleCases, parts}, null, 2);
     console.log('Parse result:', parseResult);
     fs.writeFileSync(resultPath, parseResult);
 
     console.log('Generating C++ Code...');
-    if (!formatTree) throw new Error("Format tree is undefined");
 
+    // We pass parts array instead of single tree/variables
     const generator = new CPlusPlusGenerator();
-    const code = generator.generate(formatTree, variables, multipleCases);
+    const code = generator.generate(parts, multipleCases);
 
     fs.writeFileSync(cppPath, code);
     console.log(`Saved C++ code to ${cppPath}`);

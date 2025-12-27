@@ -27,7 +27,8 @@ describe('CPlusPlusGenerator', () => {
     ];
 
     const generator = new CPlusPlusGenerator();
-    const code = generator.generate(format, variables);
+    // Updated call signature
+    const code = generator.generate([{ variables, formatTree: format }]);
 
     expect(code).toContain('long long N;');
     expect(code).toContain('std::cin >> N;');
@@ -73,7 +74,8 @@ describe('CPlusPlusGenerator', () => {
       ];
 
       const generator = new CPlusPlusGenerator();
-      const code = generator.generate(format, variables);
+      // Updated call signature
+      const code = generator.generate([{ variables, formatTree: format }]);
 
       // Check declarations
       expect(code).toContain('long long N;');

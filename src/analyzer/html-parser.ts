@@ -6,14 +6,14 @@ export interface Sample {
 }
 
 export interface ParseResult {
-  inputFormat: string;
+  inputFormats: string[];
   samples: Sample[];
   multipleCases: boolean;
 }
 
 export function parseHtml(html: string): ParseResult {
   const $ = cheerio.load(html);
-  let inputFormat = '';
+  let inputFormats: string[] = [];
   const samples: Sample[] = [];
   const tempSamples: Record<string, { input?: string; output?: string }> = {};
   let multipleCases = false;
@@ -24,18 +24,21 @@ export function parseHtml(html: string): ParseResult {
 
     if (text.match(/^Input(\s*Format)?$/i)) {
       const pres = section.find('pre');
-      if (pres.length >= 2) {
+      if (pres.length >= 3) {
+        // Query problem with multiple formats
+        inputFormats = pres.map((_, el) => $(el).text()).get();
+        multipleCases = false;
+      } else if (pres.length >= 2) {
         const firstPreText = pres.eq(0).text().trim();
         // Check if starts with T or Q.
-        // The content might be <var>T</var>... so text is T...
         if (firstPreText.startsWith('T') || firstPreText.startsWith('Q')) {
           multipleCases = true;
-          inputFormat = pres.eq(1).text();
+          inputFormats = [pres.eq(1).text()];
         } else {
-          inputFormat = pres.eq(0).text();
+          inputFormats = [pres.eq(0).text()];
         }
       } else if (pres.length > 0) {
-        inputFormat = pres.eq(0).text();
+        inputFormats = [pres.eq(0).text()];
       }
     } else {
       const inputMatch = text.match(/^Sample Input\s*(\d+)?$/i);
@@ -75,14 +78,6 @@ export function parseHtml(html: string): ParseResult {
       if (multipleCases) {
         // Strip the first line
         const lines = finalInput.split('\n');
-        // If the first line is empty (e.g. leading newline), keep stripping?
-        // Usually pre content starts immediately.
-        // The example shows:
-        // <pre>1
-        // 3...
-        // </pre>
-        // So text is "1\n3...".
-        // remove first line.
         if (lines.length > 0) {
             lines.shift();
             finalInput = lines.join('\n');
@@ -97,7 +92,7 @@ export function parseHtml(html: string): ParseResult {
   }
 
   return {
-    inputFormat: inputFormat.trim(),
+    inputFormats: inputFormats.map(f => f.trim()),
     samples,
     multipleCases,
   };
