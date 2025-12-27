@@ -72,6 +72,7 @@ export interface TemplateContext {
   formal_arguments: string;
   actual_arguments: string;
   input_part: string;
+  multiple_cases?: boolean;
   atcodertools: {
     version: string;
     url: string;
