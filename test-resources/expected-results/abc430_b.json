@@ -1,0 +1,33 @@
+{
+  "contestId": "abc430",
+  "problemId": "b",
+  "taskId": "abc430_b",
+  "url": "https://atcoder.jp/contests/abc430/tasks/abc430_b",
+  "multipleCases": false,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "M",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "S",
+      "type": "string",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        }
+      ]
+    }
+  ]
+}

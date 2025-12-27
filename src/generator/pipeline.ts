@@ -37,14 +37,19 @@ function processFormat(format: string, samples: string[]): InputPart {
 
   console.log('Inferring Types...');
   let types: Record<string, any> = {};
+  let collapsedVars = new Set<string>();
+
   try {
-     types = inferTypesFromInstances(formatTree, samples);
+     const res = inferTypesFromInstances(formatTree, samples);
+     types = res.types;
+     collapsedVars = res.collapsedVars;
   } catch (e) {
       console.warn('Type inference failed or partial match. Falling back to defaults.', e);
   }
 
   console.log('Extracting Variables...');
   const extractor = new VariableExtractor();
+  extractor.setCollapsedVars(collapsedVars);
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
 
