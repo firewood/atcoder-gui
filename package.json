@@ -20,6 +20,7 @@
     "build": "tsc && cp src/config.json5 dist/",
     "dev": "tsc --watch",
     "test": "vitest run",
+    "test:scenario": "vitest run src/tests/scenario.test.ts",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
     "check": "tsx src/generator/checker.ts",
