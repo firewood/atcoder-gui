@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { fetchProblemContent } from '../generator/fetcher.js';
-import { generateParseResult, ParseResult } from '../generator/pipeline.js';
+import { generateParseResult } from '../generator/pipeline.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,8 +34,9 @@ describe('Scenario Tests: Expected Results', () => {
       const html = await fetchProblemContent(taskId);
       const result = generateParseResult(html, taskId, url);
 
-      // Remove formatTree from result as it is not in the expected JSON
-      const { formatTree, ...actual } = result;
+      // Remove formatTree, inputParts and variablesList from result as they are not in the expected JSON
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { formatTree, inputParts, variablesList, ...actual } = result;
 
       // Ensure variables are sorted or consistent if needed,
       // but usually JSON equality is enough if order matches.

@@ -6,6 +6,7 @@ import JSON5 from 'json5';
 import { UniversalGenerator } from './universal.js';
 import { CodeGeneratorConfig } from './types.js';
 import { FormatNode, VarType, ASTNode } from '../analyzer/types.js';
+import { InputPart } from './pipeline.js';
 
 // Resolve paths relative to this file
 const __filename = fileURLToPath(import.meta.url);
@@ -32,8 +33,9 @@ export class CPlusPlusGenerator {
     format: FormatNode,
     variables: { name: string; type: VarType; dims: number; indices: ASTNode[] }[],
     multipleCases?: boolean,
+    inputParts?: InputPart[],
   ): string {
-    const context = this.generator.generate(format, variables, multipleCases);
+    const context = this.generator.generate(format, variables, multipleCases, inputParts);
     return nunjucks.renderString(this.template, context);
   }
 }

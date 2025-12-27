@@ -7,6 +7,7 @@ export interface Sample {
 
 export interface ParseResult {
   inputFormat: string;
+  inputFormats?: string[];
   samples: Sample[];
   multipleCases: boolean;
 }
@@ -14,6 +15,7 @@ export interface ParseResult {
 export function parseHtml(html: string): ParseResult {
   const $ = cheerio.load(html);
   let inputFormat = '';
+  let inputFormats: string[] | undefined;
   const samples: Sample[] = [];
   const tempSamples: Record<string, { input?: string; output?: string }> = {};
   let multipleCases = false;
@@ -24,17 +26,46 @@ export function parseHtml(html: string): ParseResult {
 
     if (text.match(/^Input(\s*Format)?$/i)) {
       const pres = section.find('pre');
-      if (pres.length >= 2) {
-        const firstPreText = pres.eq(0).text().trim();
-        // Check if starts with T or Q.
-        // The content might be <var>T</var>... so text is T...
-        if (firstPreText.startsWith('T') || firstPreText.startsWith('Q')) {
-          multipleCases = true;
-          inputFormat = pres.eq(1).text();
+      const count = pres.length;
+
+      // Check for T or Q in the first pre tag regardless of count,
+      // but only trigger multipleCases if we have at least 2 blocks
+      // (Block 1: T, Block 2: Format) OR if it's explicitly T.
+      // NOTE: For abc400_b (N Q ...), pres[0] is "N Q". It doesn't start with T.
+      // So multipleCases remains false.
+      if (count > 0) {
+          const firstPreText = pres.eq(0).text().trim();
+          // Heuristic: T or Q alone, or T followed by newline/space
+          // If it is just "N Q", it is NOT multipleCases (template shouldn't loop).
+          if (firstPreText === 'T' || firstPreText.match(/^T\s/) || firstPreText === 'Q' || firstPreText.match(/^Q\s/)) {
+               // Only valid if we have >1 blocks (T + Body)
+               // OR if T is the only block (rare for format section, usually T is separated).
+               if (count >= 2) {
+                   multipleCases = true;
+               }
+          }
+      }
+
+      if (count >= 3) {
+        // If multipleCases is detected (Block 0 is T), we skip it for inputFormats
+        // so pipeline processes Body + Query1 + Query2...
+        if (multipleCases) {
+             inputFormats = pres.slice(1).map((_, el) => $(el).text()).get();
         } else {
-          inputFormat = pres.eq(0).text();
+             inputFormats = pres.map((_, el) => $(el).text()).get();
         }
-      } else if (pres.length > 0) {
+
+        // Fallback inputFormat
+        inputFormat = inputFormats[0];
+
+      } else if (count >= 2) {
+        if (multipleCases) {
+            // Logic for standard T cases: Format is in second block
+            inputFormat = pres.eq(1).text();
+        } else {
+            inputFormat = pres.eq(0).text();
+        }
+      } else if (count > 0) {
         inputFormat = pres.eq(0).text();
       }
     } else {
@@ -75,14 +106,6 @@ export function parseHtml(html: string): ParseResult {
       if (multipleCases) {
         // Strip the first line
         const lines = finalInput.split('\n');
-        // If the first line is empty (e.g. leading newline), keep stripping?
-        // Usually pre content starts immediately.
-        // The example shows:
-        // <pre>1
-        // 3...
-        // </pre>
-        // So text is "1\n3...".
-        // remove first line.
         if (lines.length > 0) {
             lines.shift();
             finalInput = lines.join('\n');
@@ -98,6 +121,7 @@ export function parseHtml(html: string): ParseResult {
 
   return {
     inputFormat: inputFormat.trim(),
+    inputFormats,
     samples,
     multipleCases,
   };
