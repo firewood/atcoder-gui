@@ -31,8 +31,9 @@ export class CPlusPlusGenerator {
   generate(
     format: FormatNode,
     variables: { name: string; type: VarType; dims: number; indices: ASTNode[] }[],
+    multipleCases?: boolean,
   ): string {
-    const context = this.generator.generate(format, variables);
+    const context = this.generator.generate(format, variables, multipleCases);
     return nunjucks.renderString(this.template, context);
   }
 }

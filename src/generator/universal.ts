@@ -28,6 +28,7 @@ export class UniversalGenerator {
   generate(
     format: FormatNode,
     variables: Variable[],
+    multipleCases?: boolean,
   ): TemplateContext {
     const lines: string[] = [];
 
@@ -46,6 +47,7 @@ export class UniversalGenerator {
       formal_arguments: this.generateFormalArguments(variables),
       actual_arguments: this.generateActualArguments(variables),
       input_part: inputPart,
+      multiple_cases: multipleCases,
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',

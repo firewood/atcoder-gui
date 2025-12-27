@@ -134,11 +134,14 @@ async function main() {
   // Pipeline
   try {
     console.log('Parsing HTML...');
-    const { inputFormat, samples } = parseHtml(html);
+    const { inputFormat, samples, multipleCases } = parseHtml(html);
 
     if (!inputFormat) {
         console.error('Could not find Input Format section in HTML.');
         process.exit(1);
+    }
+    if (multipleCases) {
+        console.log('Multiple cases detected.');
     }
     console.log('Input Format:', inputFormat);
 
@@ -168,7 +171,7 @@ async function main() {
 
     console.log('Generating C++ Code...');
     const generator = new CPlusPlusGenerator();
-    const code = generator.generate(formatTree, variables);
+    const code = generator.generate(formatTree, variables, multipleCases);
 
     fs.writeFileSync(cppPath, code);
     console.log(`Saved C++ code to ${cppPath}`);
