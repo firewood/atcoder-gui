@@ -9,6 +9,11 @@ export interface VariableInfo {
 
 export class VariableExtractor {
   private vars = new Map<string, { dims: number; indices: ASTNode[] }>();
+  private collapsedVars = new Set<string>();
+
+  setCollapsedVars(collapsedVars: Set<string>) {
+    this.collapsedVars = collapsedVars;
+  }
 
   extract(node: FormatNode): void {
     this.visit(node, []);
@@ -65,11 +70,21 @@ export class VariableExtractor {
   }
 
   getVariables(types: Record<string, VarType>): VariableInfo[] {
-    return Array.from(this.vars.entries()).map(([name, info]) => ({
-      name,
-      type: types[name] || VarType.ValueInt, // Default to int if unknown
-      dims: info.dims,
-      indices: info.indices,
-    }));
+    return Array.from(this.vars.entries()).map(([name, info]) => {
+      let dims = info.dims;
+      let indices = info.indices;
+
+      if (this.collapsedVars.has(name) && dims > 0) {
+        dims -= 1;
+        indices = indices.slice(0, -1);
+      }
+
+      return {
+        name,
+        type: types[name] || VarType.ValueInt, // Default to int if unknown
+        dims,
+        indices,
+      };
+    });
   }
 }

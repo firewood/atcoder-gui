@@ -46,11 +46,12 @@ export function generateParseResult(html: string, taskId: string, url: string): 
 
   console.log('Inferring Types...');
   const sampleInputs = samples.map(s => s.input);
-  const types = inferTypesFromInstances(formatTree, sampleInputs);
+  const { types, collapsedVars } = inferTypesFromInstances(formatTree, sampleInputs);
   // console.log('Inferred Types:', types);
 
   console.log('Extracting Variables...');
   const extractor = new VariableExtractor();
+  extractor.setCollapsedVars(collapsedVars);
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
 
