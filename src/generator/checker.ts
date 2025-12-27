@@ -13,10 +13,15 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../');
 const CACHE_DIR = path.join(PROJECT_ROOT, '.cache');
+const TEMP_DIR = path.join(PROJECT_ROOT, '.temp');
 
 // Ensure cache directory exists
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
+}
+
+if (!fs.existsSync(TEMP_DIR)) {
+  fs.mkdirSync(TEMP_DIR, { recursive: true });
 }
 
 interface VariableInfo {
@@ -101,7 +106,8 @@ async function main() {
   }
 
   const cachePath = path.join(CACHE_DIR, `${problemId}.html`);
-  const cppPath = path.join(CACHE_DIR, `${problemId}.cpp`);
+  const cppPath = path.join(TEMP_DIR, `${problemId}.cpp`);
+  const resultPath = path.join(TEMP_DIR, `${problemId}.json`);
 
   let html: string;
 
@@ -167,7 +173,10 @@ async function main() {
     const extractor = new VariableExtractor();
     extractor.extract(formatTree);
     const variables = extractor.getVariables(types);
-    console.log('Variables:', JSON.stringify(variables, null, 2));
+
+    const parseResult = JSON.stringify({multipleCases, variables}, null, 2);
+    console.log('Parse result:', parseResult);
+    fs.writeFileSync(resultPath, parseResult);
 
     console.log('Generating C++ Code...');
     const generator = new CPlusPlusGenerator();
