@@ -26,6 +26,137 @@ export class UniversalGenerator {
   }
 
   generate(
+    parts: { variables: Variable[]; formatTree: FormatNode }[],
+    multipleCases?: boolean,
+  ): TemplateContext {
+    if (parts.length === 1) {
+        return this.generateSingle(parts[0].formatTree, parts[0].variables, multipleCases);
+    }
+
+    // Multi-part generation (Query Problem)
+    // Part 0 is Setup.
+    // Part 1..N are Queries.
+
+    const lines: string[] = [];
+    const allVariables: Variable[] = [];
+
+    // Collect all variables for arguments
+    for (const part of parts) {
+        for (const v of part.variables) {
+            // Dedupe by name
+            if (!allVariables.find(av => av.name === v.name)) {
+                allVariables.push(v);
+            }
+        }
+    }
+
+    // 1. Setup (Part 0)
+    const setupPart = parts[0];
+    for (const variable of setupPart.variables) {
+      lines.push(this.generateDeclaration(variable));
+    }
+    lines.push(...this.generateInput(setupPart.formatTree.children, setupPart.variables));
+
+    // 2. Loop Q
+    // We assume the variable for Q is in the setup variables.
+    // If we can't find a variable named 'Q' (case insensitive) or just the last scalar int?
+    // Let's look for 'Q' or 'q'.
+    let loopVarName = setupPart.variables.find(v => v.name === 'Q' || v.name === 'q')?.name;
+
+    if (!loopVarName) {
+        // Fallback: look for any scalar int variable in Setup.
+        // Or if Setup has only one variable, use it.
+        const scalarInts = setupPart.variables.filter(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
+        if (scalarInts.length > 0) {
+            // Pick the last one? Or the one named N/Q?
+            loopVarName = scalarInts[scalarInts.length - 1].name;
+        } else {
+            loopVarName = 'Q'; // Desperate fallback
+            lines.push(`int Q; cin >> Q; // TODO: Check variable name`);
+        }
+    }
+
+    lines.push(`while(${loopVarName}--){`);
+
+    // 3. Dispatch Logic
+    // We need to read the discriminator.
+    // We look at Part 1..N.
+    // We check the first token of their format.
+
+    lines.push(`${this.indent}int type; cin >> type;`);
+
+    for (let i = 1; i < parts.length; i++) {
+        const part = parts[i];
+        const format = part.formatTree;
+        // Check first child of format
+        let firstTokenValue: string | number | undefined;
+        if (format.children.length > 0) {
+            const firstNode = format.children[0];
+            if (firstNode.type === 'number') {
+                firstTokenValue = (firstNode as NumberNode).value;
+            } else if ('value' in firstNode) {
+                 // Might be a token-like node if analyzer kept it?
+                 // Analyzer transforms tokens to nodes.
+                 // If it's a fixed ItemNode with no variable? No, ItemNode has name.
+                 // If the parser saw '1', it usually becomes a NumberNode.
+            }
+        }
+
+        // We assume we can find the discriminator value.
+        // If not, we might use index i (1-based or 0-based?)
+        // Usually queries are 1, 2, 3.
+        // Let's assume the index if we can't find it? Or parse the format string raw?
+        // Since we have the formatTree, let's trust it.
+        // BUT: The analyzer might strip constant numbers if they are not relevant?
+        // Let's check Parser/Analyzer logic.
+        // Parser produces 'number' nodes. Analyzer keeps them?
+        // Looking at `src/analyzer/types.ts`, `FormatNode` has `children: ASTNode[]`.
+        // `NumberNode` is an `ASTNode`.
+
+        // If we found a number node at the start, use it.
+        // Otherwise, use `i`.
+        const discriminator = firstTokenValue !== undefined ? firstTokenValue : i;
+
+        const branchType = i === 1 ? 'if' : 'else if';
+        lines.push(`${this.indent}${branchType} (type == ${discriminator}) {`);
+
+        // Generate declarations and input for this part
+        // We filter out the discriminator variable if it was part of the input variables?
+        // Usually '1 x y' -> variables x, y. The '1' is not a variable.
+        // So we just generate declarations for part.variables.
+
+        // Note: We should not redeclare variables if they were declared in Setup (unlikely for query params).
+        // But if Query 1 uses 'x' and Query 2 uses 'x', we might have shadowing or redeclaration issues if we declare inside the block.
+        // Scoping in C++: declaring inside `if` block is fine.
+
+        const partLines: string[] = [];
+        for (const variable of part.variables) {
+            partLines.push(this.generateDeclaration(variable));
+        }
+        partLines.push(...this.generateInput(part.formatTree.children, part.variables));
+
+        lines.push(...partLines.map(l => this.indent + this.indent + l));
+        lines.push(`${this.indent}}`);
+    }
+
+    lines.push(`}`); // End while
+
+    const inputPart = lines.map((line) => this.indent + line).join('\n');
+
+    return {
+      prediction_success: true,
+      formal_arguments: this.generateFormalArguments(allVariables),
+      actual_arguments: this.generateActualArguments(allVariables), // This might need adjustment if scopes are different
+      input_part: inputPart,
+      multiple_cases: multipleCases,
+      atcodertools: {
+        version: '1.0.0', // TODO: Get from package.json
+        url: 'https://github.com/firewood/atcoder-gui',
+      },
+    };
+  }
+
+  private generateSingle(
     format: FormatNode,
     variables: Variable[],
     multipleCases?: boolean,
@@ -63,8 +194,6 @@ export class UniversalGenerator {
             name: variable.name,
         });
     } else if (variable.dims === 1) {
-        // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
-        // Assuming we know length from indices for now
         const len = this.stringifyNode(variable.indices[0]);
         const innerType = this.config.type[typeKey as keyof typeof this.config.type];
 
@@ -113,8 +242,6 @@ export class UniversalGenerator {
              name: variable.name
          });
      } else if (variable.dims === 1) {
-          // input array item like a[i]
-          // The AST for 'item' in a loop has indices.
           const access = this.formatString(this.config.access.seq, {
               name: variable.name,
               index: this.stringifyNode(node.indices[0])
@@ -138,20 +265,8 @@ export class UniversalGenerator {
 
   private generateLoopInput(node: LoopNode, variables: Variable[]): string[] {
       const lines: string[] = [];
-      // Loop header
-      // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
-
-      // We need to determine the length. In 'for i in 1..N', N is the length (if 0-indexed logic applied properly)
-      // The Analyzer puts 'start' and 'end' in LoopNode.
-      // Usually simple loops are 0 to N-1 or 1 to N.
-      // Current Analyzer likely keeps raw indices.
-      // Let's assume standard loop variable i from 0 to length for now, or use the loop variable defined.
-
-      // If loop is '1..N', length is 'N'. If '0..N-1', length is 'N'.
-      // Need a way to convert loop range to C++ loop.
-
       const loopVar = node.variable;
-      const length = this.stringifyNode(node.end); // Simplified
+      const length = this.stringifyNode(node.end);
 
       const header = this.formatString(this.config.loop.header, {
           loop_var: loopVar,
@@ -160,11 +275,9 @@ export class UniversalGenerator {
 
       lines.push(header);
 
-      // Body
       const bodyLines = this.generateInput(node.body, variables);
-      lines.push(...bodyLines.map(l => this.indent + l)); // Add indent
+      lines.push(...bodyLines.map(l => this.indent + l));
 
-      // Footer
       lines.push(this.config.loop.footer);
 
       return lines;
@@ -178,7 +291,7 @@ export class UniversalGenerator {
         if (v.dims === 0) {
              return this.formatString(this.config.arg[typeKey as keyof typeof this.config.arg], {
                 name: v.name,
-                type: innerType // Though scalars don't usually use {type} in template
+                type: innerType
             });
         } else if (v.dims === 1) {
             return this.formatString(this.config.arg.seq, {
@@ -200,7 +313,6 @@ export class UniversalGenerator {
          if (v.dims === 0) return v.name;
 
          const key = v.dims === 1 ? 'seq' : '2d_seq';
-         // Check if actual_arg template exists, otherwise just name
          if (this.config.actual_arg && this.config.actual_arg[key]) {
              return this.formatString(this.config.actual_arg[key], {
                  name: v.name
@@ -213,15 +325,14 @@ export class UniversalGenerator {
   private mapVarType(type: VarType): string {
     switch (type) {
       case 'int': return 'int';
-      case 'index_int': return 'int'; // treated as int
+      case 'index_int': return 'int';
       case 'float': return 'float';
       case 'string': return 'str';
-      case 'char': return 'str'; // Treat char as str for now, or add char to config
+      case 'char': return 'str';
       default: return 'int';
     }
   }
 
-  // Helper to replace {key} with value
   private formatString(template: string, params: Record<string, string>): string {
     return template.replace(/{(\w+)}/g, (_, key) => params[key] || `{${key}}`);
   }
@@ -229,24 +340,15 @@ export class UniversalGenerator {
   private stringifyNode(node: ASTNode): string {
       if (!node) return '';
       switch (node.type) {
-          case 'ident': return (node as any).value; // TODO: Check Token vs AST structure. FormatTree uses strings? No, ASTNode.
-          // FormatNode children are ASTNode. But ASTNode definition in types.ts is minimal.
-          // Looking at types.ts:
-          // export interface Token { type: TokenType; value?: string | number; ... }
-          // export interface ASTNode { type: string; }
-          // export interface NumberNode extends ASTNode { type: 'number'; value: number; }
-          // export interface BinOpNode { ... left, right, op ... }
-
-          case 'item': return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
+          case 'ident': return (node as any).value;
+          case 'item': return (node as ItemNode).name;
           case 'number': return String((node as NumberNode).value);
           case 'binop': {
             const bin = node as BinOpNode;
             return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(bin.right)}`;
           }
           default:
-            // Check if it has 'name' (ItemNode acting as variable reference)
             if ('name' in node) return (node as any).name;
-             // Check if it has 'value' (Token-like)
             if ('value' in node) return String((node as any).value);
             return '';
       }

@@ -83,7 +83,7 @@ export class VariableExtractor {
       // If type is String, and dimensions exceed the loop depth, it implies we are indexing implicitly into the string.
       // e.g. loops=1, indices=2 (S[N][i]). This means S[i] is a string. We drop the extra index.
       else if (type === VarType.String && dims > info.loopDepth) {
-          const excess = dims - info.loopDepth;
+          // const excess = dims - info.loopDepth;
           dims = info.loopDepth;
           // Keep the last 'dims' indices (assuming loop vars are inner)
           // E.g. [N, i], depth=1. excess=1. slice(-1) -> [i].
