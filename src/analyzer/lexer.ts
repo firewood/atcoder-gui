@@ -50,10 +50,18 @@ export class Lexer {
   }
 
   private normalizeInput(input: string): string {
+    // Replace \mathrm{...} with ...
+    // Repeatedly replace to handle nested or multiple occurrences
+    let currentInput = input;
+    const mathRmRegex = /\\mathrm\{([^{}]+)\}/g;
+    while (mathRmRegex.test(currentInput)) {
+      currentInput = currentInput.replace(mathRmRegex, '$1');
+    }
+
     let result = '';
     let inSubscript = false;
 
-    for (const char of input) {
+    for (const char of currentInput) {
       if (this.subscriptMap[char] || this.subscriptMinusMap[char]) {
         if (!inSubscript) {
           result += '_';
