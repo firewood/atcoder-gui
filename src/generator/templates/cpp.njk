@@ -30,10 +30,20 @@ const string NO = "{{ no_str }}";
 {% endif %}
 
 {% if prediction_success %}
-void solve({{ formal_arguments }}){
+void solve({{ formal_arguments }}) {
 {% if query_cases %}
-    for(int i = 0 ; i < {{ query_loop_var }}; i++){
-        // TODO
+    for (int i = 0 ; i < {{ query_loop_var }}; i++) {
+        int type;
+        cin >> type;
+        if (type == 1) {
+
+        }
+        if (type == 2) {
+
+        }
+        if (type == 3) {
+
+        }
     }
 {% endif %}
 }
