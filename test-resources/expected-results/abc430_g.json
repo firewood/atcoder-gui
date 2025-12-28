@@ -1,0 +1,34 @@
+{
+  "contestId": "abc430",
+  "problemId": "g",
+  "taskId": "abc430_g",
+  "url": "https://atcoder.jp/contests/abc430/tasks/abc430_g",
+  "multipleCases": false,
+  "queryType": true,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "Q",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "query",
+      "type": "query",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "Q",
+          "indices": []
+        }
+      ]
+    }
+  ]
+}

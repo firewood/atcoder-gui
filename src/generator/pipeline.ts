@@ -4,7 +4,7 @@ import { Parser } from '../analyzer/parser.js';
 import { Analyzer } from '../analyzer/analyzer.js';
 import { inferTypesFromInstances } from '../analyzer/typing.js';
 import { VariableExtractor, VariableInfo } from './variable-extractor.js';
-import { FormatNode } from '../analyzer/types.js';
+import { FormatNode, VarType } from '../analyzer/types.js';
 
 export interface ParseResult {
   contestId: string;
@@ -58,6 +58,13 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   extractor.setCollapsedVars(collapsedVars);
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
+
+  if (queryType) {
+    const queryVar = variables.find(v => v.name === 'query');
+    if (queryVar) {
+      queryVar.type = VarType.Query;
+    }
+  }
 
   return {
     contestId,

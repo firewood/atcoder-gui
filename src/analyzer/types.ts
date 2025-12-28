@@ -35,6 +35,7 @@ export const VarType = {
   Float: 'float',
   String: 'string',
   Char: 'char',
+  Query: 'query',
 } as const;
 
 // eslint-disable-next-line no-redeclare
