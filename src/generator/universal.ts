@@ -31,19 +31,7 @@ export class UniversalGenerator {
     multipleCases?: boolean,
     queryCases?: boolean,
   ): TemplateContext {
-    const lines: string[] = [];
-
-    // 1. Variable Declarations
-    for (const variable of variables) {
-      lines.push(this.generateDeclaration(variable));
-    }
-
-    // 2. Input Reading
-    lines.push(...this.generateInput(format.children, variables));
-
-    const inputPart = lines.map((line) => this.indent + line).join('\n');
-
-    let queryLoopVar = undefined;
+    let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
       // Heuristic: Find variable named Q or q
       const qVar = variables.find((v) => v.name.toUpperCase() === 'Q');
@@ -70,6 +58,18 @@ export class UniversalGenerator {
         }
       }
     }
+
+    const lines: string[] = [];
+
+    // 1. Variable Declarations
+    for (const variable of variables) {
+      lines.push(this.generateDeclaration(variable));
+    }
+
+    // 2. Input Reading
+    lines.push(...this.generateInput(format.children, variables, queryLoopVar));
+
+    const inputPart = lines.map((line) => this.indent + line).join('\n');
 
     return {
       prediction_success: true,
@@ -125,14 +125,25 @@ export class UniversalGenerator {
     return `// TODO: declaration for ${variable.name}`;
   }
 
-  private generateInput(nodes: ASTNode[], variables: Variable[]): string[] {
+  private generateInput(
+    nodes: ASTNode[],
+    variables: Variable[],
+    skipLoopVar?: string,
+  ): string[] {
     const lines: string[] = [];
 
     for (const node of nodes) {
       if (node.type === 'item') {
         lines.push(this.generateItemInput(node as ItemNode, variables));
       } else if (node.type === 'loop') {
-        lines.push(...this.generateLoopInput(node as LoopNode, variables));
+        const loopNode = node as LoopNode;
+        if (
+          skipLoopVar &&
+          this.stringifyNode(loopNode.end) === skipLoopVar
+        ) {
+          continue;
+        }
+        lines.push(...this.generateLoopInput(loopNode, variables));
       }
     }
     return lines;
@@ -189,15 +200,6 @@ export class UniversalGenerator {
     const lines: string[] = [];
     // Loop header
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
-
-    // We need to determine the length. In 'for i in 1..N', N is the length (if 0-indexed logic applied properly)
-    // The Analyzer puts 'start' and 'end' in LoopNode.
-    // Usually simple loops are 0 to N-1 or 1 to N.
-    // Current Analyzer likely keeps raw indices.
-    // Let's assume standard loop variable i from 0 to length for now, or use the loop variable defined.
-
-    // If loop is '1..N', length is 'N'. If '0..N-1', length is 'N'.
-    // Need a way to convert loop range to C++ loop.
 
     const loopVar = node.variable;
     const length = this.stringifyNode(node.end); // Simplified
