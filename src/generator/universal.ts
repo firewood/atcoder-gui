@@ -61,8 +61,13 @@ export class UniversalGenerator {
 
     const lines: string[] = [];
 
+    // Filter out query variables from declarations and arguments
+    const declarableVariables = variables.filter(
+      (v) => v.type !== VarType.Query,
+    );
+
     // 1. Variable Declarations
-    for (const variable of variables) {
+    for (const variable of declarableVariables) {
       lines.push(this.generateDeclaration(variable));
     }
 
@@ -73,8 +78,8 @@ export class UniversalGenerator {
 
     return {
       prediction_success: true,
-      formal_arguments: this.generateFormalArguments(variables),
-      actual_arguments: this.generateActualArguments(variables),
+      formal_arguments: this.generateFormalArguments(declarableVariables),
+      actual_arguments: this.generateActualArguments(declarableVariables),
       input_part: inputPart,
       multiple_cases: multipleCases,
       query_cases: queryCases,
