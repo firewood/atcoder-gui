@@ -84,7 +84,7 @@
       "dims": 1,
       "indices": [
         {
-          "type": "item",
+          "type": "query",
           "name": "Q",
           "indices": []
         }
