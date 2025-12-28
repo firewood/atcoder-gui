@@ -1,0 +1,94 @@
+{
+  "contestId": "abc294",
+  "problemId": "g",
+  "taskId": "abc294_g",
+  "url": "https://atcoder.jp/contests/abc294/tasks/abc294_g",
+  "multipleCases": false,
+  "queryType": true,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "u",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "binop",
+          "op": "-",
+          "left": {
+            "type": "item",
+            "name": "N",
+            "indices": []
+          },
+          "right": {
+            "type": "number",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "v",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "binop",
+          "op": "-",
+          "left": {
+            "type": "item",
+            "name": "N",
+            "indices": []
+          },
+          "right": {
+            "type": "number",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "w",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "binop",
+          "op": "-",
+          "left": {
+            "type": "item",
+            "name": "N",
+            "indices": []
+          },
+          "right": {
+            "type": "number",
+            "value": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "Q",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "query",
+      "type": "query",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "Q",
+          "indices": []
+        }
+      ]
+    }
+  ]
+}
