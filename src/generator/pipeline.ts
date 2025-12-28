@@ -80,15 +80,16 @@ export function generateParseResult(html: string, taskId: string, url: string): 
     }
   }
 
-  const queryVar = variables.find(v => v.name === 'query');
-  if (queryType) {
-    if (queryVar) {
-      queryVar.type = VarType.Query;
-    }
-  } else if (queryVar) {
-    // Fallback: if variable named 'query' exists, treat as query type
+  const queryVar = variables.find((v) => v.name === 'query');
+  if (queryVar) {
     queryType = true;
     queryVar.type = VarType.Query;
+    if (queryVar.indices.length === 1 && queryVar.indices[0].type === 'item') {
+      queryVar.indices[0] = {
+        ...queryVar.indices[0],
+        type: 'query',
+      } as any;
+    }
   }
 
   return {
