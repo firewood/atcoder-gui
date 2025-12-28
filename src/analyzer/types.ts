@@ -48,6 +48,13 @@ export interface ItemNode extends ASTNode {
   inferredType?: VarType;
 }
 
+export interface QueryNode extends ASTNode {
+  type: 'query';
+  name: string;
+  indices: ASTNode[];
+  inferredType?: VarType;
+}
+
 export interface DotsNode extends ASTNode {
   type: 'dots';
 }

@@ -4,7 +4,45 @@ import { Parser } from '../analyzer/parser.js';
 import { Analyzer } from '../analyzer/analyzer.js';
 import { inferTypesFromInstances } from '../analyzer/typing.js';
 import { VariableExtractor, VariableInfo } from './variable-extractor.js';
-import { FormatNode, VarType, ItemNode } from '../analyzer/types.js';
+import { FormatNode, VarType, ItemNode, ASTNode, LoopNode, BinOpNode } from '../analyzer/types.js';
+
+function transformToQueryNode(
+  node: ASTNode,
+  targetName: string,
+  newName: string,
+): void {
+  if (!node) return;
+
+  if (node.type === 'format') {
+    (node as FormatNode).children.forEach((c) =>
+      transformToQueryNode(c, targetName, newName),
+    );
+  } else if (node.type === 'loop') {
+    const loop = node as LoopNode;
+    transformToQueryNode(loop.start, targetName, newName);
+    transformToQueryNode(loop.end, targetName, newName);
+    loop.body.forEach((c) => transformToQueryNode(c, targetName, newName));
+  } else if (node.type === 'item') {
+    const item = node as ItemNode;
+    if (item.name === targetName) {
+      item.name = newName;
+      // Change type to query
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (item as any).type = 'query';
+    }
+    // Also traverse indices as they might contain nested stuff?
+    // Usually query variable itself is the item.
+    // If we have query[i], item is 'query', index is 'i'.
+    // We do NOT want to change 'i' to query node.
+    // So we don't recurse into indices unless targetName could be an index?
+    // User request: "query variable to query node".
+    // Assuming we stop here.
+  } else if (node.type === 'binop') {
+    const bin = node as BinOpNode;
+    transformToQueryNode(bin.left, targetName, newName);
+    transformToQueryNode(bin.right, targetName, newName);
+  }
+}
 
 export interface ParseResult {
   contestId: string;
@@ -74,9 +112,11 @@ export function generateParseResult(html: string, taskId: string, url: string): 
     );
 
     if (candidates.length === 1 && candidates[0].name !== 'query') {
-      console.log(`Renaming variable ${candidates[0].name} to query`);
+      const originalName = candidates[0].name;
+      console.log(`Renaming variable ${originalName} to query`);
       candidates[0].name = 'query';
       queryType = true;
+      transformToQueryNode(formatTree, originalName, 'query');
     }
   }
 
@@ -84,6 +124,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   if (queryVar) {
     queryType = true;
     queryVar.type = VarType.Query;
+    transformToQueryNode(formatTree, 'query', 'query');
     if (queryVar.indices.length === 1 && queryVar.indices[0].type === 'item') {
       queryVar.indices[0] = {
         ...queryVar.indices[0],

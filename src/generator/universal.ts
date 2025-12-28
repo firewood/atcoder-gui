@@ -133,6 +133,9 @@ export class UniversalGenerator {
         lines.push(this.generateItemInput(node as ItemNode, variables));
       } else if (node.type === 'loop') {
         lines.push(...this.generateLoopInput(node as LoopNode, variables));
+      } else if (node.type === 'query') {
+        // Handle query node similarly to item node for now, or use specific logic
+        lines.push(this.generateItemInput(node as unknown as ItemNode, variables));
       }
     }
     return lines;
