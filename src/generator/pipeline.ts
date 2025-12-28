@@ -4,7 +4,7 @@ import { Parser } from '../analyzer/parser.js';
 import { Analyzer } from '../analyzer/analyzer.js';
 import { inferTypesFromInstances } from '../analyzer/typing.js';
 import { VariableExtractor, VariableInfo } from './variable-extractor.js';
-import { FormatNode, VarType } from '../analyzer/types.js';
+import { FormatNode, VarType, ItemNode } from '../analyzer/types.js';
 
 export interface ParseResult {
   contestId: string;
@@ -59,6 +59,26 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   extractor.setCollapsedVars(collapsedVars);
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
+
+  // Heuristic: Rename single list variable depending on Q to "query"
+  const queryCountVar = variables.find(
+    (v) => v.dims === 0 && (v.name === 'Q' || v.name === 'q'),
+  );
+  if (queryCountVar) {
+    const candidates = variables.filter(
+      (v) =>
+        v.dims === 1 &&
+        v.indices.length === 1 &&
+        v.indices[0].type === 'item' &&
+        (v.indices[0] as ItemNode).name === queryCountVar.name,
+    );
+
+    if (candidates.length === 1 && candidates[0].name !== 'query') {
+      console.log(`Renaming variable ${candidates[0].name} to query`);
+      candidates[0].name = 'query';
+      queryType = true;
+    }
+  }
 
   const queryVar = variables.find(v => v.name === 'query');
   if (queryType) {
