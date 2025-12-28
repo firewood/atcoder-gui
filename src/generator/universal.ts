@@ -84,9 +84,8 @@ export class UniversalGenerator {
       multiple_cases: multipleCases,
       query_cases: queryCases,
       query_loop_var: queryLoopVar,
-      atcodertools: {
+      tools: {
         version: '1.0.0', // TODO: Get from package.json
-        url: 'https://github.com/firewood/atcoder-gui',
       },
     };
   }
@@ -142,10 +141,7 @@ export class UniversalGenerator {
         lines.push(this.generateItemInput(node as ItemNode, variables));
       } else if (node.type === 'loop') {
         const loopNode = node as LoopNode;
-        if (
-          skipLoopVar &&
-          this.stringifyNode(loopNode.end) === skipLoopVar
-        ) {
+        if (skipLoopVar && this.stringifyNode(loopNode.end) === skipLoopVar) {
           continue;
         }
         lines.push(...this.generateLoopInput(loopNode, variables));

@@ -26,17 +26,17 @@ export interface CodeGeneratorConfig {
     float: string;
     str: string;
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   actual_arg: {
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   access: {
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   declare: {
@@ -44,17 +44,17 @@ export interface CodeGeneratorConfig {
     float: string;
     str: string;
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   allocate: {
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   declare_and_allocate: {
     seq: string;
-    "2d_seq": string;
+    '2d_seq': string;
   };
 
   input: {
@@ -75,8 +75,7 @@ export interface TemplateContext {
   multiple_cases?: boolean;
   query_cases?: boolean;
   query_loop_var?: string;
-  atcodertools: {
+  tools: {
     version: string;
-    url: string;
   };
 }
