@@ -129,6 +129,10 @@ export class UniversalGenerator {
      const variable = variables.find(v => v.name === node.name);
      if (!variable) return `// Unknown variable ${node.name}`;
 
+     if (variable.type === VarType.Query) {
+         return '// TODO';
+     }
+
      const typeKey = this.mapVarType(variable.type);
 
      if (variable.dims === 0) {
@@ -240,6 +244,7 @@ export class UniversalGenerator {
       case 'float': return 'float';
       case 'string': return 'str';
       case 'char': return 'str'; // Treat char as str for now, or add char to config
+      case VarType.Query: return 'int'; // Fallback to int for vector<long long> declaration
       default: return 'int';
     }
   }
