@@ -38,117 +38,24 @@ export class UniversalGenerator {
     // Part 1..N are Queries.
 
     const lines: string[] = [];
-    const allVariables: Variable[] = [];
-
-    // Collect all variables for arguments
-    for (const part of parts) {
-        for (const v of part.variables) {
-            // Dedupe by name
-            if (!allVariables.find(av => av.name === v.name)) {
-                allVariables.push(v);
-            }
-        }
-    }
+    const setupPart = parts[0];
+    const allVariables: Variable[] = setupPart.variables;
 
     // 1. Setup (Part 0)
-    const setupPart = parts[0];
     for (const variable of setupPart.variables) {
       lines.push(this.generateDeclaration(variable));
     }
     lines.push(...this.generateInput(setupPart.formatTree.children, setupPart.variables));
-
-    // 2. Loop Q
-    // We assume the variable for Q is in the setup variables.
-    // If we can't find a variable named 'Q' (case insensitive) or just the last scalar int?
-    // Let's look for 'Q' or 'q'.
-    let loopVarName = setupPart.variables.find(v => v.name === 'Q' || v.name === 'q')?.name;
-
-    if (!loopVarName) {
-        // Fallback: look for any scalar int variable in Setup.
-        // Or if Setup has only one variable, use it.
-        const scalarInts = setupPart.variables.filter(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
-        if (scalarInts.length > 0) {
-            // Pick the last one? Or the one named N/Q?
-            loopVarName = scalarInts[scalarInts.length - 1].name;
-        } else {
-            loopVarName = 'Q'; // Desperate fallback
-            lines.push(`int Q; cin >> Q; // TODO: Check variable name`);
-        }
-    }
-
-    lines.push(`while(${loopVarName}--){`);
-
-    // 3. Dispatch Logic
-    // We need to read the discriminator.
-    // We look at Part 1..N.
-    // We check the first token of their format.
-
-    lines.push(`${this.indent}int type; cin >> type;`);
-
-    for (let i = 1; i < parts.length; i++) {
-        const part = parts[i];
-        const format = part.formatTree;
-        // Check first child of format
-        let firstTokenValue: string | number | undefined;
-        if (format.children.length > 0) {
-            const firstNode = format.children[0];
-            if (firstNode.type === 'number') {
-                firstTokenValue = (firstNode as NumberNode).value;
-            } else if ('value' in firstNode) {
-                 // Might be a token-like node if analyzer kept it?
-                 // Analyzer transforms tokens to nodes.
-                 // If it's a fixed ItemNode with no variable? No, ItemNode has name.
-                 // If the parser saw '1', it usually becomes a NumberNode.
-            }
-        }
-
-        // We assume we can find the discriminator value.
-        // If not, we might use index i (1-based or 0-based?)
-        // Usually queries are 1, 2, 3.
-        // Let's assume the index if we can't find it? Or parse the format string raw?
-        // Since we have the formatTree, let's trust it.
-        // BUT: The analyzer might strip constant numbers if they are not relevant?
-        // Let's check Parser/Analyzer logic.
-        // Parser produces 'number' nodes. Analyzer keeps them?
-        // Looking at `src/analyzer/types.ts`, `FormatNode` has `children: ASTNode[]`.
-        // `NumberNode` is an `ASTNode`.
-
-        // If we found a number node at the start, use it.
-        // Otherwise, use `i`.
-        const discriminator = firstTokenValue !== undefined ? firstTokenValue : i;
-
-        const branchType = i === 1 ? 'if' : 'else if';
-        lines.push(`${this.indent}${branchType} (type == ${discriminator}) {`);
-
-        // Generate declarations and input for this part
-        // We filter out the discriminator variable if it was part of the input variables?
-        // Usually '1 x y' -> variables x, y. The '1' is not a variable.
-        // So we just generate declarations for part.variables.
-
-        // Note: We should not redeclare variables if they were declared in Setup (unlikely for query params).
-        // But if Query 1 uses 'x' and Query 2 uses 'x', we might have shadowing or redeclaration issues if we declare inside the block.
-        // Scoping in C++: declaring inside `if` block is fine.
-
-        const partLines: string[] = [];
-        for (const variable of part.variables) {
-            partLines.push(this.generateDeclaration(variable));
-        }
-        partLines.push(...this.generateInput(part.formatTree.children, part.variables));
-
-        lines.push(...partLines.map(l => this.indent + this.indent + l));
-        lines.push(`${this.indent}}`);
-    }
-
-    lines.push(`}`); // End while
 
     const inputPart = lines.map((line) => this.indent + line).join('\n');
 
     return {
       prediction_success: true,
       formal_arguments: this.generateFormalArguments(allVariables),
-      actual_arguments: this.generateActualArguments(allVariables), // This might need adjustment if scopes are different
+      actual_arguments: this.generateActualArguments(allVariables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      query_cases: true,
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',

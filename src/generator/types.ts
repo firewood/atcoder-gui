@@ -73,6 +73,7 @@ export interface TemplateContext {
   actual_arguments: string;
   input_part: string;
   multiple_cases?: boolean;
+  query_cases?: boolean;
   atcodertools: {
     version: string;
     url: string;
