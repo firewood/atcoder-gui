@@ -64,6 +64,13 @@ export interface CodeGeneratorConfig {
   };
 }
 
+export interface QueryCase {
+  value: string; // The discriminator value (e.g. "1")
+  input_part: string;
+  formal_arguments: string;
+  actual_arguments: string;
+}
+
 export interface TemplateContext {
   mod?: number;
   yes_str?: string;
@@ -72,6 +79,13 @@ export interface TemplateContext {
   formal_arguments: string;
   actual_arguments: string;
   input_part: string;
+
+  // For query problems
+  target_structure?: 'model_solution' | 'query_problem';
+  query_loop_var?: string;
+  query_setup_input_part?: string; // Input code for setup variables
+  query_cases?: QueryCase[];
+
   multiple_cases?: boolean;
   atcodertools: {
     version: string;

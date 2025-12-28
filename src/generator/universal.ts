@@ -7,7 +7,7 @@ import {
   BinOpNode,
   NumberNode,
 } from '../analyzer/types.js';
-import { CodeGeneratorConfig, TemplateContext } from './types.js';
+import { CodeGeneratorConfig, QueryCase, TemplateContext } from './types.js';
 
 type Variable = {
   name: string;
@@ -37,53 +37,32 @@ export class UniversalGenerator {
     // Part 0 is Setup.
     // Part 1..N are Queries.
 
-    const lines: string[] = [];
-    const allVariables: Variable[] = [];
-
-    // Collect all variables for arguments
-    for (const part of parts) {
-        for (const v of part.variables) {
-            // Dedupe by name
-            if (!allVariables.find(av => av.name === v.name)) {
-                allVariables.push(v);
-            }
-        }
-    }
+    const setupPart = parts[0];
+    const setupLines: string[] = [];
 
     // 1. Setup (Part 0)
-    const setupPart = parts[0];
     for (const variable of setupPart.variables) {
-      lines.push(this.generateDeclaration(variable));
+      setupLines.push(this.generateDeclaration(variable));
     }
-    lines.push(...this.generateInput(setupPart.formatTree.children, setupPart.variables));
+    setupLines.push(...this.generateInput(setupPart.formatTree.children, setupPart.variables));
+
+    const querySetupInputPart = setupLines.map((line) => this.indent + line).join('\n');
+
 
     // 2. Loop Q
-    // We assume the variable for Q is in the setup variables.
-    // If we can't find a variable named 'Q' (case insensitive) or just the last scalar int?
-    // Let's look for 'Q' or 'q'.
     let loopVarName = setupPart.variables.find(v => v.name === 'Q' || v.name === 'q')?.name;
-
     if (!loopVarName) {
         // Fallback: look for any scalar int variable in Setup.
-        // Or if Setup has only one variable, use it.
         const scalarInts = setupPart.variables.filter(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
         if (scalarInts.length > 0) {
-            // Pick the last one? Or the one named N/Q?
             loopVarName = scalarInts[scalarInts.length - 1].name;
         } else {
-            loopVarName = 'Q'; // Desperate fallback
-            lines.push(`int Q; cin >> Q; // TODO: Check variable name`);
+            loopVarName = 'Q';
         }
     }
 
-    lines.push(`while(${loopVarName}--){`);
-
     // 3. Dispatch Logic
-    // We need to read the discriminator.
-    // We look at Part 1..N.
-    // We check the first token of their format.
-
-    lines.push(`${this.indent}int type; cin >> type;`);
+    const queryCases: QueryCase[] = [];
 
     for (let i = 1; i < parts.length; i++) {
         const part = parts[i];
@@ -94,40 +73,10 @@ export class UniversalGenerator {
             const firstNode = format.children[0];
             if (firstNode.type === 'number') {
                 firstTokenValue = (firstNode as NumberNode).value;
-            } else if ('value' in firstNode) {
-                 // Might be a token-like node if analyzer kept it?
-                 // Analyzer transforms tokens to nodes.
-                 // If it's a fixed ItemNode with no variable? No, ItemNode has name.
-                 // If the parser saw '1', it usually becomes a NumberNode.
             }
         }
 
-        // We assume we can find the discriminator value.
-        // If not, we might use index i (1-based or 0-based?)
-        // Usually queries are 1, 2, 3.
-        // Let's assume the index if we can't find it? Or parse the format string raw?
-        // Since we have the formatTree, let's trust it.
-        // BUT: The analyzer might strip constant numbers if they are not relevant?
-        // Let's check Parser/Analyzer logic.
-        // Parser produces 'number' nodes. Analyzer keeps them?
-        // Looking at `src/analyzer/types.ts`, `FormatNode` has `children: ASTNode[]`.
-        // `NumberNode` is an `ASTNode`.
-
-        // If we found a number node at the start, use it.
-        // Otherwise, use `i`.
-        const discriminator = firstTokenValue !== undefined ? firstTokenValue : i;
-
-        const branchType = i === 1 ? 'if' : 'else if';
-        lines.push(`${this.indent}${branchType} (type == ${discriminator}) {`);
-
-        // Generate declarations and input for this part
-        // We filter out the discriminator variable if it was part of the input variables?
-        // Usually '1 x y' -> variables x, y. The '1' is not a variable.
-        // So we just generate declarations for part.variables.
-
-        // Note: We should not redeclare variables if they were declared in Setup (unlikely for query params).
-        // But if Query 1 uses 'x' and Query 2 uses 'x', we might have shadowing or redeclaration issues if we declare inside the block.
-        // Scoping in C++: declaring inside `if` block is fine.
+        const discriminator = firstTokenValue !== undefined ? String(firstTokenValue) : String(i);
 
         const partLines: string[] = [];
         for (const variable of part.variables) {
@@ -135,20 +84,54 @@ export class UniversalGenerator {
         }
         partLines.push(...this.generateInput(part.formatTree.children, part.variables));
 
-        lines.push(...partLines.map(l => this.indent + this.indent + l));
-        lines.push(`${this.indent}}`);
+        const caseInputPart = partLines.map(l => this.indent + this.indent + this.indent + l).join('\n');
+
+        // Combine setup variables + case variables for arguments
+        // Use references for queries to avoid copying
+        const caseFormalArgs = this.generateFormalArguments([...setupPart.variables, ...part.variables], true);
+        const caseActualArgs = this.generateActualArguments([...setupPart.variables, ...part.variables]);
+
+        queryCases.push({
+            value: discriminator,
+            input_part: caseInputPart,
+            formal_arguments: caseFormalArgs,
+            actual_arguments: caseActualArgs
+        });
     }
 
-    lines.push(`}`); // End while
+    // Legacy support for monolithic input_part
+    const monolithicLines = [...setupLines];
+    monolithicLines.push(`while(${loopVarName}--){`);
+    monolithicLines.push(`${this.indent}int type; cin >> type;`);
+    for (let i = 0; i < queryCases.length; i++) {
+        const c = queryCases[i];
+        const branchType = i === 0 ? 'if' : 'else if';
+        monolithicLines.push(`${this.indent}${branchType} (type == ${c.value}) {`);
 
-    const inputPart = lines.map((line) => this.indent + line).join('\n');
+        const part = parts[i + 1];
+        const partLines: string[] = [];
+        for (const variable of part.variables) {
+            partLines.push(this.generateDeclaration(variable));
+        }
+        partLines.push(...this.generateInput(part.formatTree.children, part.variables));
+        monolithicLines.push(...partLines.map(l => this.indent + this.indent + l));
 
+        monolithicLines.push(`${this.indent}}`);
+    }
+    monolithicLines.push(`}`);
+    const inputPart = monolithicLines.map((line) => this.indent + line).join('\n');
+
+    // Use references for Setup solve as well
     return {
       prediction_success: true,
-      formal_arguments: this.generateFormalArguments(allVariables),
-      actual_arguments: this.generateActualArguments(allVariables), // This might need adjustment if scopes are different
+      formal_arguments: this.generateFormalArguments(setupPart.variables, true),
+      actual_arguments: this.generateActualArguments(setupPart.variables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      target_structure: 'query_problem',
+      query_loop_var: loopVarName,
+      query_setup_input_part: querySetupInputPart,
+      query_cases: queryCases,
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',
@@ -179,6 +162,7 @@ export class UniversalGenerator {
       actual_arguments: this.generateActualArguments(variables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      target_structure: 'model_solution',
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',
@@ -283,33 +267,72 @@ export class UniversalGenerator {
       return lines;
   }
 
-  private generateFormalArguments(variables: Variable[]): string {
-    return variables.map(v => {
+  private generateFormalArguments(variables: Variable[], useReferences: boolean = false): string {
+    const seen = new Set<string>();
+    const uniqueVars: Variable[] = [];
+
+    // De-duplicate variables by name (handling potential conflicts between setup and query vars)
+    for (const v of variables) {
+        if (!seen.has(v.name)) {
+            seen.add(v.name);
+            uniqueVars.push(v);
+        }
+    }
+
+    return uniqueVars.map(v => {
         const typeKey = this.mapVarType(v.type);
         const innerType = this.config.type[typeKey as keyof typeof this.config.type];
 
+        let result = '';
         if (v.dims === 0) {
-             return this.formatString(this.config.arg[typeKey as keyof typeof this.config.arg], {
+             result = this.formatString(this.config.arg[typeKey as keyof typeof this.config.arg], {
                 name: v.name,
                 type: innerType
             });
         } else if (v.dims === 1) {
-            return this.formatString(this.config.arg.seq, {
+            result = this.formatString(this.config.arg.seq, {
                 name: v.name,
                 type: innerType
             });
         } else if (v.dims === 2) {
-             return this.formatString(this.config.arg['2d_seq'], {
+             result = this.formatString(this.config.arg['2d_seq'], {
                 name: v.name,
                 type: innerType
             });
         }
-        return '';
+
+        if (useReferences && v.dims > 0) {
+            // HACK: Insert '&' before variable name if it's not already there.
+            // Assumption: config.arg.* patterns are like "type name" or "vector<type> name".
+            // We want "vector<type>& name".
+            // We can replace " name" with "& name" or find the last space.
+            // But if the type includes pointer, it might be tricky.
+            // Safer: split by name and rejoin.
+            const name = v.name;
+            const idx = result.lastIndexOf(name);
+            if (idx !== -1) {
+                // Check if preceded by space
+                if (result[idx-1] === ' ') {
+                    return result.slice(0, idx-1) + '& ' + result.slice(idx);
+                }
+            }
+        }
+        return result;
     }).join(', ');
   }
 
   private generateActualArguments(variables: Variable[]): string {
-     return variables.map(v => {
+    const seen = new Set<string>();
+    const uniqueVars: Variable[] = [];
+
+    for (const v of variables) {
+        if (!seen.has(v.name)) {
+            seen.add(v.name);
+            uniqueVars.push(v);
+        }
+    }
+
+     return uniqueVars.map(v => {
          if (v.dims === 0) return v.name;
 
          const key = v.dims === 1 ? 'seq' : '2d_seq';
