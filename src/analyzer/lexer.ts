@@ -50,10 +50,10 @@ export class Lexer {
   }
 
   private normalizeInput(input: string): string {
-    // Replace \mathrm{...} with ...
+    // Replace \mathrm{...} and \operatorname{...} with ...
     // Repeatedly replace to handle nested or multiple occurrences
     let currentInput = input;
-    const mathRmRegex = /\\mathrm\{([^{}]+)\}/g;
+    const mathRmRegex = /\\(?:mathrm|operatorname)\{([^{}]+)\}/g;
     while (mathRmRegex.test(currentInput)) {
       currentInput = currentInput.replace(mathRmRegex, '$1');
     }
