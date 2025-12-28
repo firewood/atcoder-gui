@@ -31,7 +31,11 @@ const string NO = "{{ no_str }}";
 
 {% if prediction_success %}
 void solve({{ formal_arguments }}){
-
+{% if query_cases %}
+    for(int i = 0 ; i < {{ query_loop_var }}; i++){
+        // TODO
+    }
+{% endif %}
 }
 {% endif %}
 

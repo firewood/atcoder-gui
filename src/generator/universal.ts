@@ -29,6 +29,7 @@ export class UniversalGenerator {
     format: FormatNode,
     variables: Variable[],
     multipleCases?: boolean,
+    queryCases?: boolean,
   ): TemplateContext {
     const lines: string[] = [];
 
@@ -42,12 +43,25 @@ export class UniversalGenerator {
 
     const inputPart = lines.map((line) => this.indent + line).join('\n');
 
+    let queryLoopVar = undefined;
+    if (queryCases) {
+        // Heuristic: Find variable named Q or q, or the last scalar integer
+        const qVar = variables.find(v => v.name.toUpperCase() === 'Q') ||
+                     [...variables].reverse().find(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
+
+        if (qVar) {
+            queryLoopVar = qVar.name;
+        }
+    }
+
     return {
       prediction_success: true,
       formal_arguments: this.generateFormalArguments(variables),
       actual_arguments: this.generateActualArguments(variables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      query_cases: queryCases,
+      query_loop_var: queryLoopVar,
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',
