@@ -56,12 +56,10 @@ int main(){
     int t;
     cin >> t;
     while(t--){
-{{ input_part | safe }}
-        solve({{ actual_arguments }});
+{{ input_part | safe }}        solve({{ actual_arguments }});
     }
     {% else %}
-{{ input_part | safe }}
-    solve({{ actual_arguments }});
+{{ input_part | safe }}    solve({{ actual_arguments }});
     {% endif %}
     {% else %}
     // Failed to predict input format
