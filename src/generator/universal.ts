@@ -117,7 +117,7 @@ export class UniversalGenerator {
 
       for (const node of nodes) {
           if (node.type === 'item') {
-              lines.push(this.generateItemInput(node as ItemNode, variables));
+              lines.push(...this.generateItemInput(node as ItemNode, variables));
           } else if (node.type === 'loop') {
               lines.push(...this.generateLoopInput(node as LoopNode, variables));
           }
@@ -125,20 +125,25 @@ export class UniversalGenerator {
       return lines;
   }
 
-  private generateItemInput(node: ItemNode, variables: Variable[]): string {
+  private generateItemInput(node: ItemNode, variables: Variable[]): string[] {
      const variable = variables.find(v => v.name === node.name);
-     if (!variable) return `// Unknown variable ${node.name}`;
+     if (!variable) return [`// Unknown variable ${node.name}`];
 
      if (variable.type === VarType.Query) {
-         return '// TODO';
+         return [
+             '// int64_t type, x, ans = 0;',
+             '// cin >> type >> x;',
+             '// TODO',
+             '// cout << ans << endl;'
+         ];
      }
 
      const typeKey = this.mapVarType(variable.type);
 
      if (variable.dims === 0) {
-         return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+         return [this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
              name: variable.name
-         });
+         })];
      } else if (variable.dims === 1) {
           // input array item like a[i]
           // The AST for 'item' in a loop has indices.
@@ -146,21 +151,21 @@ export class UniversalGenerator {
               name: variable.name,
               index: this.stringifyNode(node.indices[0])
           });
-          return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+          return [this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
               name: access
-          });
+          })];
      } else if (variable.dims === 2) {
          const access = this.formatString(this.config.access['2d_seq'], {
               name: variable.name,
               index_i: this.stringifyNode(node.indices[0]),
               index_j: this.stringifyNode(node.indices[1])
           });
-          return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+          return [this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
               name: access
-          });
+          })];
      }
 
-     return `// TODO: input for ${node.name}`;
+     return [`// TODO: input for ${node.name}`];
   }
 
   private generateLoopInput(node: LoopNode, variables: Variable[]): string[] {
