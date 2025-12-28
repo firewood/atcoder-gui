@@ -22,8 +22,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
 
   console.log('Parsing HTML...');
-  // eslint-disable-next-line prefer-const
-  let { inputFormat, samples, multipleCases, queryType } = parseHtml(html);
+  const { inputFormat, samples, multipleCases, queryType } = parseHtml(html);
 
   if (!inputFormat) {
       throw new Error('Could not find Input Format section in HTML.');
@@ -60,15 +59,11 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
 
-  const queryVar = variables.find(v => v.name === 'query');
   if (queryType) {
+    const queryVar = variables.find(v => v.name === 'query');
     if (queryVar) {
       queryVar.type = VarType.Query;
     }
-  } else if (queryVar) {
-    // Fallback: if variable named 'query' exists, treat as query type
-    queryType = true;
-    queryVar.type = VarType.Query;
   }
 
   return {
