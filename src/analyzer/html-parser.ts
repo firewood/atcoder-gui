@@ -28,8 +28,8 @@ export function parseHtml(html: string): ParseResult {
       const pres = section.find('pre');
       if (pres.length >= 3) {
         // Query type problem
-        // Combine the first two blocks (Setup + Q)
-        inputFormat = pres.eq(0).text() + '\n' + pres.eq(1).text();
+        // Use only the first block for format
+        inputFormat = pres.eq(0).text();
         queryType = true;
         multipleCases = false;
       } else if (pres.length >= 2) {

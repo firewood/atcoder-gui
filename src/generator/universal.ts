@@ -45,12 +45,21 @@ export class UniversalGenerator {
 
     let queryLoopVar = undefined;
     if (queryCases) {
-        // Heuristic: Find variable named Q or q, or the last scalar integer
-        const qVar = variables.find(v => v.name.toUpperCase() === 'Q') ||
-                     [...variables].reverse().find(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
+        // Heuristic: Find variable named Q or q
+        const qVar = variables.find(v => v.name.toUpperCase() === 'Q');
 
         if (qVar) {
             queryLoopVar = qVar.name;
+        } else {
+            // Fallback: Check for last scalar integer, but favor Q if missing
+             const lastScalar = [...variables].reverse().find(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
+             if (lastScalar && lastScalar.name.toUpperCase() !== 'N' && lastScalar.name.toUpperCase() !== 'M') {
+                 // Use last scalar if it doesn't look like N or M (usually loop bounds for setup)
+                 queryLoopVar = lastScalar.name;
+             } else {
+                 // Default fallback if no suitable variable found (e.g. Q was in unparsed block)
+                 queryLoopVar = 'Q';
+             }
         }
     }
 
