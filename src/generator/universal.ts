@@ -29,6 +29,7 @@ export class UniversalGenerator {
     format: FormatNode,
     variables: Variable[],
     multipleCases?: boolean,
+    queryCases?: boolean,
   ): TemplateContext {
     const lines: string[] = [];
 
@@ -42,12 +43,34 @@ export class UniversalGenerator {
 
     const inputPart = lines.map((line) => this.indent + line).join('\n');
 
+    let queryLoopVar = undefined;
+    if (queryCases) {
+        // Heuristic: Find variable named Q or q
+        const qVar = variables.find(v => v.name.toUpperCase() === 'Q');
+
+        if (qVar) {
+            queryLoopVar = qVar.name;
+        } else {
+            // Fallback: Check for last scalar integer, but favor Q if missing
+             const lastScalar = [...variables].reverse().find(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
+             if (lastScalar && lastScalar.name.toUpperCase() !== 'N' && lastScalar.name.toUpperCase() !== 'M') {
+                 // Use last scalar if it doesn't look like N or M (usually loop bounds for setup)
+                 queryLoopVar = lastScalar.name;
+             } else {
+                 // Default fallback if no suitable variable found (e.g. Q was in unparsed block)
+                 queryLoopVar = 'Q';
+             }
+        }
+    }
+
     return {
       prediction_success: true,
       formal_arguments: this.generateFormalArguments(variables),
       actual_arguments: this.generateActualArguments(variables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      query_cases: queryCases,
+      query_loop_var: queryLoopVar,
       atcodertools: {
         version: '1.0.0', // TODO: Get from package.json
         url: 'https://github.com/firewood/atcoder-gui',

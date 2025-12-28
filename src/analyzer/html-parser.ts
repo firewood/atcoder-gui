@@ -9,6 +9,7 @@ export interface ParseResult {
   inputFormat: string;
   samples: Sample[];
   multipleCases: boolean;
+  queryType: boolean;
 }
 
 export function parseHtml(html: string): ParseResult {
@@ -17,6 +18,7 @@ export function parseHtml(html: string): ParseResult {
   const samples: Sample[] = [];
   const tempSamples: Record<string, { input?: string; output?: string }> = {};
   let multipleCases = false;
+  let queryType = false;
 
   $('h3').each((_, element) => {
     const text = $(element).text().trim();
@@ -24,7 +26,13 @@ export function parseHtml(html: string): ParseResult {
 
     if (text.match(/^Input(\s*Format)?$/i)) {
       const pres = section.find('pre');
-      if (pres.length >= 2) {
+      if (pres.length >= 3) {
+        // Query type problem
+        // Use only the first block for format
+        inputFormat = pres.eq(0).text();
+        queryType = true;
+        multipleCases = false;
+      } else if (pres.length >= 2) {
         const firstPreText = pres.eq(0).text().trim();
         // Check if starts with T or Q.
         // The content might be <var>T</var>... so text is T...
@@ -100,5 +108,6 @@ export function parseHtml(html: string): ParseResult {
     inputFormat: inputFormat.trim(),
     samples,
     multipleCases,
+    queryType,
   };
 }

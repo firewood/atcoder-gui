@@ -12,6 +12,7 @@ export interface ParseResult {
   taskId: string;
   url: string;
   multipleCases: boolean;
+  queryType: boolean;
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
 }
@@ -21,13 +22,16 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
 
   console.log('Parsing HTML...');
-  const { inputFormat, samples, multipleCases } = parseHtml(html);
+  const { inputFormat, samples, multipleCases, queryType } = parseHtml(html);
 
   if (!inputFormat) {
       throw new Error('Could not find Input Format section in HTML.');
   }
   if (multipleCases) {
       console.log('Multiple cases detected.');
+  }
+  if (queryType) {
+      console.log('Query type problem detected.');
   }
   // console.log('Input Format:', inputFormat);
 
@@ -61,6 +65,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
     taskId,
     url,
     multipleCases,
+    queryType,
     variables,
     formatTree
   };

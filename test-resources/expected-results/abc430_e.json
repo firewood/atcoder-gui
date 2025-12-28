@@ -4,6 +4,7 @@
   "taskId": "abc430_e",
   "url": "https://atcoder.jp/contests/abc430/tasks/abc430_e",
   "multipleCases": true,
+  "queryType": false,
   "variables": [
     {
       "name": "A",
