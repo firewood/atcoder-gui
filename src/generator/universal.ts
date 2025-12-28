@@ -45,22 +45,30 @@ export class UniversalGenerator {
 
     let queryLoopVar = undefined;
     if (queryCases) {
-        // Heuristic: Find variable named Q or q
-        const qVar = variables.find(v => v.name.toUpperCase() === 'Q');
+      // Heuristic: Find variable named Q or q
+      const qVar = variables.find((v) => v.name.toUpperCase() === 'Q');
 
-        if (qVar) {
-            queryLoopVar = qVar.name;
+      if (qVar) {
+        queryLoopVar = qVar.name;
+      } else {
+        // Fallback: Check for last scalar integer, but favor Q if missing
+        const lastScalar = [...variables]
+          .reverse()
+          .find(
+            (v) => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'),
+          );
+        if (
+          lastScalar &&
+          lastScalar.name.toUpperCase() !== 'N' &&
+          lastScalar.name.toUpperCase() !== 'M'
+        ) {
+          // Use last scalar if it doesn't look like N or M (usually loop bounds for setup)
+          queryLoopVar = lastScalar.name;
         } else {
-            // Fallback: Check for last scalar integer, but favor Q if missing
-             const lastScalar = [...variables].reverse().find(v => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'));
-             if (lastScalar && lastScalar.name.toUpperCase() !== 'N' && lastScalar.name.toUpperCase() !== 'M') {
-                 // Use last scalar if it doesn't look like N or M (usually loop bounds for setup)
-                 queryLoopVar = lastScalar.name;
-             } else {
-                 // Default fallback if no suitable variable found (e.g. Q was in unparsed block)
-                 queryLoopVar = 'Q';
-             }
+          // Default fallback if no suitable variable found (e.g. Q was in unparsed block)
+          queryLoopVar = 'Q';
         }
+      }
     }
 
     return {
@@ -82,201 +90,238 @@ export class UniversalGenerator {
     const typeKey = this.mapVarType(variable.type);
 
     if (variable.dims === 0) {
-        return this.formatString(this.config.declare[typeKey as keyof typeof this.config.declare], {
-            name: variable.name,
-        });
+      return this.formatString(
+        this.config.declare[typeKey as keyof typeof this.config.declare],
+        {
+          name: variable.name,
+        },
+      );
     } else if (variable.dims === 1) {
-        // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
-        // Assuming we know length from indices for now
-        const len = this.stringifyNode(variable.indices[0]);
-        const innerType = this.config.type[typeKey as keyof typeof this.config.type];
+      // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
+      // Assuming we know length from indices for now
+      const len = this.stringifyNode(variable.indices[0]);
+      const innerType =
+        this.config.type[typeKey as keyof typeof this.config.type];
 
-        return this.formatString(this.config.declare_and_allocate.seq, {
-            name: variable.name,
-            type: innerType,
-            length: len
-        });
+      return this.formatString(this.config.declare_and_allocate.seq, {
+        name: variable.name,
+        type: innerType,
+        length: len,
+      });
     } else if (variable.dims === 2) {
-        const lenI = this.stringifyNode(variable.indices[0]);
-        const lenJ = this.stringifyNode(variable.indices[1]);
-        const innerType = this.config.type[typeKey as keyof typeof this.config.type];
+      const lenI = this.stringifyNode(variable.indices[0]);
+      const lenJ = this.stringifyNode(variable.indices[1]);
+      const innerType =
+        this.config.type[typeKey as keyof typeof this.config.type];
 
-        return this.formatString(this.config.declare_and_allocate['2d_seq'], {
-            name: variable.name,
-            type: innerType,
-            length_i: lenI,
-            length_j: lenJ
-        });
+      return this.formatString(this.config.declare_and_allocate['2d_seq'], {
+        name: variable.name,
+        type: innerType,
+        length_i: lenI,
+        length_j: lenJ,
+      });
     }
 
     return `// TODO: declaration for ${variable.name}`;
   }
 
   private generateInput(nodes: ASTNode[], variables: Variable[]): string[] {
-      const lines: string[] = [];
+    const lines: string[] = [];
 
-      for (const node of nodes) {
-          if (node.type === 'item') {
-              lines.push(this.generateItemInput(node as ItemNode, variables));
-          } else if (node.type === 'loop') {
-              lines.push(...this.generateLoopInput(node as LoopNode, variables));
-          }
+    for (const node of nodes) {
+      if (node.type === 'item') {
+        lines.push(this.generateItemInput(node as ItemNode, variables));
+      } else if (node.type === 'loop') {
+        lines.push(...this.generateLoopInput(node as LoopNode, variables));
       }
-      return lines;
+    }
+    return lines;
   }
 
   private generateItemInput(node: ItemNode, variables: Variable[]): string {
-     const variable = variables.find(v => v.name === node.name);
-     if (!variable) return `// Unknown variable ${node.name}`;
+    const variable = variables.find((v) => v.name === node.name);
+    if (!variable) return `// Unknown variable ${node.name}`;
 
-     if (variable.type === VarType.Query) {
-         return '// TODO';
-     }
+    if (variable.type === VarType.Query) {
+      return '// TODO';
+    }
 
-     const typeKey = this.mapVarType(variable.type);
+    const typeKey = this.mapVarType(variable.type);
 
-     if (variable.dims === 0) {
-         return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-             name: variable.name
-         });
-     } else if (variable.dims === 1) {
-          // input array item like a[i]
-          // The AST for 'item' in a loop has indices.
-          const access = this.formatString(this.config.access.seq, {
-              name: variable.name,
-              index: this.stringifyNode(node.indices[0])
-          });
-          return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-              name: access
-          });
-     } else if (variable.dims === 2) {
-         const access = this.formatString(this.config.access['2d_seq'], {
-              name: variable.name,
-              index_i: this.stringifyNode(node.indices[0]),
-              index_j: this.stringifyNode(node.indices[1])
-          });
-          return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-              name: access
-          });
-     }
+    if (variable.dims === 0) {
+      return this.formatString(
+        this.config.input[typeKey as keyof typeof this.config.input],
+        {
+          name: variable.name,
+        },
+      );
+    } else if (variable.dims === 1) {
+      // input array item like a[i]
+      // The AST for 'item' in a loop has indices.
+      const access = this.formatString(this.config.access.seq, {
+        name: variable.name,
+        index: this.stringifyNode(node.indices[0]),
+      });
+      return this.formatString(
+        this.config.input[typeKey as keyof typeof this.config.input],
+        {
+          name: access,
+        },
+      );
+    } else if (variable.dims === 2) {
+      const access = this.formatString(this.config.access['2d_seq'], {
+        name: variable.name,
+        index_i: this.stringifyNode(node.indices[0]),
+        index_j: this.stringifyNode(node.indices[1]),
+      });
+      return this.formatString(
+        this.config.input[typeKey as keyof typeof this.config.input],
+        {
+          name: access,
+        },
+      );
+    }
 
-     return `// TODO: input for ${node.name}`;
+    return `// TODO: input for ${node.name}`;
   }
 
   private generateLoopInput(node: LoopNode, variables: Variable[]): string[] {
-      const lines: string[] = [];
-      // Loop header
-      // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
+    const lines: string[] = [];
+    // Loop header
+    // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
 
-      // We need to determine the length. In 'for i in 1..N', N is the length (if 0-indexed logic applied properly)
-      // The Analyzer puts 'start' and 'end' in LoopNode.
-      // Usually simple loops are 0 to N-1 or 1 to N.
-      // Current Analyzer likely keeps raw indices.
-      // Let's assume standard loop variable i from 0 to length for now, or use the loop variable defined.
+    // We need to determine the length. In 'for i in 1..N', N is the length (if 0-indexed logic applied properly)
+    // The Analyzer puts 'start' and 'end' in LoopNode.
+    // Usually simple loops are 0 to N-1 or 1 to N.
+    // Current Analyzer likely keeps raw indices.
+    // Let's assume standard loop variable i from 0 to length for now, or use the loop variable defined.
 
-      // If loop is '1..N', length is 'N'. If '0..N-1', length is 'N'.
-      // Need a way to convert loop range to C++ loop.
+    // If loop is '1..N', length is 'N'. If '0..N-1', length is 'N'.
+    // Need a way to convert loop range to C++ loop.
 
-      const loopVar = node.variable;
-      const length = this.stringifyNode(node.end); // Simplified
+    const loopVar = node.variable;
+    const length = this.stringifyNode(node.end); // Simplified
 
-      const header = this.formatString(this.config.loop.header, {
-          loop_var: loopVar,
-          length: length
-      });
+    const header = this.formatString(this.config.loop.header, {
+      loop_var: loopVar,
+      length: length,
+    });
 
-      lines.push(header);
+    lines.push(header);
 
-      // Body
-      const bodyLines = this.generateInput(node.body, variables);
-      lines.push(...bodyLines.map(l => this.indent + l)); // Add indent
+    // Body
+    const bodyLines = this.generateInput(node.body, variables);
+    lines.push(...bodyLines.map((l) => this.indent + l)); // Add indent
 
-      // Footer
-      lines.push(this.config.loop.footer);
+    // Footer
+    lines.push(this.config.loop.footer);
 
-      return lines;
+    return lines;
   }
 
   private generateFormalArguments(variables: Variable[]): string {
-    return variables.map(v => {
+    return variables
+      .map((v) => {
         const typeKey = this.mapVarType(v.type);
-        const innerType = this.config.type[typeKey as keyof typeof this.config.type];
+        const innerType =
+          this.config.type[typeKey as keyof typeof this.config.type];
 
         if (v.dims === 0) {
-             return this.formatString(this.config.arg[typeKey as keyof typeof this.config.arg], {
-                name: v.name,
-                type: innerType // Though scalars don't usually use {type} in template
-            });
+          return this.formatString(
+            this.config.arg[typeKey as keyof typeof this.config.arg],
+            {
+              name: v.name,
+              type: innerType, // Though scalars don't usually use {type} in template
+            },
+          );
         } else if (v.dims === 1) {
-            return this.formatString(this.config.arg.seq, {
-                name: v.name,
-                type: innerType
-            });
+          return this.formatString(this.config.arg.seq, {
+            name: v.name,
+            type: innerType,
+          });
         } else if (v.dims === 2) {
-             return this.formatString(this.config.arg['2d_seq'], {
-                name: v.name,
-                type: innerType
-            });
+          return this.formatString(this.config.arg['2d_seq'], {
+            name: v.name,
+            type: innerType,
+          });
         }
         return '';
-    }).join(', ');
+      })
+      .join(', ');
   }
 
   private generateActualArguments(variables: Variable[]): string {
-     return variables.map(v => {
-         if (v.dims === 0) return v.name;
+    return variables
+      .map((v) => {
+        if (v.dims === 0) return v.name;
 
-         const key = v.dims === 1 ? 'seq' : '2d_seq';
-         // Check if actual_arg template exists, otherwise just name
-         if (this.config.actual_arg && this.config.actual_arg[key]) {
-             return this.formatString(this.config.actual_arg[key], {
-                 name: v.name
-             });
-         }
-         return v.name;
-     }).join(', ');
+        const key = v.dims === 1 ? 'seq' : '2d_seq';
+        // Check if actual_arg template exists, otherwise just name
+        if (this.config.actual_arg && this.config.actual_arg[key]) {
+          return this.formatString(this.config.actual_arg[key], {
+            name: v.name,
+          });
+        }
+        return v.name;
+      })
+      .join(', ');
   }
 
   private mapVarType(type: VarType): string {
     switch (type) {
-      case 'int': return 'int';
-      case 'index_int': return 'int'; // treated as int
-      case 'float': return 'float';
-      case 'string': return 'str';
-      case 'char': return 'str'; // Treat char as str for now, or add char to config
-      case VarType.Query: return 'int'; // Fallback to int for vector<long long> declaration
-      default: return 'int';
+      case 'int':
+        return 'int';
+      case 'index_int':
+        return 'int'; // treated as int
+      case 'float':
+        return 'float';
+      case 'string':
+        return 'str';
+      case 'char':
+        return 'str'; // Treat char as str for now, or add char to config
+      case VarType.Query:
+        return 'int'; // Fallback to int for vector<long long> declaration
+      default:
+        return 'int';
     }
   }
 
   // Helper to replace {key} with value
-  private formatString(template: string, params: Record<string, string>): string {
+  private formatString(
+    template: string,
+    params: Record<string, string>,
+  ): string {
     return template.replace(/{(\w+)}/g, (_, key) => params[key] || `{${key}}`);
   }
 
   private stringifyNode(node: ASTNode): string {
-      if (!node) return '';
-      switch (node.type) {
-          case 'ident': return (node as any).value; // TODO: Check Token vs AST structure. FormatTree uses strings? No, ASTNode.
-          // FormatNode children are ASTNode. But ASTNode definition in types.ts is minimal.
-          // Looking at types.ts:
-          // export interface Token { type: TokenType; value?: string | number; ... }
-          // export interface ASTNode { type: string; }
-          // export interface NumberNode extends ASTNode { type: 'number'; value: number; }
-          // export interface BinOpNode { ... left, right, op ... }
+    if (!node) return '';
+    switch (node.type) {
+      case 'ident':
+        return (node as any).value; // TODO: Check Token vs AST structure. FormatTree uses strings? No, ASTNode.
+      // FormatNode children are ASTNode. But ASTNode definition in types.ts is minimal.
+      // Looking at types.ts:
+      // export interface Token { type: TokenType; value?: string | number; ... }
+      // export interface ASTNode { type: string; }
+      // export interface NumberNode extends ASTNode { type: 'number'; value: number; }
+      // export interface BinOpNode { ... left, right, op ... }
 
-          case 'item': return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
-          case 'number': return String((node as NumberNode).value);
-          case 'binop': {
-            const bin = node as BinOpNode;
-            return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(bin.right)}`;
-          }
-          default:
-            // Check if it has 'name' (ItemNode acting as variable reference)
-            if ('name' in node) return (node as any).name;
-             // Check if it has 'value' (Token-like)
-            if ('value' in node) return String((node as any).value);
-            return '';
+      case 'item':
+        return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
+      case 'number':
+        return String((node as NumberNode).value);
+      case 'binop': {
+        const bin = node as BinOpNode;
+        return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(
+          bin.right,
+        )}`;
       }
+      default:
+        // Check if it has 'name' (ItemNode acting as variable reference)
+        if ('name' in node) return (node as any).name;
+        // Check if it has 'value' (Token-like)
+        if ('value' in node) return String((node as any).value);
+        return '';
+    }
   }
 }
