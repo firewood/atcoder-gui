@@ -53,7 +53,7 @@ export class Lexer {
     // Replace \mathrm{...} and \operatorname{...} with ...
     // Repeatedly replace to handle nested or multiple occurrences
     let currentInput = input;
-    const mathRmRegex = /\\(?:mathrm|operatorname)\{([^{}]+)\}/g;
+    const mathRmRegex = /\\(?:mathrm|operatorname|text)\{([^{}]+)\}/g;
     while (mathRmRegex.test(currentInput)) {
       currentInput = currentInput.replace(mathRmRegex, '$1');
     }
