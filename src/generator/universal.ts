@@ -59,22 +59,20 @@ export class UniversalGenerator {
       }
     }
 
-    const lines: string[] = [];
-
     // Filter out query variables from declarations and arguments
     const declarableVariables = variables.filter(
       (v) => v.type !== VarType.Query,
     );
 
-    // 1. Variable Declarations
-    for (const variable of declarableVariables) {
-      lines.push(this.generateDeclaration(variable));
-    }
-
-    // 2. Input Reading
-    lines.push(...this.generateInput(format.children, variables, queryLoopVar));
-
-    const inputPart = lines.map((line) => this.indent + line).join("\n");
+    const declaredVariables = new Set<string>();
+    // Input Reading (and interleaved declaration)
+    const inputLines = this.generateInput(
+      format.children,
+      declarableVariables,
+      declaredVariables,
+      queryLoopVar
+    );
+    const inputPart = inputLines.map((line) => this.indent + line).join("\n");
 
     return {
       prediction_success: true,
@@ -129,22 +127,70 @@ export class UniversalGenerator {
     return `// TODO: declaration for ${variable.name}`;
   }
 
+  private collectVariables(nodes: ASTNode[], variables: Variable[]): string[] {
+    const vars = new Set<string>();
+    const visit = (node: ASTNode) => {
+        if (!node) return;
+        if (node.type === 'item') {
+            const item = node as ItemNode;
+            // Check if this item corresponds to a known variable
+            if (variables.some(v => v.name === item.name)) {
+                vars.add(item.name);
+            }
+        } else if (node.type === 'loop') {
+            const loop = node as LoopNode;
+            // Recursively scan loop body
+            loop.body.forEach(child => visit(child));
+        }
+        // No need to traverse other node types deeply for variable *usage* in input context usually,
+        // but 'item' indices might contain variables.
+        // However, 'item' node itself is what we are looking for as "being read".
+    };
+    nodes.forEach(node => visit(node));
+    return Array.from(vars);
+  }
+
   private generateInput(
     nodes: ASTNode[],
     variables: Variable[],
+    declaredVariables: Set<string>,
     skipLoopVar?: string,
   ): string[] {
     const lines: string[] = [];
 
     for (const node of nodes) {
       if (node.type === "item") {
-        lines.push(this.generateItemInput(node as ItemNode, variables));
+        const itemNode = node as ItemNode;
+        const variable = variables.find((v) => v.name === itemNode.name);
+
+        // Declare if needed
+        if (variable && !declaredVariables.has(variable.name)) {
+            lines.push(this.generateDeclaration(variable));
+            declaredVariables.add(variable.name);
+        }
+
+        lines.push(this.generateItemInput(itemNode, variables));
       } else if (node.type === "loop") {
         const loopNode = node as LoopNode;
         if (skipLoopVar && this.stringifyNode(loopNode.end) === skipLoopVar) {
           continue;
         }
-        lines.push(...this.generateLoopInput(loopNode, variables));
+
+        // Check for variables inside the loop that need declaration
+        // We only care about variables that are in our 'variables' list (global inputs)
+        // Loop counters are local to the loop.
+        const varsInLoop = this.collectVariables(loopNode.body, variables);
+        for (const varName of varsInLoop) {
+            if (!declaredVariables.has(varName)) {
+                const variable = variables.find(v => v.name === varName);
+                if (variable) {
+                    lines.push(this.generateDeclaration(variable));
+                    declaredVariables.add(varName);
+                }
+            }
+        }
+
+        lines.push(...this.generateLoopInput(loopNode, variables, declaredVariables));
       }
     }
     return lines;
@@ -197,7 +243,7 @@ export class UniversalGenerator {
     return `// TODO: input for ${node.name}`;
   }
 
-  private generateLoopInput(node: LoopNode, variables: Variable[]): string[] {
+  private generateLoopInput(node: LoopNode, variables: Variable[], declaredVariables: Set<string>): string[] {
     const lines: string[] = [];
     // Loop header
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
@@ -213,7 +259,7 @@ export class UniversalGenerator {
     lines.push(header);
 
     // Body
-    const bodyLines = this.generateInput(node.body, variables);
+    const bodyLines = this.generateInput(node.body, variables, declaredVariables);
     lines.push(...bodyLines.map((l) => this.indent + l)); // Add indent
 
     // Footer
