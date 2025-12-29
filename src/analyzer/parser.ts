@@ -81,7 +81,7 @@ export class Parser {
             }
         } else {
             // Single expression index
-            indices.push(this.parseExpression());
+            indices.push(this.parseAtom());
         }
     }
 

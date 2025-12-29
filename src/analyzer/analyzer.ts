@@ -1,10 +1,142 @@
-import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from './types';
+import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode, NumberNode } from './types';
 
 export class Analyzer {
   public analyze(root: FormatNode): FormatNode {
-    const childrenWithoutBreaks = root.children.filter(n => n.type !== 'break');
+    // Flatten variables pass: Convert single-element constant arrays (e.g. N_1) to scalars (N1)
+    // if they are not part of a loop structure (not adjacent to dots).
+    const flattenedRoot = this.flattenVariables(root);
+
+    const childrenWithoutBreaks = flattenedRoot.children.filter(n => n.type !== 'break');
     const newChildren = this.normalize(childrenWithoutBreaks);
-    return { ...root, children: newChildren };
+    return { ...flattenedRoot, children: newChildren };
+  }
+
+  private flattenVariables(root: FormatNode): FormatNode {
+    // 1. Collect Stats
+    const usageStats = new Map<string, {
+      hasNonConstIndex: boolean;
+      isAdjacentToDots: boolean;
+      notSingleDim: boolean;
+    }>();
+
+    const getStats = (name: string) => {
+      if (!usageStats.has(name)) {
+        usageStats.set(name, { hasNonConstIndex: false, isAdjacentToDots: false, notSingleDim: false });
+      }
+      return usageStats.get(name)!;
+    };
+
+    // Helper to check usage inside expressions/indices
+    const checkUsage = (node: ASTNode) => {
+      if (node.type === 'item') {
+        const item = node as ItemNode;
+        const stats = getStats(item.name);
+
+        if (item.indices.length !== 1) {
+          stats.notSingleDim = true;
+        } else {
+          const idx = item.indices[0];
+          if (idx.type !== 'number') {
+            stats.hasNonConstIndex = true;
+          }
+        }
+
+        // Recursively check inside indices
+        item.indices.forEach(checkUsage);
+      } else if (node.type === 'binop') {
+        const binop = node as BinOpNode;
+        checkUsage(binop.left);
+        checkUsage(binop.right);
+      }
+      // Add other node types if they can contain items (loops not yet present)
+    };
+
+    // Helper to check adjacency to dots
+    const checkAdjacency = (nodes: ASTNode[]) => {
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (node.type !== 'item') continue;
+
+        const item = node as ItemNode;
+        const stats = getStats(item.name);
+
+        // Check prev
+        let j = i - 1;
+        while (j >= 0 && nodes[j].type === 'break') j--;
+        if (j >= 0 && (nodes[j].type === 'dots' || nodes[j].type === 'vdots')) {
+          stats.isAdjacentToDots = true;
+        }
+
+        // Check next
+        j = i + 1;
+        while (j < nodes.length && nodes[j].type === 'break') j++;
+        if (j < nodes.length && (nodes[j].type === 'dots' || nodes[j].type === 'vdots')) {
+          stats.isAdjacentToDots = true;
+        }
+      }
+    };
+
+    // Run analysis
+    // 1. Usage in indices (deep)
+    const traverse = (node: ASTNode) => {
+      if (node.type === 'format') {
+        (node as FormatNode).children.forEach(traverse);
+      } else {
+        checkUsage(node);
+      }
+    };
+    traverse(root);
+
+    // 2. Adjacency in top-level structure
+    checkAdjacency(root.children);
+
+    // 3. Identify candidates
+    const candidates = new Set<string>();
+    for (const [name, stats] of usageStats.entries()) {
+      if (!stats.hasNonConstIndex && !stats.notSingleDim && !stats.isAdjacentToDots) {
+        candidates.add(name);
+      }
+    }
+
+    if (candidates.size === 0) return root;
+
+    // 4. Transform
+    const transform = (node: ASTNode): ASTNode => {
+      if (node.type === 'format') {
+        return {
+          ...node,
+          children: (node as FormatNode).children.map(transform)
+        } as FormatNode;
+      }
+      if (node.type === 'item') {
+        const item = node as ItemNode;
+        const newIndices = item.indices.map(transform);
+
+        if (candidates.has(item.name)) {
+          // Should be single constant index due to checks
+          const idxNode = newIndices[0] as NumberNode;
+          const val = idxNode.value;
+          return {
+            ...item,
+            name: `${item.name}${val}`, // e.g. N1
+            indices: [] // Remove index
+          };
+        }
+        return { ...item, indices: newIndices };
+      }
+      if (node.type === 'binop') {
+        const binop = node as BinOpNode;
+        return {
+          ...binop,
+          left: transform(binop.left),
+          right: transform(binop.right)
+        };
+      }
+      // pass through others
+      return node;
+    };
+
+    return transform(root) as FormatNode;
   }
 
   private normalize(nodes: ASTNode[]): ASTNode[] {
@@ -52,7 +184,7 @@ export class Analyzer {
           return true;
       }
       return false;
-  }
+    }
 
   private matchLoopBody(nodes: ASTNode[], loopNode: LoopNode, indexVal: number): boolean {
      if (nodes.length !== loopNode.body.length) return false;
