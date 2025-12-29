@@ -1,4 +1,10 @@
-import { FormatNode, ASTNode, ItemNode, LoopNode, VarType } from '../analyzer/types.js';
+import {
+  FormatNode,
+  ASTNode,
+  ItemNode,
+  LoopNode,
+  VarType,
+} from "../analyzer/types.js";
 
 export interface VariableInfo {
   name: string;
@@ -8,7 +14,10 @@ export interface VariableInfo {
 }
 
 export class VariableExtractor {
-  private vars = new Map<string, { dims: number; indices: ASTNode[]; loopDepth: number }>();
+  private vars = new Map<
+    string,
+    { dims: number; indices: ASTNode[]; loopDepth: number }
+  >();
   private collapsedVars = new Set<string>();
 
   setCollapsedVars(collapsedVars: Set<string>) {
@@ -22,18 +31,22 @@ export class VariableExtractor {
   private visit(node: ASTNode, loops: LoopNode[]) {
     if (!node) return;
 
-    if (node.type === 'format') {
+    if (node.type === "format") {
       (node as FormatNode).children.forEach((c) => this.visit(c, loops));
-    } else if (node.type === 'loop') {
+    } else if (node.type === "loop") {
       const loop = node as LoopNode;
       // Visit bounds first
       this.visit(loop.start, loops);
       this.visit(loop.end, loops);
       // Visit body with updated loop stack
       loop.body.forEach((c) => this.visit(c, [...loops, loop]));
-    } else if (node.type === 'item') {
+    } else if (node.type === "item") {
       const item = node as ItemNode;
-      const existing = this.vars.get(item.name) || { dims: 0, indices: [], loopDepth: 0 };
+      const existing = this.vars.get(item.name) || {
+        dims: 0,
+        indices: [],
+        loopDepth: 0,
+      };
       const currentLoopDepth = loops.length;
 
       // We only update if we find a usage with MORE dimensions, or if it's new.
@@ -42,29 +55,33 @@ export class VariableExtractor {
       if (item.indices.length >= existing.dims) {
         const indices: ASTNode[] = [];
         for (const idx of item.indices) {
-            let resolvedSize: ASTNode = idx;
-            // Try to resolve index to a loop bound
-            // Heuristic: if index is a simple variable and matches a loop variable, use loop end
-            if (idx.type === 'item') {
-                const idxName = (idx as ItemNode).name;
-                const loop = loops.find(l => l.variable === idxName);
-                if (loop) {
-                    resolvedSize = loop.end;
-                }
+          let resolvedSize: ASTNode = idx;
+          // Try to resolve index to a loop bound
+          // Heuristic: if index is a simple variable and matches a loop variable, use loop end
+          if (idx.type === "item") {
+            const idxName = (idx as ItemNode).name;
+            const loop = loops.find((l) => l.variable === idxName);
+            if (loop) {
+              resolvedSize = loop.end;
             }
-            indices.push(resolvedSize);
+          }
+          indices.push(resolvedSize);
         }
 
         // Keep the MAX loop depth seen for this variable (or should we strictly bind depth to definition?)
         // If defined in Loop, depth is > 0.
         // We use the depth at the point of definition (maximum dimensions).
-        this.vars.set(item.name, { dims: item.indices.length, indices, loopDepth: currentLoopDepth });
+        this.vars.set(item.name, {
+          dims: item.indices.length,
+          indices,
+          loopDepth: currentLoopDepth,
+        });
       }
-    } else if (node.type === 'binop') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const bin = node as any;
-        this.visit(bin.left, loops);
-        this.visit(bin.right, loops);
+    } else if (node.type === "binop") {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bin = node as any;
+      this.visit(bin.left, loops);
+      this.visit(bin.right, loops);
     }
   }
 
@@ -83,16 +100,16 @@ export class VariableExtractor {
       // If type is String, and dimensions exceed the loop depth, it implies we are indexing implicitly into the string.
       // e.g. loops=1, indices=2 (S[N][i]). This means S[i] is a string. We drop the extra index.
       else if (type === VarType.String && dims > info.loopDepth) {
-          const excess = dims - info.loopDepth;
-          dims = info.loopDepth;
-          // Keep the last 'dims' indices (assuming loop vars are inner)
-          // E.g. [N, i], depth=1. excess=1. slice(-1) -> [i].
-          // If depth=0 (scalar usage outside loop), but indices=1? -> dims=0.
-          if (dims === 0) {
-              indices = [];
-          } else {
-              indices = indices.slice(-dims);
-          }
+        // const excess = dims - info.loopDepth;
+        dims = info.loopDepth;
+        // Keep the last 'dims' indices (assuming loop vars are inner)
+        // E.g. [N, i], depth=1. excess=1. slice(-1) -> [i].
+        // If depth=0 (scalar usage outside loop), but indices=1? -> dims=0.
+        if (dims === 0) {
+          indices = [];
+        } else {
+          indices = indices.slice(-dims);
+        }
       }
 
       return {

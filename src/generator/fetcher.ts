@@ -1,11 +1,11 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROJECT_ROOT = path.resolve(__dirname, '../../');
-const CACHE_DIR = path.join(PROJECT_ROOT, '.cache');
+const PROJECT_ROOT = path.resolve(__dirname, "../../");
+const CACHE_DIR = path.join(PROJECT_ROOT, ".cache");
 
 // Ensure cache directory exists
 if (!fs.existsSync(CACHE_DIR)) {
@@ -13,7 +13,7 @@ if (!fs.existsSync(CACHE_DIR)) {
 }
 
 export async function fetchProblemContent(taskId: string): Promise<string> {
-  const problemId = taskId.split('_').at(-1) || '';
+  const problemId = taskId.split("_").at(-1) || "";
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
   const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
 
@@ -21,13 +21,15 @@ export async function fetchProblemContent(taskId: string): Promise<string> {
 
   if (fs.existsSync(cachePath)) {
     console.log(`Using cached HTML: ${cachePath}`);
-    return fs.readFileSync(cachePath, 'utf-8');
+    return fs.readFileSync(cachePath, "utf-8");
   } else {
     console.log(`Fetching ${url}...`);
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to fetch: ${response.status} ${response.statusText}`,
+        );
       }
       const html = await response.text();
       fs.writeFileSync(cachePath, html);

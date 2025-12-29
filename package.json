@@ -27,7 +27,8 @@
     "start": "tsx src/main.ts",
     "start:built": "node dist/main.js",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run test:run && pnpm run lint"
+    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run test:run && pnpm run lint",
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
@@ -64,6 +65,10 @@
     "@typescript-eslint/eslint-plugin": "^8.47.0",
     "@typescript-eslint/parser": "^8.47.0",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "^4.0.13"
