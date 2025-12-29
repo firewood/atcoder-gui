@@ -1,4 +1,4 @@
-import * as cheerio from 'cheerio';
+import * as cheerio from "cheerio";
 
 export interface Sample {
   input: string;
@@ -14,18 +14,18 @@ export interface ParseResult {
 
 export function parseHtml(html: string): ParseResult {
   const $ = cheerio.load(html);
-  let inputFormat = '';
+  let inputFormat = "";
   const samples: Sample[] = [];
   const tempSamples: Record<string, { input?: string; output?: string }> = {};
   let multipleCases = false;
   let queryType = false;
 
-  $('h3').each((_, element) => {
+  $("h3").each((_, element) => {
     const text = $(element).text().trim();
-    const section = $(element).closest('section');
+    const section = $(element).closest("section");
 
     if (text.match(/^Input(\s*Format)?$/i)) {
-      const pres = section.find('pre');
+      const pres = section.find("pre");
       if (pres.length >= 3) {
         // Query type problem
         // Use only the first block for format
@@ -36,7 +36,7 @@ export function parseHtml(html: string): ParseResult {
         const firstPreText = pres.eq(0).text().trim();
         // Check if starts with T or Q.
         // The content might be <var>T</var>... so text is T...
-        if (firstPreText.startsWith('T') || firstPreText.startsWith('Q')) {
+        if (firstPreText.startsWith("T") || firstPreText.startsWith("Q")) {
           multipleCases = true;
           inputFormat = pres.eq(1).text();
         } else {
@@ -48,11 +48,11 @@ export function parseHtml(html: string): ParseResult {
     } else {
       const inputMatch = text.match(/^Sample Input\s*(\d+)?$/i);
       if (inputMatch) {
-        const id = inputMatch[1] || '1';
+        const id = inputMatch[1] || "1";
         if (!tempSamples[id]) tempSamples[id] = {};
 
-        let content = '';
-        const pre = section.find('pre');
+        let content = "";
+        const pre = section.find("pre");
         if (pre.length > 0) {
           content = pre.text();
         }
@@ -61,11 +61,11 @@ export function parseHtml(html: string): ParseResult {
 
       const outputMatch = text.match(/^Sample Output\s*(\d+)?$/i);
       if (outputMatch) {
-        const id = outputMatch[1] || '1';
+        const id = outputMatch[1] || "1";
         if (!tempSamples[id]) tempSamples[id] = {};
 
-        let content = '';
-        const pre = section.find('pre');
+        let content = "";
+        const pre = section.find("pre");
         if (pre.length > 0) {
           content = pre.text();
         }
@@ -82,7 +82,7 @@ export function parseHtml(html: string): ParseResult {
       let finalInput = s.input;
       if (multipleCases) {
         // Strip the first line
-        const lines = finalInput.split('\n');
+        const lines = finalInput.split("\n");
         // If the first line is empty (e.g. leading newline), keep stripping?
         // Usually pre content starts immediately.
         // The example shows:
@@ -93,13 +93,13 @@ export function parseHtml(html: string): ParseResult {
         // remove first line.
         if (lines.length > 0) {
           lines.shift();
-          finalInput = lines.join('\n');
+          finalInput = lines.join("\n");
         }
       }
 
       samples.push({
         input: finalInput,
-        output: s.output
+        output: s.output,
       });
     }
   }
@@ -108,6 +108,6 @@ export function parseHtml(html: string): ParseResult {
     inputFormat: inputFormat.trim(),
     samples,
     multipleCases,
-    queryType
+    queryType,
   };
 }

@@ -1,9 +1,9 @@
-import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from './types';
+import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from "./types";
 
 export class Analyzer {
   public analyze(root: FormatNode): FormatNode {
     const childrenWithoutBreaks = root.children.filter(
-      (n) => n.type !== 'break'
+      (n) => n.type !== "break",
     );
     const newChildren = this.normalize(childrenWithoutBreaks);
     return { ...root, children: newChildren };
@@ -14,7 +14,7 @@ export class Analyzer {
     let i = 0;
     while (i < nodes.length) {
       const node = nodes[i];
-      if (node.type === 'dots') {
+      if (node.type === "dots") {
         const loop = this.detectLoop(nodes, i);
         if (loop) {
           const { K, loopNode } = loop;
@@ -37,7 +37,7 @@ export class Analyzer {
   }
 
   private tryExtendLoop(result: ASTNode[], loopNode: LoopNode): boolean {
-    if (loopNode.start.type !== 'number') return false;
+    if (loopNode.start.type !== "number") return false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentStart = (loopNode.start as any).value;
     const prevIndexVal = currentStart - 1;
@@ -59,7 +59,7 @@ export class Analyzer {
   private matchLoopBody(
     nodes: ASTNode[],
     loopNode: LoopNode,
-    indexVal: number
+    indexVal: number,
   ): boolean {
     if (nodes.length !== loopNode.body.length) return false;
 
@@ -76,9 +76,9 @@ export class Analyzer {
     node: ASTNode,
     template: ItemNode,
     loopVar: string,
-    indexVal: number
+    indexVal: number,
   ): boolean {
-    if (node.type !== 'item') return false;
+    if (node.type !== "item") return false;
     const itemNode = node as ItemNode;
     if (itemNode.name !== template.name) return false;
     if (itemNode.indices.length !== template.indices.length) return false;
@@ -89,12 +89,12 @@ export class Analyzer {
 
       // Check if templIdx is the loop variable
       if (
-        templIdx.type === 'item' &&
+        templIdx.type === "item" &&
         (templIdx as ItemNode).name === loopVar &&
         (templIdx as ItemNode).indices.length === 0
       ) {
         // Should match indexVal
-        if (nodeIdx.type !== 'number' || (nodeIdx as any).value !== indexVal)
+        if (nodeIdx.type !== "number" || (nodeIdx as any).value !== indexVal)
           return false;
       } else {
         // Should be identical
@@ -106,7 +106,7 @@ export class Analyzer {
 
   private detectLoop(
     nodes: ASTNode[],
-    dotsIndex: number
+    dotsIndex: number,
   ): { K: number; loopNode: LoopNode } | null {
     for (let K = 1; K <= dotsIndex; K++) {
       if (dotsIndex + K >= nodes.length) break;
@@ -117,7 +117,7 @@ export class Analyzer {
       if (this.match(left, right)) {
         const loopNode = this.createLoop(
           left as ItemNode[],
-          right as ItemNode[]
+          right as ItemNode[],
         );
         if (loopNode) return { K, loopNode };
       }
@@ -130,7 +130,7 @@ export class Analyzer {
     for (let i = 0; i < left.length; i++) {
       const l = left[i];
       const r = right[i];
-      if (l.type !== 'item' || r.type !== 'item') return false;
+      if (l.type !== "item" || r.type !== "item") return false;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((l as any).name !== (r as any).name) return false;
     }
@@ -174,19 +174,19 @@ export class Analyzer {
     const body = left.map((item) => {
       const newIndices = [...item.indices];
       newIndices[diffIndex] = {
-        type: 'item',
+        type: "item",
         name: loopVar,
-        indices: []
+        indices: [],
       } as ItemNode;
       return { ...item, indices: newIndices };
     });
 
     return {
-      type: 'loop',
+      type: "loop",
       variable: loopVar,
       start,
       end,
-      body
+      body,
     };
   }
 
@@ -194,19 +194,19 @@ export class Analyzer {
     start: ASTNode,
     end: ASTNode,
     left: ItemNode[],
-    right: ItemNode[]
+    right: ItemNode[],
   ): string {
     const used = new Set<string>();
     const extract = (node: ASTNode) => {
-      if (node.type === 'item') {
+      if (node.type === "item") {
         used.add((node as ItemNode).name);
         (node as ItemNode).indices.forEach(extract);
       }
-      if (node.type === 'binop') {
+      if (node.type === "binop") {
         extract((node as BinOpNode).left);
         extract((node as BinOpNode).right);
       }
-      if (node.type === 'loop') {
+      if (node.type === "loop") {
         // Shouldn't happen in raw AST unless recursive?
       }
     };
@@ -216,16 +216,16 @@ export class Analyzer {
     left.forEach(extract); // Extract from indices of left items
     right.forEach(extract); // Extract from indices of right items
 
-    const candidates = ['i', 'j', 'k', 'l', 'm'];
+    const candidates = ["i", "j", "k", "l", "m"];
     for (const c of candidates) {
       if (!used.has(c)) return c;
     }
-    return 'i';
+    return "i";
   }
 
   private areNodesEqual(a: ASTNode, b: ASTNode): boolean {
     if (a.type !== b.type) return false;
-    if (a.type === 'item') {
+    if (a.type === "item") {
       const ia = a as ItemNode;
       const ib = b as ItemNode;
       if (ia.name !== ib.name) return false;
@@ -235,11 +235,11 @@ export class Analyzer {
       }
       return true;
     }
-    if (a.type === 'number') {
+    if (a.type === "number") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (a as any).value === (b as any).value;
     }
-    if (a.type === 'binop') {
+    if (a.type === "binop") {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const ba = a as any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
