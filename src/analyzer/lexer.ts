@@ -80,6 +80,9 @@ export class Lexer {
       currentInput = currentInput.replace(mathRmRegex, "$1");
     }
 
+    // Replace LaTeX spacing commands like "\ ", "\,", "\;" with a single space
+    currentInput = currentInput.replace(/\\[,;: ]/g, ' ');
+
     let result = "";
     let inSubscript = false;
 
