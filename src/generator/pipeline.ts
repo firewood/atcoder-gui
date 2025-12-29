@@ -17,22 +17,26 @@ export interface ParseResult {
   formatTree?: FormatNode; // Optional, if we want to expose it
 }
 
-export function generateParseResult(html: string, taskId: string, url: string): ParseResult {
+export function generateParseResult(
+  html: string,
+  taskId: string,
+  url: string
+): ParseResult {
   const problemId = taskId.split('_').at(-1) || '';
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
 
   console.log('Parsing HTML...');
-  // eslint-disable-next-line prefer-const
+
   let { inputFormat, samples, multipleCases, queryType } = parseHtml(html);
 
   if (!inputFormat) {
-      throw new Error('Could not find Input Format section in HTML.');
+    throw new Error('Could not find Input Format section in HTML.');
   }
   if (multipleCases) {
-      console.log('Multiple cases detected.');
+    console.log('Multiple cases detected.');
   }
   if (queryType) {
-      console.log('Query type problem detected.');
+    console.log('Query type problem detected.');
   }
   // console.log('Input Format:', inputFormat);
 
@@ -50,8 +54,11 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   // console.log('AST:', JSON.stringify(formatTree, null, 2));
 
   console.log('Inferring Types...');
-  const sampleInputs = samples.map(s => s.input);
-  const { types, collapsedVars } = inferTypesFromInstances(formatTree, sampleInputs);
+  const sampleInputs = samples.map((s) => s.input);
+  const { types, collapsedVars } = inferTypesFromInstances(
+    formatTree,
+    sampleInputs
+  );
   // console.log('Inferred Types:', types);
 
   console.log('Extracting Variables...');
@@ -60,7 +67,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
 
-  const queryVar = variables.find(v => v.name === 'query');
+  const queryVar = variables.find((v) => v.name === 'query');
   if (queryType) {
     if (queryVar) {
       queryVar.type = VarType.Query;

@@ -1,4 +1,11 @@
-import { ASTNode, BinOpNode, FormatNode, ItemNode, LoopNode, NumberNode } from './types';
+import {
+  ASTNode,
+  BinOpNode,
+  FormatNode,
+  ItemNode,
+  LoopNode,
+  NumberNode
+} from './types';
 
 export class MatchError extends Error {
   constructor(message: string) {
@@ -17,18 +24,22 @@ export function evalAST(node: ASTNode, env: Record<string, any>): number {
     // Assuming variables used in indices are scalars (integers)
     const val = env[item.name];
     if (val === undefined) {
-      throw new MatchError(`Variable ${item.name} not found in environment during evaluation`);
+      throw new MatchError(
+        `Variable ${item.name} not found in environment during evaluation`
+      );
     }
     // If val is an object (array/map), we can't use it directly in arithmetic unless we have indices
     if (typeof val === 'object') {
-       // If indices are provided, we should evaluate them.
-       // However, ASTNode for 'item' in LoopNode's start/end usually doesn't have complex indices in simplified AST?
-       // Let's handle simple cases first.
-       if (item.indices.length > 0) {
-           // Recursive evaluation for indices?
-           // For now, let's assume scalar variables for loop bounds.
-           throw new MatchError(`Array access in loop bounds not fully supported yet: ${item.name}`);
-       }
+      // If indices are provided, we should evaluate them.
+      // However, ASTNode for 'item' in LoopNode's start/end usually doesn't have complex indices in simplified AST?
+      // Let's handle simple cases first.
+      if (item.indices.length > 0) {
+        // Recursive evaluation for indices?
+        // For now, let's assume scalar variables for loop bounds.
+        throw new MatchError(
+          `Array access in loop bounds not fully supported yet: ${item.name}`
+        );
+      }
     }
     return Number(val);
   }
@@ -37,21 +48,29 @@ export function evalAST(node: ASTNode, env: Record<string, any>): number {
     const left = evalAST(binop.left, env);
     const right = evalAST(binop.right, env);
     switch (binop.op) {
-      case '+': return left + right;
-      case '-': return left - right;
-      case '*': return left * right;
-      case '/': return Math.floor(left / right); // Integer division assumed?
-      default: throw new MatchError(`Unknown operator ${binop.op}`);
+      case '+':
+        return left + right;
+      case '-':
+        return left - right;
+      case '*':
+        return left * right;
+      case '/':
+        return Math.floor(left / right); // Integer division assumed?
+      default:
+        throw new MatchError(`Unknown operator ${binop.op}`);
     }
   }
   throw new MatchError(`Unknown node type for evaluation: ${node.type}`);
 }
 
-export function matchFormat(node: FormatNode, input: string): Record<string, any> {
+export function matchFormat(
+  node: FormatNode,
+  input: string
+): Record<string, any> {
   // Tokenize input by whitespace
   const tokens = input.trim().split(/\s+/);
   if (tokens.length === 1 && tokens[0] === '') {
-      tokens.pop(); // Handle empty input
+    tokens.pop(); // Handle empty input
   }
 
   const env: Record<string, any> = {};
@@ -120,12 +139,12 @@ export function matchFormat(node: FormatNode, input: string): Record<string, any
     } else if (ast.type === 'break') {
       // Newline checks are implicit in whitespace tokenization
     } else if (ast.type === 'dots') {
-        // dots should be handled by loop detection ideally.
-        // If we encounter dots here, it means analyzer didn't convert it to a loop?
-        // Or maybe it's just decorative?
-        // For matching, we might ignore it?
-        // But if it implies "read until end", that's hard.
-        // We assume AST is fully normalized to Loops.
+      // dots should be handled by loop detection ideally.
+      // If we encounter dots here, it means analyzer didn't convert it to a loop?
+      // Or maybe it's just decorative?
+      // For matching, we might ignore it?
+      // But if it implies "read until end", that's hard.
+      // We assume AST is fully normalized to Loops.
     }
   }
 

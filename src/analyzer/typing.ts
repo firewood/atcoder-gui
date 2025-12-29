@@ -34,14 +34,19 @@ function unifyTypes(t1: VarType, t2: VarType): VarType {
   if (t1 === VarType.Char || t2 === VarType.Char) return VarType.String;
 
   const types = new Set([t1, t2]);
-  if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt)) return VarType.ValueInt;
-  if (types.has(VarType.IndexInt) && types.has(VarType.Float)) return VarType.Float;
-  if (types.has(VarType.ValueInt) && types.has(VarType.Float)) return VarType.Float;
+  if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt))
+    return VarType.ValueInt;
+  if (types.has(VarType.IndexInt) && types.has(VarType.Float))
+    return VarType.Float;
+  if (types.has(VarType.ValueInt) && types.has(VarType.Float))
+    return VarType.Float;
 
   return VarType.String;
 }
 
-function getVarTypesFromMatchResult(values: Record<string, any>): Record<string, VarType> {
+function getVarTypesFromMatchResult(
+  values: Record<string, any>
+): Record<string, VarType> {
   const types: Record<string, VarType> = {};
 
   for (const name of Object.keys(values)) {
@@ -57,26 +62,29 @@ function getVarTypesFromMatchResult(values: Record<string, any>): Record<string,
     }
 
     if (candidateTypes.size === 0) {
-        throw new TypingError(`Failed to infer type: ${name} has no values`);
+      throw new TypingError(`Failed to infer type: ${name} has no values`);
     }
 
     let currentType: VarType | null = null;
     for (const t of candidateTypes) {
-        if (currentType === null) {
-            currentType = t;
-        } else {
-            currentType = unifyTypes(currentType, t);
-        }
+      if (currentType === null) {
+        currentType = t;
+      } else {
+        currentType = unifyTypes(currentType, t);
+      }
     }
     if (currentType) {
-        types[name] = currentType;
+      types[name] = currentType;
     }
   }
 
   return types;
 }
 
-function unifyVarTypes(t1: Record<string, VarType>, t2: Record<string, VarType>): Record<string, VarType> {
+function unifyVarTypes(
+  t1: Record<string, VarType>,
+  t2: Record<string, VarType>
+): Record<string, VarType> {
   const t3: Record<string, VarType> = {};
   const allKeys = new Set([...Object.keys(t1), ...Object.keys(t2)]);
 
@@ -92,7 +100,10 @@ function unifyVarTypes(t1: Record<string, VarType>, t2: Record<string, VarType>)
   return t3;
 }
 
-function collapseLoops(node: ASTNode): { collapsedAst: ASTNode; collapsedVars: Set<string> } {
+function collapseLoops(node: ASTNode): {
+  collapsedAst: ASTNode;
+  collapsedVars: Set<string>;
+} {
   const collapsedVars = new Set<string>();
 
   function transform(n: ASTNode): ASTNode {
@@ -118,9 +129,9 @@ function collapseLoops(node: ASTNode): { collapsedAst: ASTNode; collapsedVars: S
               item = child as ItemNode;
             }
           } else if (child.type === 'break' || child.type === 'dots') {
-             // Ignore break/dots
+            // Ignore break/dots
           } else {
-             isSimple = false; // Other nodes like nested loops or binops
+            isSimple = false; // Other nodes like nested loops or binops
           }
         }
       };
@@ -131,27 +142,27 @@ function collapseLoops(node: ASTNode): { collapsedAst: ASTNode; collapsedVars: S
         const originalItem = item as ItemNode;
         // Find index that uses the loop variable
         const loopVar = loop.variable;
-        const indexToRemove = originalItem.indices.findIndex(idx =>
-            idx.type === 'item' && (idx as ItemNode).name === loopVar
+        const indexToRemove = originalItem.indices.findIndex(
+          (idx) => idx.type === 'item' && (idx as ItemNode).name === loopVar
         );
 
         if (indexToRemove !== -1) {
-            // Collapsible!
-            const newIndices = [...originalItem.indices];
-            newIndices.splice(indexToRemove, 1);
+          // Collapsible!
+          const newIndices = [...originalItem.indices];
+          newIndices.splice(indexToRemove, 1);
 
-            collapsedVars.add(originalItem.name);
-            return {
-              ...originalItem,
-              indices: newIndices,
-            };
+          collapsedVars.add(originalItem.name);
+          return {
+            ...originalItem,
+            indices: newIndices
+          };
         }
       }
 
       // If not collapsible, recurse
       return {
         ...loop,
-        body: loop.body.map(transform),
+        body: loop.body.map(transform)
       };
     }
     return n;
@@ -162,38 +173,38 @@ function collapseLoops(node: ASTNode): { collapsedAst: ASTNode; collapsedVars: S
 }
 
 export function inferTypesFromInstances(
-    node: FormatNode,
-    instances: string[]
+  node: FormatNode,
+  instances: string[]
 ): { types: Record<string, VarType>; collapsedVars: Set<string> } {
   if (instances.length === 0) return { types: {}, collapsedVars: new Set() };
 
   let firstError: any;
   try {
-      let finalTypes: Record<string, VarType> | null = null;
-      for (const instance of instances) {
-          const values = matchFormat(node, instance);
-          const types = getVarTypesFromMatchResult(values);
-          finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
-      }
-      return { types: finalTypes || {}, collapsedVars: new Set() };
+    let finalTypes: Record<string, VarType> | null = null;
+    for (const instance of instances) {
+      const values = matchFormat(node, instance);
+      const types = getVarTypesFromMatchResult(values);
+      finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
+    }
+    return { types: finalTypes || {}, collapsedVars: new Set() };
   } catch (e) {
-      firstError = e;
+    firstError = e;
   }
 
   const { collapsedAst, collapsedVars } = collapseLoops(node);
   if (collapsedVars.size > 0) {
-       try {
-          let finalTypes: Record<string, VarType> | null = null;
-          for (const instance of instances) {
-              const values = matchFormat(collapsedAst as FormatNode, instance);
-              const types = getVarTypesFromMatchResult(values);
-              finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
-          }
-          return { types: finalTypes || {}, collapsedVars };
-      } catch (e) {
-          // Both failed. Throw the FIRST error usually.
-          throw firstError;
+    try {
+      let finalTypes: Record<string, VarType> | null = null;
+      for (const instance of instances) {
+        const values = matchFormat(collapsedAst as FormatNode, instance);
+        const types = getVarTypesFromMatchResult(values);
+        finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
+      return { types: finalTypes || {}, collapsedVars };
+    } catch (e) {
+      // Both failed. Throw the FIRST error usually.
+      throw firstError;
+    }
   }
 
   throw firstError;

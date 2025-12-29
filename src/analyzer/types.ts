@@ -2,14 +2,14 @@ export type TokenType =
   | 'ident'
   | 'number'
   | 'newline'
-  | 'dots'    // ... or …
-  | 'vdots'   // ⋮
+  | 'dots' // ... or …
+  | 'vdots' // ⋮
   | 'subscript' // _ or implied by unicode subscript
-  | 'binop'   // +, -, *, /, etc.
+  | 'binop' // +, -, *, /, etc.
   | 'lparen'
   | 'rparen'
   | 'comma'
-  | 'space'   // Usually skipped, but defined for completeness
+  | 'space' // Usually skipped, but defined for completeness
   | 'eof';
 
 export interface Token {
@@ -35,11 +35,11 @@ export const VarType = {
   Float: 'float',
   String: 'string',
   Char: 'char',
-  Query: 'query',
+  Query: 'query'
 } as const;
 
 // eslint-disable-next-line no-redeclare
-export type VarType = typeof VarType[keyof typeof VarType];
+export type VarType = (typeof VarType)[keyof typeof VarType];
 
 export interface ItemNode extends ASTNode {
   type: 'item';

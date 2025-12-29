@@ -8,7 +8,10 @@ import { generateParseResult, ParseResult } from '../generator/pipeline.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '../../');
-const EXPECTED_RESULTS_DIR = path.join(PROJECT_ROOT, 'test-resources/expected-results');
+const EXPECTED_RESULTS_DIR = path.join(
+  PROJECT_ROOT,
+  'test-resources/expected-results'
+);
 
 // Helper to read JSON
 function readJson(filepath: string) {
@@ -17,13 +20,15 @@ function readJson(filepath: string) {
 
 describe('Scenario Tests: Expected Results', () => {
   // Get all JSON files in the expected-results directory
-  const files = fs.readdirSync(EXPECTED_RESULTS_DIR).filter(f => f.endsWith('.json'));
+  const files = fs
+    .readdirSync(EXPECTED_RESULTS_DIR)
+    .filter((f) => f.endsWith('.json'));
 
   if (files.length === 0) {
     console.warn('No expected result files found. Skipping scenario tests.');
   }
 
-  files.forEach(file => {
+  files.forEach((file) => {
     it(`should match expected result for ${file}`, async () => {
       const expected = readJson(path.join(EXPECTED_RESULTS_DIR, file));
       const { taskId, url } = expected;

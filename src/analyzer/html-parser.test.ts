@@ -9,7 +9,10 @@ import path from 'path';
 
 describe('htmlParser', () => {
   it('should parse problem-example.html', () => {
-    const htmlPath = path.resolve(__dirname, '../../test-resources/single-case-example.html');
+    const htmlPath = path.resolve(
+      __dirname,
+      '../../test-resources/single-case-example.html'
+    );
     const html = fs.readFileSync(htmlPath, 'utf-8');
     const result = parseHtml(html);
 
@@ -26,7 +29,10 @@ describe('htmlParser', () => {
   });
 
   it('should parse input format into FormatNode using Analyzer', () => {
-    const htmlPath = path.resolve(__dirname, '../../test-resources/single-case-example.html');
+    const htmlPath = path.resolve(
+      __dirname,
+      '../../test-resources/single-case-example.html'
+    );
     const html = fs.readFileSync(htmlPath, 'utf-8');
     const result = parseHtml(html);
 
@@ -87,10 +93,12 @@ describe('htmlParser', () => {
     const children = ast.children;
     expect(children.length).toBeGreaterThanOrEqual(2);
 
-    const nNode = children.find(c => c.type === 'item' && (c as ItemNode).name === 'N');
+    const nNode = children.find(
+      (c) => c.type === 'item' && (c as ItemNode).name === 'N'
+    );
     expect(nNode).toBeDefined();
 
-    const loopNode = children.find(c => c.type === 'loop') as LoopNode;
+    const loopNode = children.find((c) => c.type === 'loop') as LoopNode;
     expect(loopNode).toBeDefined();
     expect(loopNode.type).toBe('loop');
     expect(loopNode.end.type).toBe('item');

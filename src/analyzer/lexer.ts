@@ -24,23 +24,45 @@ export class Lexer {
     { type: 'binop', regex: /^[-+*/]/ },
     { type: 'lparen', regex: /^[{([[]/ }, // Match (, {, or [  (fixed regex)
     { type: 'rparen', regex: /^[})\]]/ }, // Match ), }, or ]
-    { type: 'comma', regex: /^,/ },
+    { type: 'comma', regex: /^,/ }
   ];
 
   // Unicode subscript mapping
   private subscriptMap: Record<string, string> = {
-    '₀': '0', '₁': '1', '₂': '2', '₃': '3', '₄': '4',
-    '₅': '5', '₆': '6', '₇': '7', '₈': '8', '₉': '9',
-    'ₐ': 'a', 'ₑ': 'e', 'ₕ': 'h', 'ᵢ': 'i', 'ⱼ': 'j', 'ₖ': 'k',
-    'ₗ': 'l', 'ₘ': 'm', 'ₙ': 'n', 'ₒ': 'o', 'ₚ': 'p', 'ᵣ': 'r',
-    'ₛ': 's', 'ₜ': 't', 'ᵤ': 'u', 'ᵥ': 'v', 'ₓ': 'x'
+    '₀': '0',
+    '₁': '1',
+    '₂': '2',
+    '₃': '3',
+    '₄': '4',
+    '₅': '5',
+    '₆': '6',
+    '₇': '7',
+    '₈': '8',
+    '₉': '9',
+    ₐ: 'a',
+    ₑ: 'e',
+    ₕ: 'h',
+    ᵢ: 'i',
+    ⱼ: 'j',
+    ₖ: 'k',
+    ₗ: 'l',
+    ₘ: 'm',
+    ₙ: 'n',
+    ₒ: 'o',
+    ₚ: 'p',
+    ᵣ: 'r',
+    ₛ: 's',
+    ₜ: 't',
+    ᵤ: 'u',
+    ᵥ: 'v',
+    ₓ: 'x'
     // Add more if needed
   };
 
   // Unicode subscript minus
   private subscriptMinusMap: Record<string, string> = {
     '₋': '-'
-  }
+  };
 
   constructor(input: string) {
     this.input = this.normalizeInput(input);
@@ -93,7 +115,7 @@ export class Lexer {
               type: rule.type,
               value: rule.type === 'number' ? parseInt(value, 10) : value,
               line: this.line,
-              column: this.column,
+              column: this.column
             });
           }
 
@@ -118,7 +140,9 @@ export class Lexer {
       if (!matched) {
         // Instead of throwing, skip the character?
         // Or throw. The prompt implies normal inputs.
-        throw new Error(`Unexpected character at line ${this.line}, column ${this.column}: ${rest[0]}`);
+        throw new Error(
+          `Unexpected character at line ${this.line}, column ${this.column}: ${rest[0]}`
+        );
       }
     }
 

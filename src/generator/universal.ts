@@ -5,7 +5,7 @@ import {
   LoopNode,
   VarType,
   BinOpNode,
-  NumberNode,
+  NumberNode
 } from '../analyzer/types.js';
 import { CodeGeneratorConfig, TemplateContext } from './types.js';
 
@@ -29,7 +29,7 @@ export class UniversalGenerator {
     format: FormatNode,
     variables: Variable[],
     multipleCases?: boolean,
-    queryCases?: boolean,
+    queryCases?: boolean
   ): TemplateContext {
     let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
@@ -43,7 +43,7 @@ export class UniversalGenerator {
         const lastScalar = [...variables]
           .reverse()
           .find(
-            (v) => v.dims === 0 && (v.type === 'int' || v.type === 'index_int'),
+            (v) => v.dims === 0 && (v.type === 'int' || v.type === 'index_int')
           );
         if (
           lastScalar &&
@@ -63,7 +63,7 @@ export class UniversalGenerator {
 
     // Filter out query variables from declarations and arguments
     const declarableVariables = variables.filter(
-      (v) => v.type !== VarType.Query,
+      (v) => v.type !== VarType.Query
     );
 
     // 1. Variable Declarations
@@ -85,8 +85,8 @@ export class UniversalGenerator {
       query_cases: queryCases,
       query_loop_var: queryLoopVar,
       tools: {
-        version: '1.0.0', // TODO: Get from package.json
-      },
+        version: '1.0.0' // TODO: Get from package.json
+      }
     };
   }
 
@@ -97,8 +97,8 @@ export class UniversalGenerator {
       return this.formatString(
         this.config.declare[typeKey as keyof typeof this.config.declare],
         {
-          name: variable.name,
-        },
+          name: variable.name
+        }
       );
     } else if (variable.dims === 1) {
       // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
@@ -110,7 +110,7 @@ export class UniversalGenerator {
       return this.formatString(this.config.declare_and_allocate.seq, {
         name: variable.name,
         type: innerType,
-        length: len,
+        length: len
       });
     } else if (variable.dims === 2) {
       const lenI = this.stringifyNode(variable.indices[0]);
@@ -122,7 +122,7 @@ export class UniversalGenerator {
         name: variable.name,
         type: innerType,
         length_i: lenI,
-        length_j: lenJ,
+        length_j: lenJ
       });
     }
 
@@ -132,7 +132,7 @@ export class UniversalGenerator {
   private generateInput(
     nodes: ASTNode[],
     variables: Variable[],
-    skipLoopVar?: string,
+    skipLoopVar?: string
   ): string[] {
     const lines: string[] = [];
 
@@ -164,33 +164,33 @@ export class UniversalGenerator {
       return this.formatString(
         this.config.input[typeKey as keyof typeof this.config.input],
         {
-          name: variable.name,
-        },
+          name: variable.name
+        }
       );
     } else if (variable.dims === 1) {
       // input array item like a[i]
       // The AST for 'item' in a loop has indices.
       const access = this.formatString(this.config.access.seq, {
         name: variable.name,
-        index: this.stringifyNode(node.indices[0]),
+        index: this.stringifyNode(node.indices[0])
       });
       return this.formatString(
         this.config.input[typeKey as keyof typeof this.config.input],
         {
-          name: access,
-        },
+          name: access
+        }
       );
     } else if (variable.dims === 2) {
       const access = this.formatString(this.config.access['2d_seq'], {
         name: variable.name,
         index_i: this.stringifyNode(node.indices[0]),
-        index_j: this.stringifyNode(node.indices[1]),
+        index_j: this.stringifyNode(node.indices[1])
       });
       return this.formatString(
         this.config.input[typeKey as keyof typeof this.config.input],
         {
-          name: access,
-        },
+          name: access
+        }
       );
     }
 
@@ -207,7 +207,7 @@ export class UniversalGenerator {
 
     const header = this.formatString(this.config.loop.header, {
       loop_var: loopVar,
-      length: length,
+      length: length
     });
 
     lines.push(header);
@@ -234,18 +234,18 @@ export class UniversalGenerator {
             this.config.arg[typeKey as keyof typeof this.config.arg],
             {
               name: v.name,
-              type: innerType, // Though scalars don't usually use {type} in template
-            },
+              type: innerType // Though scalars don't usually use {type} in template
+            }
           );
         } else if (v.dims === 1) {
           return this.formatString(this.config.arg.seq, {
             name: v.name,
-            type: innerType,
+            type: innerType
           });
         } else if (v.dims === 2) {
           return this.formatString(this.config.arg['2d_seq'], {
             name: v.name,
-            type: innerType,
+            type: innerType
           });
         }
         return '';
@@ -262,7 +262,7 @@ export class UniversalGenerator {
         // Check if actual_arg template exists, otherwise just name
         if (this.config.actual_arg && this.config.actual_arg[key]) {
           return this.formatString(this.config.actual_arg[key], {
-            name: v.name,
+            name: v.name
           });
         }
         return v.name;
@@ -292,7 +292,7 @@ export class UniversalGenerator {
   // Helper to replace {key} with value
   private formatString(
     template: string,
-    params: Record<string, string>,
+    params: Record<string, string>
   ): string {
     return template.replace(/{(\w+)}/g, (_, key) => params[key] || `{${key}}`);
   }
@@ -316,7 +316,7 @@ export class UniversalGenerator {
       case 'binop': {
         const bin = node as BinOpNode;
         return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(
-          bin.right,
+          bin.right
         )}`;
       }
       default:

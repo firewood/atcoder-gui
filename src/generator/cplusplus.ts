@@ -30,11 +30,21 @@ export class CPlusPlusGenerator {
 
   generate(
     format: FormatNode,
-    variables: { name: string; type: VarType; dims: number; indices: ASTNode[] }[],
+    variables: {
+      name: string;
+      type: VarType;
+      dims: number;
+      indices: ASTNode[];
+    }[],
     multipleCases?: boolean,
-    queryCases?: boolean,
+    queryCases?: boolean
   ): string {
-    const context = this.generator.generate(format, variables, multipleCases, queryCases);
+    const context = this.generator.generate(
+      format,
+      variables,
+      multipleCases,
+      queryCases
+    );
     return nunjucks.renderString(this.template, context);
   }
 }

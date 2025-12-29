@@ -92,14 +92,14 @@ export function parseHtml(html: string): ParseResult {
         // So text is "1\n3...".
         // remove first line.
         if (lines.length > 0) {
-            lines.shift();
-            finalInput = lines.join('\n');
+          lines.shift();
+          finalInput = lines.join('\n');
         }
       }
 
       samples.push({
         input: finalInput,
-        output: s.output,
+        output: s.output
       });
     }
   }
@@ -108,6 +108,6 @@ export function parseHtml(html: string): ParseResult {
     inputFormat: inputFormat.trim(),
     samples,
     multipleCases,
-    queryType,
+    queryType
   };
 }
