@@ -210,6 +210,50 @@ export class UniversalGenerator {
       length: length,
     });
 
+    // Check if we need to resize any vectors before the loop
+    // Find vectors whose dimension size matches the loop length
+    // simplified: check if first dimension's index matches loop length expression string
+    for (const v of variables) {
+      if (v.dims >= 1) {
+        // v.indices[0] is the size of the first dimension
+        const sizeExpr = this.stringifyNode(v.indices[0]);
+        if (sizeExpr === length) {
+          // Found a match!
+          // But wait, is this the right loop?
+          // If the vector depends on N, and we are in loop 0..N, then yes.
+          // Note: This logic assumes we iterate the full range.
+
+          // Check if config has resize template
+          const resizeKey = v.dims === 1 ? 'seq' : '2d_seq';
+          const resizeTemplate = (this.config as any).resize
+            ? (this.config as any).resize[resizeKey]
+            : null;
+
+          if (resizeTemplate) {
+            const params: Record<string, string> = {
+                name: v.name,
+                length: length, // for 1D
+                length_i: length, // for 2D first dim
+            };
+
+            if (v.dims === 2 && v.indices.length > 1) {
+                 params.length_j = this.stringifyNode(v.indices[1]);
+                 const typeKey = this.mapVarType(v.type);
+                 params.type = this.config.type[typeKey as keyof typeof this.config.type];
+            }
+
+            lines.push(
+              this.formatString(resizeTemplate, params),
+            );
+          }
+        }
+      }
+      // TODO: Handle 2D inner loop resizing if needed
+      // If v.dims === 2, and we are in the inner loop, we might need v[i].resize(M)
+      // But generating v[i] requires knowing the outer loop variable.
+      // Current implementation is simplified.
+    }
+
     lines.push(header);
 
     // Body

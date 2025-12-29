@@ -43,8 +43,12 @@
     "2d_seq": "{name}.assign({length_i}, std::vector<{type}>({length_j}));"
   },
   "declare_and_allocate": {
-    "seq": "std::vector<{type}> {name}({length});",
-    "2d_seq": "std::vector<std::vector<{type}>> {name}({length_i}, std::vector<{type}>({length_j}));"
+    "seq": "std::vector<{type}> {name};",
+    "2d_seq": "std::vector<std::vector<{type}>> {name};"
+  },
+  "resize": {
+    "seq": "{name}.resize({length});",
+    "2d_seq": "{name}.resize({length_i}, std::vector<{type}>({length_j}));"
   },
   "input": {
     "int": "std::cin >> {name};",

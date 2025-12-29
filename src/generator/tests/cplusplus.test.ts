@@ -77,7 +77,7 @@ describe('CPlusPlusGenerator', () => {
 
       // Check declarations
       expect(code).toContain('long long N;');
-      expect(code).toContain('std::vector<long long> A(N);');
+      expect(code).toContain('std::vector<long long> A;');
 
       // Check input loop
       expect(code).toContain('std::cin >> N;');
