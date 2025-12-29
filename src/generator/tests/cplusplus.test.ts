@@ -88,4 +88,99 @@ describe('CPlusPlusGenerator', () => {
       expect(code).toContain('void solve(long long N, std::vector<long long> A)');
       expect(code).toContain('solve(N, std::move(A));');
   });
+
+  it('should generate interleaved declarations for multiple arrays', () => {
+    // Input:
+    // N
+    // A_1 ... A_N
+    // M
+    // B_1 ... B_M
+
+    const N_Node: any = { type: 'item', name: 'N', indices: [] };
+    const M_Node: any = { type: 'item', name: 'M', indices: [] };
+    const i_Node: any = { type: 'ident', value: 'i' };
+    const j_Node: any = { type: 'ident', value: 'j' };
+    const N_Ref: any = { type: 'ident', value: 'N' };
+    const M_Ref: any = { type: 'ident', value: 'M' };
+
+    const format: FormatNode = {
+        type: 'format',
+        children: [
+            N_Node,
+            {
+                type: 'loop',
+                variable: 'i',
+                start: { type: 'number', value: 0 },
+                end: { type: 'ident', value: 'N' },
+                body: [
+                    {
+                        type: 'item',
+                        name: 'A',
+                        indices: [i_Node]
+                    }
+                ]
+            } as any,
+            M_Node,
+            {
+                type: 'loop',
+                variable: 'j',
+                start: { type: 'number', value: 0 },
+                end: { type: 'ident', value: 'M' },
+                body: [
+                    {
+                        type: 'item',
+                        name: 'B',
+                        indices: [j_Node]
+                    }
+                ]
+            } as any
+        ]
+    };
+
+    const variables = [
+        { name: 'N', type: VarType.ValueInt, dims: 0, indices: [] },
+        { name: 'A', type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+        { name: 'M', type: VarType.ValueInt, dims: 0, indices: [] },
+        { name: 'B', type: VarType.ValueInt, dims: 1, indices: [M_Ref] }
+    ];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    // Verify order:
+    // N declared
+    // input N
+    // A declared (using N)
+    // loop A
+    // M declared
+    // input M
+    // B declared (using M)
+    // loop B
+
+    const lines = code.split('\n');
+    const nDeclIndex = lines.findIndex(l => l.includes('long long N;'));
+    const nInputIndex = lines.findIndex(l => l.includes('std::cin >> N;'));
+    const aDeclIndex = lines.findIndex(l => l.includes('std::vector<long long> A(N);'));
+    const aLoopIndex = lines.findIndex(l => l.includes('for(int i = 0 ; i < N ; i++){'));
+    const mDeclIndex = lines.findIndex(l => l.includes('long long M;'));
+    const mInputIndex = lines.findIndex(l => l.includes('std::cin >> M;'));
+    const bDeclIndex = lines.findIndex(l => l.includes('std::vector<long long> B(M);'));
+    const bLoopIndex = lines.findIndex(l => l.includes('for(int j = 0 ; j < M ; j++){'));
+
+    expect(nDeclIndex).toBeLessThan(nInputIndex);
+    expect(nInputIndex).toBeLessThan(aDeclIndex); // N input before A declared (since A uses N)
+    expect(aDeclIndex).toBeLessThan(aLoopIndex);
+
+    // Check that M and B appear after A's loop (rough check of interleaving, though strict order between A loop and M depends on generator)
+    // Actually, format is N, Loop A, M, Loop B.
+    // So M decl should be after Loop A? Or at least after N decl.
+    // With new logic, M is declared when M_Node is processed.
+    // M_Node is after Loop A in format.
+    // So M decl should be after Loop A.
+
+    expect(aLoopIndex).toBeLessThan(mDeclIndex);
+    expect(mDeclIndex).toBeLessThan(mInputIndex);
+    expect(mInputIndex).toBeLessThan(bDeclIndex);
+    expect(bDeclIndex).toBeLessThan(bLoopIndex);
+  });
 });
