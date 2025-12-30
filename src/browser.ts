@@ -83,6 +83,20 @@ export class BrowserManager {
   }
 
   /**
+   * Get the current URL
+   */
+  getCurrentUrl(): string | undefined {
+    return this.page?.url();
+  }
+
+  /**
+   * Get the current page content
+   */
+  async getCurrentPageContent(): Promise<string | undefined> {
+    return await this.page?.content();
+  }
+
+  /**
    * Get the current browser instance
    */
   getBrowser(): Browser | null {
