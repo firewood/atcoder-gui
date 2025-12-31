@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import { CPlusPlusGenerator } from '../cplusplus';
 import { FormatNode, VarType, ASTNode } from '../../analyzer/types';
 
@@ -182,5 +185,37 @@ describe('CPlusPlusGenerator', () => {
     expect(mDeclIndex).toBeLessThan(mInputIndex);
     expect(mInputIndex).toBeLessThan(bDeclIndex);
     expect(bDeclIndex).toBeLessThan(bLoopIndex);
+  });
+
+  it('should load local config and template files if config.json exists', () => {
+    // Create a temporary directory and files
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atcoder-gui-test-'));
+    const originalCwd = process.cwd();
+
+    try {
+      // Create dummy files
+      fs.writeFileSync(path.join(tempDir, 'config.json'), '{}');
+      fs.writeFileSync(path.join(tempDir, 'cpp.njk'), 'CUSTOM TEMPLATE MARKER');
+
+      // Change CWD to the temporary directory
+      process.chdir(tempDir);
+
+      // Mock data (minimal)
+      const format: FormatNode = { type: 'format', children: [] };
+      const variables: any[] = [];
+
+      // Instantiate the generator
+      const generator = new CPlusPlusGenerator();
+
+      // Generate code
+      const code = generator.generate(format, variables);
+
+      // Assert that the custom template was used
+      expect(code).toContain('CUSTOM TEMPLATE MARKER');
+    } finally {
+      // Clean up: restore CWD and remove the temporary directory
+      process.chdir(originalCwd);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });
