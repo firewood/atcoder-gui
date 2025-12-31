@@ -8,6 +8,7 @@ import { ConfigManager, AppConfig } from './config.js';
 import { SubmitManager } from './submit.js';
 import { CookieExporter } from './cookie-export.js';
 import { GenManager } from './gen.js';
+import { Gen2Manager } from './gen2.js';
 import { ProblemManager } from './problem.js';
 import { execSync } from 'child_process';
 
@@ -17,6 +18,7 @@ export class AtCoderGUI {
   private submitManager: SubmitManager;
   private cookieExporter: CookieExporter;
   private genManager: GenManager;
+  private gen2Manager: Gen2Manager;
   private problemManager: ProblemManager;
   private rl: readline.Interface | null = null;
 
@@ -26,6 +28,7 @@ export class AtCoderGUI {
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
     this.genManager = new GenManager(this.browserManager);
+    this.gen2Manager = new Gen2Manager(this.browserManager);
     this.problemManager = new ProblemManager(this.browserManager);
   }
 
@@ -203,6 +206,10 @@ export class AtCoderGUI {
           this.genManager.run(args);
           break;
 
+        case 'gen2':
+          this.gen2Manager.run();
+          break;
+
         case 'new':
           this.genManager.runAtcoderCli(args);
           break;
@@ -278,6 +285,7 @@ Available commands:
   config               Show current configuration
   submit <filename>    Submit solution to AtCoder
   gen <contest-id>     Generate sample cases using atcoder-tools
+  gen2                 Generate main.cpp from current problem page
   new <contest-id>     Generate sample cases using atcoder-cli
   make <args>          Execute make command
   test                 Execute test command
