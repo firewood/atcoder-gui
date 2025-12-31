@@ -6,7 +6,7 @@ import JSON5 from "json5";
 import { UniversalGenerator } from "./universal.js";
 import { CodeGeneratorConfig } from "./types.js";
 import { FormatNode, VarType, ASTNode } from "../analyzer/types.js";
-import process from "process";
+import { ConfigManager } from "../config.js";
 
 // Resolve paths relative to this file
 const __filename = fileURLToPath(import.meta.url);
@@ -19,16 +19,14 @@ export class CPlusPlusGenerator {
   private generator: UniversalGenerator;
   private template: string;
 
-  constructor() {
+  constructor(configManager?: ConfigManager) {
     let configPath = DEFAULT_CONFIG_PATH;
     let templatePath = DEFAULT_TEMPLATE_PATH;
 
-    const cwd = process.cwd();
-    const localConfigJsonPath = path.join(cwd, "config.json");
-
-    if (fs.existsSync(localConfigJsonPath)) {
-      const localCppJson5Path = path.join(cwd, "cpp.json5");
-      const localCppNjkPath = path.join(cwd, "cpp.njk");
+    if (configManager) {
+      const configDir = configManager.getConfigDirPath();
+      const localCppJson5Path = path.join(configDir, "cpp.json5");
+      const localCppNjkPath = path.join(configDir, "cpp.njk");
 
       if (fs.existsSync(localCppJson5Path)) {
         configPath = localCppJson5Path;

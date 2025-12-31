@@ -2,12 +2,15 @@ import fs from 'fs';
 import { BrowserManager } from './browser';
 import { CPlusPlusGenerator } from './generator/cplusplus.js';
 import { generateParseResult } from './generator/pipeline.js';
+import { ConfigManager } from './config.js';
 
 export class Gen2Manager {
   private browserManager: BrowserManager;
+  private configManager: ConfigManager;
 
-  constructor(browserManager: BrowserManager) {
+  constructor(browserManager: BrowserManager, configManager: ConfigManager) {
     this.browserManager = browserManager;
+    this.configManager = configManager;
   }
 
   async run(): Promise<void> {
@@ -43,7 +46,7 @@ export class Gen2Manager {
       console.log('Generating C++ Code...');
       if (!formatTree) throw new Error('Format tree is undefined');
 
-      const generator = new CPlusPlusGenerator();
+      const generator = new CPlusPlusGenerator(this.configManager);
       const code = generator.generate(
         formatTree,
         variables,
