@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { CPlusPlusGenerator } from "./cplusplus.js";
 import { fetchProblemContent } from "./fetcher.js";
 import { generateParseResult } from "./pipeline.js";
+import { ConfigManager } from "../config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,7 +55,8 @@ async function main() {
     console.log("Generating C++ Code...");
     if (!formatTree) throw new Error("Format tree is undefined");
 
-    const generator = new CPlusPlusGenerator();
+    const configManager = new ConfigManager();
+    const generator = new CPlusPlusGenerator(configManager);
     const code = generator.generate(
       formatTree,
       variables,

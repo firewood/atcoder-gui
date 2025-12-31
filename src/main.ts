@@ -28,7 +28,7 @@ export class AtCoderGUI {
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
     this.genManager = new GenManager(this.browserManager);
-    this.gen2Manager = new Gen2Manager(this.browserManager);
+    this.gen2Manager = new Gen2Manager(this.browserManager, this.configManager);
     this.problemManager = new ProblemManager(this.browserManager);
   }
 

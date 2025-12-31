@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
 import { CPlusPlusGenerator } from '../cplusplus';
 import { FormatNode, VarType, ASTNode } from '../../analyzer/types';
+import { ConfigManager } from '../../config';
 
 describe('CPlusPlusGenerator', () => {
   it('should generate C++ code for simple input', () => {
@@ -182,5 +186,36 @@ describe('CPlusPlusGenerator', () => {
     expect(mDeclIndex).toBeLessThan(mInputIndex);
     expect(mInputIndex).toBeLessThan(bDeclIndex);
     expect(bDeclIndex).toBeLessThan(bLoopIndex);
+  });
+
+  it('should load local config and template files from config directory', () => {
+    // Create a temporary directory and files
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'atcoder-gui-test-'));
+
+    try {
+      // Create a dummy cpp.njk in the temp directory
+      fs.writeFileSync(path.join(tempDir, 'cpp.njk'), 'CUSTOM TEMPLATE MARKER');
+
+      // Mock ConfigManager to return the temp directory path
+      const mockConfigManager = {
+        getConfigDirPath: () => tempDir,
+      } as unknown as ConfigManager;
+
+      // Mock data (minimal)
+      const format: FormatNode = { type: 'format', children: [] };
+      const variables: any[] = [];
+
+      // Instantiate the generator with the mock config manager
+      const generator = new CPlusPlusGenerator(mockConfigManager);
+
+      // Generate code
+      const code = generator.generate(format, variables);
+
+      // Assert that the custom template was used
+      expect(code).toContain('CUSTOM TEMPLATE MARKER');
+    } finally {
+      // Clean up: remove the temporary directory
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   });
 });
