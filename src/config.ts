@@ -1,19 +1,20 @@
-import Conf from 'conf';
-import JSON5 from 'json5';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+import Conf from "conf";
+import JSON5 from "json5";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-const { version } = require('../package.json');
+const { version } = require("../package.json");
 
 export interface AppConfig {
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
   defaultUrl?: string;
   windowSize?: {
     width: number;
     height: number;
   };
+  workspaceDir?: string;
   testCommand?: string;
 }
 
@@ -22,13 +23,13 @@ export class ConfigManager {
 
   constructor() {
     this.conf = new Conf<AppConfig>({
-      projectName: 'atcoder-gui',
+      projectName: "atcoder-gui",
       projectVersion: version,
-      configName: 'config',
-      fileExtension: 'json5',
+      configName: "config",
+      fileExtension: "json5",
       serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
       deserialize: (text: string): AppConfig => JSON5.parse(text),
-      defaults: {}
+      defaults: {},
     });
 
     // Initialize user config with default template on first launch
@@ -42,7 +43,7 @@ export class ConfigManager {
     try {
       // Check if user config file already exists
       if (!existsSync(this.conf.path)) {
-        console.log('First launch detected, creating config file with default template...');
+        console.log("First launch detected, creating config file with default template...");
 
         // Ensure config directory exists
         const configDir = dirname(this.conf.path);
@@ -52,14 +53,14 @@ export class ConfigManager {
 
         // Read default config.json5 template
         const defaultConfigPath = dirname(fileURLToPath(import.meta.url));
-        const defaultTemplate = readFileSync(join(defaultConfigPath, 'config.json5'), 'utf-8');
+        const defaultTemplate = readFileSync(join(defaultConfigPath, "config.json5"), "utf-8");
 
         // Write the template directly to user config path using fs
-        writeFileSync(this.conf.path, defaultTemplate, 'utf-8');
+        writeFileSync(this.conf.path, defaultTemplate, "utf-8");
         console.log(`Config file created at: ${this.conf.path}`);
       }
     } catch (error) {
-      console.warn('Failed to initialize user config file:', error);
+      console.warn("Failed to initialize user config file:", error);
     }
   }
 

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 
-import * as readline from 'readline';
-import { pathToFileURL } from 'url';
-import * as fs from 'fs';
-import { BrowserManager } from './browser.js';
-import { ConfigManager, AppConfig } from './config.js';
-import { SubmitManager } from './submit.js';
-import { CookieExporter } from './cookie-export.js';
-import { GenManager } from './gen.js';
-import { Gen2Manager } from './gen2.js';
-import { ProblemManager } from './problem.js';
-import { execSync } from 'child_process';
+import * as readline from "readline";
+import { pathToFileURL } from "url";
+import * as fs from "fs";
+import { BrowserManager } from "./browser.js";
+import { ConfigManager, AppConfig } from "./config.js";
+import { SubmitManager } from "./submit.js";
+import { CookieExporter } from "./cookie-export.js";
+import { GenManager } from "./gen.js";
+import { Gen2Manager } from "./gen2.js";
+import { ProblemManager } from "./problem.js";
+import { execSync } from "child_process";
 
 export class AtCoderGUI {
   private browserManager: BrowserManager;
@@ -37,7 +37,7 @@ export class AtCoderGUI {
    */
   async init(): Promise<void> {
     await this.browserManager.launch(this.getConfig());
-    const url = this.getConfig().defaultUrl || 'https://atcoder.jp';
+    const url = this.getConfig().defaultUrl || "https://atcoder.jp";
     await this.browserManager.openUrl(url);
   }
 
@@ -84,7 +84,7 @@ export class AtCoderGUI {
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-      prompt: 'command> '
+      prompt: "command> ",
     });
 
     this.browserManager.setOnPageClose(() => {
@@ -94,10 +94,10 @@ export class AtCoderGUI {
     console.log('Type "help" for available commands or "exit" to quit');
     this.rl.prompt();
 
-    this.rl.on('line', async (input: string) => {
+    this.rl.on("line", async (input: string) => {
       const trimmedInput = input.trim();
 
-      if (trimmedInput === '') {
+      if (trimmedInput === "") {
         this.rl!.prompt();
         return;
       }
@@ -106,15 +106,15 @@ export class AtCoderGUI {
       this.rl!.prompt();
     });
 
-    this.rl.on('close', async () => {
-      console.log('\nGoodbye!');
+    this.rl.on("close", async () => {
+      console.log("\nGoodbye!");
       await this.close();
       process.exit(0);
     });
 
     // Handle Ctrl+C
-    process.on('SIGINT', async () => {
-      console.log('\nShutting down...');
+    process.on("SIGINT", async () => {
+      console.log("\nShutting down...");
       await this.close();
       process.exit(0);
     });
@@ -124,9 +124,9 @@ export class AtCoderGUI {
    * Handle CLI commands
    */
   private async handleCommand(input: string): Promise<void> {
-    const args = input.split(' ').filter(arg => arg.length > 0);
+    const args = input.split(" ").filter((arg) => arg.length > 0);
     const command = args[0].toLowerCase();
-    if (command == '') {
+    if (command == "") {
       return;
     }
 
@@ -137,132 +137,124 @@ export class AtCoderGUI {
 
     try {
       switch (command) {
-        case 'open':
+        case "open":
           if (args.length < 2) {
-            console.log('Error: URL is required for open command');
-            console.log('Usage: open <URL>');
+            console.log("Error: URL is required for open command");
+            console.log("Usage: open <URL>");
             return;
           }
           await this.openUrl(args[1]);
           break;
 
-        case 'config':
-          console.log('Current configuration:');
+        case "config":
+          console.log("Current configuration:");
           console.log(JSON.stringify(this.getConfig(), null, 2));
           break;
 
-        case 'help':
+        case "help":
           this.showHelp();
           break;
 
-        case 'exit':
-        case 'quit':
+        case "exit":
+        case "quit":
           this.rl?.close();
           break;
 
-        case 'acc':
-        case 'oj':
+        case "acc":
+        case "oj":
           {
-            const command_line = args.join(' ');
+            const command_line = args.join(" ");
             try {
-              execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
-            } catch (_) {
-              ;
-            }
+              execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
+            } catch (_) {}
           }
           break;
 
-        case 'export':
+        case "export":
           if (args.length < 2) {
-            console.log('Error: Target is required for export command');
-            console.log('Usage: export <target>');
-            console.log('Available targets:');
-            console.log('  atcoder-tools    Export cookies to atcoder-tools cookie.txt');
-            console.log('  atcoder-cli      Export cookies to atcoder-cli session.json');
-            console.log('  oj               Export cookies to online-judge-tools cookie.jar');
+            console.log("Error: Target is required for export command");
+            console.log("Usage: export <target>");
+            console.log("Available targets:");
+            console.log("  atcoder-tools    Export cookies to atcoder-tools cookie.txt");
+            console.log("  atcoder-cli      Export cookies to atcoder-cli session.json");
+            console.log("  oj               Export cookies to online-judge-tools cookie.jar");
             return;
           }
 
           {
             const target = args[1].toLowerCase();
             switch (target) {
-              case 'atcoder-tools':
+              case "atcoder-tools":
                 await this.cookieExporter.exportCookiesForAtCoderTools();
                 break;
-              case 'atcoder-cli':
+              case "atcoder-cli":
                 await this.cookieExporter.exportCookiesForAtCoderCli();
                 break;
-              case 'oj':
+              case "oj":
                 await this.cookieExporter.exportCookiesForOj();
                 break;
               default:
                 console.log(`Unknown export target: ${target}`);
-                console.log('Available targets: atcoder-tools, atcoder-cli, oj');
+                console.log("Available targets: atcoder-tools, atcoder-cli, oj");
             }
           }
           break;
 
-        case 'gen':
+        case "gen":
           this.genManager.run(args);
           break;
 
-        case 'gen2':
+        case "gen2":
           this.gen2Manager.run();
           break;
 
-        case 'new':
+        case "new":
           this.genManager.runAtcoderCli(args);
           break;
 
-        case 'cp':
-        case 'copy':
-        case 'del':
-        case 'dir':
-        case 'ls':
-        case 'make':
-        case 'pwd':
-        case 'rm':
+        case "cp":
+        case "copy":
+        case "del":
+        case "dir":
+        case "ls":
+        case "make":
+        case "pwd":
+        case "rm":
           {
-            const command_line = args.join(' ');
+            const command_line = args.join(" ");
             try {
-              execSync(command_line, { encoding: 'utf-8', stdio: 'inherit' });
-            } catch (_) {
-              ;
-            }
+              execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
+            } catch (_) {}
           }
           break;
 
-        case 'submit':
+        case "submit":
           if (!(await this.submitManager.submitSolution(args[1]))) {
             break;
           }
         // eslint-disable-next-line no-fallthrough
-        case 'test':
+        case "test":
           {
             const testCommand = this.getConfig().testCommand;
             if (testCommand) {
               try {
-                execSync(testCommand, { encoding: 'utf-8', stdio: 'inherit' });
-              } catch (_) {
-                ;
-              }
+                execSync(testCommand, { encoding: "utf-8", stdio: "inherit" });
+              } catch (_) {}
             } else {
-              console.log('Error: testCommand is not configured in config.json5');
+              console.log("Error: testCommand is not configured in config.json5");
             }
           }
           break;
 
-        case 'cd':
-          if (args.length < 2) {
-            console.log('Error: Directory is required for cd command');
-            console.log('Usage: cd <directory>');
-            return;
-          }
-          try {
-            process.chdir(args[1]);
-            console.log(`Current directory: ${process.cwd()}`);
-          } catch (err) {
-            console.error(`Error changing directory: ${err}`);
+        case "cd":
+          {
+            const dir = args.length < 2 ? this.getConfig().workspaceDir : args[1];
+            try {
+              process.chdir(dir);
+              console.log(`Current directory: ${process.cwd()}`);
+            } catch (err) {
+              console.error(`Error changing directory: ${err}`);
+            }
           }
           break;
 
@@ -271,7 +263,7 @@ export class AtCoderGUI {
           console.log('Type "help" for available commands');
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   }
 
@@ -327,12 +319,12 @@ async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const configManager = new ConfigManager();
 
-  if (args.includes('version') || args.includes('--version') || args.includes('-v')) {
+  if (args.includes("version") || args.includes("--version") || args.includes("-v")) {
     console.log(configManager.getVersion());
     return;
   }
 
-  if (args.includes('config-dir') || args.includes('--config-dir')) {
+  if (args.includes("config-dir") || args.includes("--config-dir")) {
     console.log(configManager.getConfigDirPath());
     return;
   }
@@ -343,7 +335,7 @@ async function main(): Promise<void> {
 // Run the CLI if this file is executed directly
 if (import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   main().catch((error) => {
-    console.error('Fatal error:', error);
+    console.error("Fatal error:", error);
     process.exit(1);
   });
 }

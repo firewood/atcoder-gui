@@ -12,5 +12,7 @@
     width: 1200,
     height: 900,
 
+  workspaceDir: '~/atcoder',
+
   testCommand: 'make test',
 }}
