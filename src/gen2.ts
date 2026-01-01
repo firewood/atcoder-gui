@@ -33,7 +33,7 @@ export class Gen2Manager {
     console.log(`Generating main.cpp for task: ${taskId}`);
 
     try {
-      const html = await this.browserManager.getCurrentPageContent();
+      const html = await this.browserManager.fetchRawHtml(url);
       if (!html) {
         console.error('Error: Could not get page content.');
         return;
