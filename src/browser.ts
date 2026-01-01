@@ -14,6 +14,22 @@ export class BrowserManager {
   }
 
   /**
+   * Fetch raw HTML content from a URL within the browser context
+   */
+  async fetchRawHtml(url: string): Promise<string> {
+    if (!this.page) {
+      throw new Error('Browser not launched. Call launch() first.');
+    }
+
+    const html = await this.page.evaluate(async (url) => {
+      const response = await fetch(url);
+      return await response.text();
+    }, url);
+
+    return html;
+  }
+
+  /**
    * Set the callback function to be called when the browser page closes
    */
   setOnPageClose(callback: (() => void) | null): void {
