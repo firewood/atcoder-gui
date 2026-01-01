@@ -201,15 +201,15 @@ export class AtCoderGUI {
           break;
 
         case "gen":
-          this.genManager.run(args);
+          await this.genManager.run(args);
           break;
 
         case "gen2":
-          this.gen2Manager.run();
+          await this.gen2Manager.run();
           break;
 
         case "new":
-          this.genManager.runAtcoderCli(args);
+          await this.genManager.runAtcoderCli(args);
           break;
 
         case "cp":
