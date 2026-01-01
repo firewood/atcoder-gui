@@ -22,7 +22,7 @@ export class UniversalGenerator {
 
   constructor(config: CodeGeneratorConfig) {
     this.config = config;
-    this.indent = " ".repeat(config.base_indent);
+    this.indent = (config.indent_type == "tab" ? "\t" : " ").repeat(config.indent_width);
   }
 
   generate(
@@ -42,9 +42,7 @@ export class UniversalGenerator {
         // Fallback: Check for last scalar integer, but favor Q if missing
         const lastScalar = [...variables]
           .reverse()
-          .find(
-            (v) => v.dims === 0 && (v.type === "int" || v.type === "index_int"),
-          );
+          .find((v) => v.dims === 0 && (v.type === "int" || v.type === "index_int"));
         if (
           lastScalar &&
           lastScalar.name.toUpperCase() !== "N" &&
@@ -60,9 +58,7 @@ export class UniversalGenerator {
     }
 
     // Filter out query variables from declarations and arguments
-    const declarableVariables = variables.filter(
-      (v) => v.type !== VarType.Query,
-    );
+    const declarableVariables = variables.filter((v) => v.type !== VarType.Query);
 
     const declaredVariables = new Set<string>();
     // Input Reading (and interleaved declaration)
@@ -70,7 +66,7 @@ export class UniversalGenerator {
       format.children,
       declarableVariables,
       declaredVariables,
-      queryLoopVar
+      queryLoopVar,
     );
     const inputPart = inputLines.map((line) => this.indent + line).join("\n");
 
@@ -92,18 +88,14 @@ export class UniversalGenerator {
     const typeKey = this.mapVarType(variable.type);
 
     if (variable.dims === 0) {
-      return this.formatString(
-        this.config.declare[typeKey as keyof typeof this.config.declare],
-        {
-          name: variable.name,
-        },
-      );
+      return this.formatString(this.config.declare[typeKey as keyof typeof this.config.declare], {
+        name: variable.name,
+      });
     } else if (variable.dims === 1) {
       // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
       // Assuming we know length from indices for now
       const len = this.stringifyNode(variable.indices[0]);
-      const innerType =
-        this.config.type[typeKey as keyof typeof this.config.type];
+      const innerType = this.config.type[typeKey as keyof typeof this.config.type];
 
       return this.formatString(this.config.declare_and_allocate.seq, {
         name: variable.name,
@@ -113,8 +105,7 @@ export class UniversalGenerator {
     } else if (variable.dims === 2) {
       const lenI = this.stringifyNode(variable.indices[0]);
       const lenJ = this.stringifyNode(variable.indices[1]);
-      const innerType =
-        this.config.type[typeKey as keyof typeof this.config.type];
+      const innerType = this.config.type[typeKey as keyof typeof this.config.type];
 
       return this.formatString(this.config.declare_and_allocate["2d_seq"], {
         name: variable.name,
@@ -130,23 +121,23 @@ export class UniversalGenerator {
   private collectVariables(nodes: ASTNode[], variables: Variable[]): string[] {
     const vars = new Set<string>();
     const visit = (node: ASTNode) => {
-        if (!node) return;
-        if (node.type === 'item') {
-            const item = node as ItemNode;
-            // Check if this item corresponds to a known variable
-            if (variables.some(v => v.name === item.name)) {
-                vars.add(item.name);
-            }
-        } else if (node.type === 'loop') {
-            const loop = node as LoopNode;
-            // Recursively scan loop body
-            loop.body.forEach(child => visit(child));
+      if (!node) return;
+      if (node.type === "item") {
+        const item = node as ItemNode;
+        // Check if this item corresponds to a known variable
+        if (variables.some((v) => v.name === item.name)) {
+          vars.add(item.name);
         }
-        // No need to traverse other node types deeply for variable *usage* in input context usually,
-        // but 'item' indices might contain variables.
-        // However, 'item' node itself is what we are looking for as "being read".
+      } else if (node.type === "loop") {
+        const loop = node as LoopNode;
+        // Recursively scan loop body
+        loop.body.forEach((child) => visit(child));
+      }
+      // No need to traverse other node types deeply for variable *usage* in input context usually,
+      // but 'item' indices might contain variables.
+      // However, 'item' node itself is what we are looking for as "being read".
     };
-    nodes.forEach(node => visit(node));
+    nodes.forEach((node) => visit(node));
     return Array.from(vars);
   }
 
@@ -165,8 +156,8 @@ export class UniversalGenerator {
 
         // Declare if needed
         if (variable && !declaredVariables.has(variable.name)) {
-            lines.push(this.generateDeclaration(variable));
-            declaredVariables.add(variable.name);
+          lines.push(this.generateDeclaration(variable));
+          declaredVariables.add(variable.name);
         }
 
         lines.push(this.generateItemInput(itemNode, variables));
@@ -181,13 +172,13 @@ export class UniversalGenerator {
         // Loop counters are local to the loop.
         const varsInLoop = this.collectVariables(loopNode.body, variables);
         for (const varName of varsInLoop) {
-            if (!declaredVariables.has(varName)) {
-                const variable = variables.find(v => v.name === varName);
-                if (variable) {
-                    lines.push(this.generateDeclaration(variable));
-                    declaredVariables.add(varName);
-                }
+          if (!declaredVariables.has(varName)) {
+            const variable = variables.find((v) => v.name === varName);
+            if (variable) {
+              lines.push(this.generateDeclaration(variable));
+              declaredVariables.add(varName);
             }
+          }
         }
 
         lines.push(...this.generateLoopInput(loopNode, variables, declaredVariables));
@@ -207,12 +198,9 @@ export class UniversalGenerator {
     const typeKey = this.mapVarType(variable.type);
 
     if (variable.dims === 0) {
-      return this.formatString(
-        this.config.input[typeKey as keyof typeof this.config.input],
-        {
-          name: variable.name,
-        },
-      );
+      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+        name: variable.name,
+      });
     } else if (variable.dims === 1) {
       // input array item like a[i]
       // The AST for 'item' in a loop has indices.
@@ -220,30 +208,28 @@ export class UniversalGenerator {
         name: variable.name,
         index: this.stringifyNode(node.indices[0]),
       });
-      return this.formatString(
-        this.config.input[typeKey as keyof typeof this.config.input],
-        {
-          name: access,
-        },
-      );
+      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+        name: access,
+      });
     } else if (variable.dims === 2) {
       const access = this.formatString(this.config.access["2d_seq"], {
         name: variable.name,
         index_i: this.stringifyNode(node.indices[0]),
         index_j: this.stringifyNode(node.indices[1]),
       });
-      return this.formatString(
-        this.config.input[typeKey as keyof typeof this.config.input],
-        {
-          name: access,
-        },
-      );
+      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
+        name: access,
+      });
     }
 
     return `// TODO: input for ${node.name}`;
   }
 
-  private generateLoopInput(node: LoopNode, variables: Variable[], declaredVariables: Set<string>): string[] {
+  private generateLoopInput(
+    node: LoopNode,
+    variables: Variable[],
+    declaredVariables: Set<string>,
+  ): string[] {
     const lines: string[] = [];
     // Loop header
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
@@ -272,17 +258,13 @@ export class UniversalGenerator {
     return variables
       .map((v) => {
         const typeKey = this.mapVarType(v.type);
-        const innerType =
-          this.config.type[typeKey as keyof typeof this.config.type];
+        const innerType = this.config.type[typeKey as keyof typeof this.config.type];
 
         if (v.dims === 0) {
-          return this.formatString(
-            this.config.arg[typeKey as keyof typeof this.config.arg],
-            {
-              name: v.name,
-              type: innerType, // Though scalars don't usually use {type} in template
-            },
-          );
+          return this.formatString(this.config.arg[typeKey as keyof typeof this.config.arg], {
+            name: v.name,
+            type: innerType, // Though scalars don't usually use {type} in template
+          });
         } else if (v.dims === 1) {
           return this.formatString(this.config.arg.seq, {
             name: v.name,
@@ -336,10 +318,7 @@ export class UniversalGenerator {
   }
 
   // Helper to replace {key} with value
-  private formatString(
-    template: string,
-    params: Record<string, string>,
-  ): string {
+  private formatString(template: string, params: Record<string, string>): string {
     return template.replace(/{(\w+)}/g, (_, key) => params[key] || `{${key}}`);
   }
 
@@ -361,9 +340,7 @@ export class UniversalGenerator {
         return String((node as NumberNode).value);
       case "binop": {
         const bin = node as BinOpNode;
-        return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(
-          bin.right,
-        )}`;
+        return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(bin.right)}`;
       }
       default:
         // Check if it has 'name' (ItemNode acting as variable reference)

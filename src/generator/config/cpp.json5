@@ -1,9 +1,10 @@
 {
-  "base_indent": 4,
+  "indent_width": 1,
+  "indent_type": "tab",
   "insert_space_around_operators": false,
   "global_prefix": "",
   "loop": {
-    "header": "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){",
+    "header": "for (int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++) {",
     "footer": "}"
   },
   "type": {
