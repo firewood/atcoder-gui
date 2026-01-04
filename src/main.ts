@@ -205,7 +205,7 @@ export class AtCoderGUI {
           break;
 
         case "gen2":
-          await this.gen2Manager.run();
+          await this.gen2Manager.run(args);
           break;
 
         case "new":
