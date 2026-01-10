@@ -1,6 +1,7 @@
 export interface CodeGeneratorConfig {
   indent_width: number;
   indent_type: "tab" | "space";
+  newline?: "lf" | "crlf";
   insert_space_around_operators?: boolean;
   global_prefix?: string;
 

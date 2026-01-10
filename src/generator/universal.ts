@@ -19,10 +19,12 @@ type Variable = {
 export class UniversalGenerator {
   private config: CodeGeneratorConfig;
   private indent: string;
+  private newline: string;
 
   constructor(config: CodeGeneratorConfig) {
     this.config = config;
     this.indent = (config.indent_type == "tab" ? "\t" : " ").repeat(config.indent_width);
+    this.newline = config.newline == "crlf" ? "\r\n" : "\n";
   }
 
   generate(
@@ -68,7 +70,7 @@ export class UniversalGenerator {
       declaredVariables,
       queryLoopVar,
     );
-    const inputPart = inputLines.map((line) => this.indent + line).join("\n");
+    const inputPart = inputLines.map((line) => this.indent + line).join(this.newline);
 
     return {
       prediction_success: true,
