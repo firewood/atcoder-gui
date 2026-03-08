@@ -3,8 +3,8 @@
 ## Phase 1: Setup & Configuration
 - [x] Task: Python 固有の設定ファイルの作成 (fcc3873)
     - [x] `src/generator/config/python.json5` を作成 (fcc3873)
-- [ ] Task: Python Nunjucks テンプレートの作成
-    - [ ] `src/generator/templates/python.njk` を作成
+- [x] Task: Python Nunjucks テンプレートの作成 (7bc4226)
+    - [x] `src/generator/templates/python.njk` を作成 (7bc4226)
 - [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
 
 ## Phase 2: Core Implementation
