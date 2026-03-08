@@ -1,0 +1,55 @@
+{
+  "indent_width": 4,
+  "indent_type": "space",
+  "insert_space_around_operators": true,
+  "global_prefix": "",
+  "loop": {
+    "header": "for {loop_var} in range({length}):",
+    "footer": ""
+  },
+  "type": {
+    "int": "int",
+    "float": "float",
+    "str": "str"
+  },
+  "default": {
+    "int": "0",
+    "float": "0.0",
+    "str": "''"
+  },
+  "arg": {
+    "int": "{name}: int",
+    "float": "{name}: float",
+    "str": "{name}: str",
+    "seq": "{name}: List[{type}]",
+    "2d_seq": "{name}: List[List[{type}]]"
+  },
+  "actual_arg": {
+    "seq": "{name}",
+    "2d_seq": "{name}"
+  },
+  "access": {
+    "seq": "{name}[{index}]",
+    "2d_seq": "{name}[{index_i}][{index_j}]"
+  },
+  "declare": {
+    "int": "{name}: int",
+    "float": "{name}: float",
+    "str": "{name}: str",
+    "seq": "{name}: List[{type}]",
+    "2d_seq": "{name}: List[List[{type}]]"
+  },
+  "allocate": {
+    "seq": "{name} = [{default}] * {length}",
+    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]"
+  },
+  "declare_and_allocate": {
+    "seq": "{name} = [{default}] * {length}",
+    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]"
+  },
+  "input": {
+    "int": "{name} = int(sys.stdin.readline())",
+    "float": "{name} = float(sys.stdin.readline())",
+    "str": "{name} = sys.stdin.readline().rstrip()"
+  }
+}
