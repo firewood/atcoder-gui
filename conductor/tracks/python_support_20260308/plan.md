@@ -15,9 +15,9 @@
     - [x] 様々な入力形式に対して Python コードが正しく生成されることを確認 (3574777)
 - [x] Task: Conductor - User Manual Verification 'Phase 2' (8158e53)
 
-## Phase 3: Integration
-- [ ] Task: 言語選択をサポートするための `gen2.ts` の更新
-    - [ ] 要求に応じて `PythonGenerator` をインスタンス化するロジックを `gen2.ts` に追加
-- [ ] Task: エンドツーエンドのフロー確認
-    - [ ] サンプル問題で `gen2` を実行し、`main.py` が正しく生成されることを確認
-- [ ] Task: Conductor - User Manual Verification 'Phase 3' (Protocol in workflow.md)
+## Phase 3: Integration [checkpoint: 8390b14]
+- [x] Task: 言語選択をサポートするための `gen2.ts` の更新 (6a7cc7a)
+    - [x] 要求に応じて `PythonGenerator` をインスタンス化するロジックを `gen2.ts` に追加 (6a7cc7a)
+- [x] Task: エンドツーエンドのフロー確認 (6a7cc7a)
+    - [x] サンプル問題で `gen2` を実行し、`main.py` が正しく生成されることを確認 (6a7cc7a)
+- [x] Task: Conductor - User Manual Verification 'Phase 3' (8390b14)
