@@ -1,0 +1,8 @@
+{
+  "track_id": "cd_home_support_20260315",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-15T00:00:00Z",
+  "updated_at": "2026-03-15T00:00:00Z",
+  "description": "cdコマンドで home directory (~) に対応したい。openspec形式でspecを記述して"
+}
