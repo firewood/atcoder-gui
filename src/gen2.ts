@@ -1,8 +1,9 @@
 import fs from "fs";
 import path from "path";
 import * as cheerio from "cheerio";
-import { BrowserManager } from "./browser";
+import { BrowserManager } from "./browser.js";
 import { CPlusPlusGenerator } from "./generator/cplusplus.js";
+import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
@@ -17,9 +18,16 @@ export class Gen2Manager {
   }
 
   async run(args: string[]): Promise<void> {
+    let lang = "cpp";
+    const langIdx = args.findIndex((arg) => arg === "--lang" || arg === "-l");
+    if (langIdx !== -1 && langIdx + 1 < args.length) {
+      lang = args[langIdx + 1].toLowerCase();
+      args.splice(langIdx, 2);
+    }
+
     if (args.length > 1) {
       const contestId = args[1];
-      console.log(`Generating directories for contest: ${contestId}`);
+      console.log(`Generating directories for contest: ${contestId} (Language: ${lang})`);
 
       const contestUrl = `https://atcoder.jp/contests/${contestId}/tasks`;
 
@@ -67,12 +75,13 @@ export class Gen2Manager {
           fs.mkdirSync(problemDirPath, { recursive: true });
         }
 
+        const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
         const metadata: AtCoderToolsMetadata = {
-          code_filename: "main.cpp",
+          code_filename: code_filename,
           judge: {
             judge_type: "normal",
           },
-          lang: "cpp",
+          lang: lang === "python" || lang === "py" ? "python" : "cpp",
           problem: {
             alphabet: problem.alphabet,
             contest: {
@@ -93,7 +102,7 @@ export class Gen2Manager {
 
         results.push({
           id: problem.alphabet,
-          success: await this.generateCode(contestId, problem.id, problemDirPath),
+          success: await this.generateCode(contestId, problem.id, problemDirPath, lang),
         });
       }
 
@@ -111,12 +120,18 @@ export class Gen2Manager {
 
       const contestId = match[1],
         taskId = match[2];
-      console.log(`Generating main.cpp for task: ${taskId}`);
-      await this.generateCode(contestId, taskId, ".");
+      const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
+      console.log(`Generating ${code_filename} for task: ${taskId}`);
+      await this.generateCode(contestId, taskId, ".", lang);
     }
   }
 
-  async generateCode(contestId: string, taskId: string, savePath: string): Promise<boolean> {
+  async generateCode(
+    contestId: string,
+    taskId: string,
+    savePath: string,
+    lang: string = "cpp",
+  ): Promise<boolean> {
     const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
 
     await new Promise((_) => setTimeout(_, 500));
@@ -129,14 +144,25 @@ export class Gen2Manager {
           url,
         );
 
-        console.log("Generating C++ Code...");
         if (!formatTree) throw new Error("Format tree is undefined");
 
-        const generator = new CPlusPlusGenerator(this.configManager);
-        const code = generator.generate(formatTree, variables, multipleCases, queryType);
+        let code = "";
+        let filename = "main.cpp";
 
-        fs.writeFileSync(path.join(savePath, "main.cpp"), code);
-        console.log("Saved C++ code to main.cpp");
+        if (lang === "python" || lang === "py") {
+          console.log("Generating Python Code...");
+          const generator = new PythonGenerator(this.configManager);
+          code = generator.generate(formatTree, variables, multipleCases, queryType);
+          filename = "main.py";
+        } else {
+          console.log("Generating C++ Code...");
+          const generator = new CPlusPlusGenerator(this.configManager);
+          code = generator.generate(formatTree, variables, multipleCases, queryType);
+          filename = "main.cpp";
+        }
+
+        fs.writeFileSync(path.join(savePath, filename), code);
+        console.log(`Saved ${lang} code to ${filename}`);
         return true;
       }
     } catch (e) {
