@@ -21,3 +21,6 @@
 - [x] Task: エンドツーエンドのフロー確認 (6a7cc7a)
     - [x] サンプル問題で `gen2` を実行し、`main.py` が正しく生成されることを確認 (6a7cc7a)
 - [x] Task: Conductor - User Manual Verification 'Phase 3' (8390b14)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions (1a170ee)
