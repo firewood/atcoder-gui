@@ -88,10 +88,12 @@ export class UniversalGenerator {
 
   private generateDeclaration(variable: Variable): string {
     const typeKey = this.mapVarType(variable.type);
+    const defaultValue = this.config.default[typeKey as keyof typeof this.config.default] || "";
 
     if (variable.dims === 0) {
       return this.formatString(this.config.declare[typeKey as keyof typeof this.config.declare], {
         name: variable.name,
+        default: defaultValue,
       });
     } else if (variable.dims === 1) {
       // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
@@ -103,6 +105,7 @@ export class UniversalGenerator {
         name: variable.name,
         type: innerType,
         length: len,
+        default: defaultValue,
       });
     } else if (variable.dims === 2) {
       const lenI = this.stringifyNode(variable.indices[0]);
@@ -114,6 +117,7 @@ export class UniversalGenerator {
         type: innerType,
         length_i: lenI,
         length_j: lenJ,
+        default: defaultValue,
       });
     }
 
