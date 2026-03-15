@@ -1,11 +1,11 @@
 # Implementation Plan: Python Support for Code Generator
 
-## Phase 1: Setup & Configuration
+## Phase 1: Setup & Configuration [checkpoint: b40c897]
 - [x] Task: Python 固有の設定ファイルの作成 (fcc3873)
     - [x] `src/generator/config/python.json5` を作成 (fcc3873)
 - [x] Task: Python Nunjucks テンプレートの作成 (7bc4226)
     - [x] `src/generator/templates/python.njk` を作成 (7bc4226)
-- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1' (b40c897)
 
 ## Phase 2: Core Implementation
 - [ ] Task: `PythonGenerator` クラスの実装
