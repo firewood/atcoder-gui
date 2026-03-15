@@ -3,6 +3,13 @@ import sys
 # Increase recursion depth for DFS/DP
 sys.setrecursionlimit(2000000)
 
+def input_tokens():
+    for line in sys.stdin:
+        for word in line.split():
+            yield word
+
+tokens = input_tokens()
+
 {% if mod -%}
 MOD = {{ mod }}
 {% endif -%}
@@ -17,10 +24,7 @@ NO = "{{ no_str }}"
 def solve({{ formal_arguments }}):
 {% if query_cases -%}
     for _ in range({{ query_loop_var }}):
-        line = sys.stdin.readline().split()
-        if not line:
-            continue
-        t = int(line[0])
+        t = int(next(tokens))
         if t == 1:
             pass
         elif t == 2:

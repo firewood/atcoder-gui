@@ -57,9 +57,21 @@ describe('Gen2Manager', () => {
       path.join(problemAPath, 'metadata.json'),
       JSON.stringify(
         {
-          contest: { contest_id: 'abc123' },
-          problem_id: 'abc123_a',
-          alphabet: 'A',
+          code_filename: 'main.cpp',
+          judge: {
+            judge_type: 'normal',
+          },
+          lang: 'cpp',
+          problem: {
+            alphabet: 'A',
+            contest: {
+              contest_id: 'abc123',
+            },
+            problem_id: 'abc123_a',
+          },
+          sample_in_pattern: 'in_*.txt',
+          sample_out_pattern: 'out_*.txt',
+          timeout_ms: 2000,
         },
         null,
         2,
@@ -72,9 +84,21 @@ describe('Gen2Manager', () => {
       path.join(problemBPath, 'metadata.json'),
       JSON.stringify(
         {
-          contest: { contest_id: 'abc123' },
-          problem_id: 'abc123_b',
-          alphabet: 'B',
+          code_filename: 'main.cpp',
+          judge: {
+            judge_type: 'normal',
+          },
+          lang: 'cpp',
+          problem: {
+            alphabet: 'B',
+            contest: {
+              contest_id: 'abc123',
+            },
+            problem_id: 'abc123_b',
+          },
+          sample_in_pattern: 'in_*.txt',
+          sample_out_pattern: 'out_*.txt',
+          timeout_ms: 2000,
         },
         null,
         2,

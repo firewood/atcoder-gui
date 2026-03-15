@@ -29,7 +29,7 @@ describe("PythonGenerator", () => {
     const code = generator.generate(format, variables);
 
     expect(code).toContain("N: int");
-    expect(code).toContain("N = int(sys.stdin.readline())");
+    expect(code).toContain("N = int(next(tokens))");
     expect(code).toContain("def solve(N: int):");
   });
 
@@ -76,9 +76,9 @@ describe("PythonGenerator", () => {
     expect(code).toContain("A = [0] * N");
 
     // Check input loop
-    expect(code).toContain("N = int(sys.stdin.readline())");
+    expect(code).toContain("N = int(next(tokens))");
     expect(code).toContain("for i in range(N):");
-    expect(code).toContain("A[i] = int(sys.stdin.readline())");
+    expect(code).toContain("A[i] = int(next(tokens))");
 
     // Check arguments
     expect(code).toContain("def solve(N: int, A: List[int]):");
@@ -89,17 +89,13 @@ describe("PythonGenerator", () => {
     const format: FormatNode = { type: "format", children: [] };
     const variables: any[] = [];
     
-    // Using internal generator context to test template features
-    // We can't easily pass mod/yes/no via generate() arguments yet, 
-    // but the template supports them if they are in the context.
-    // However, the current generate() method doesn't take these.
-    // Looking at universal.ts to see how to pass these.
-    
     const generator = new PythonGenerator();
     const code = generator.generate(format, variables);
     
     expect(code).toContain("import sys");
     expect(code).toContain("sys.setrecursionlimit(2000000)");
+    expect(code).toContain("def input_tokens():");
+    expect(code).toContain("tokens = input_tokens()");
     expect(code).toContain("if __name__ == '__main__':");
   });
 });

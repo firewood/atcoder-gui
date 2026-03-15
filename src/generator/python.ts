@@ -39,10 +39,7 @@ export class PythonGenerator {
     const configContent = fs.readFileSync(configPath, "utf-8");
     const config = JSON5.parse(configContent) as CodeGeneratorConfig;
     this.generator = new UniversalGenerator(config);
-    this.template = fs
-      .readFileSync(templatePath, "utf-8")
-      .replaceAll("%}\r\n", "%}")
-      .replaceAll("%}\n", "%}");
+    this.template = fs.readFileSync(templatePath, "utf-8");
 
     // Configure nunjucks
     nunjucks.configure({ autoescape: false });

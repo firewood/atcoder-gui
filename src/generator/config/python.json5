@@ -48,8 +48,8 @@
     "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]"
   },
   "input": {
-    "int": "{name} = int(sys.stdin.readline())",
-    "float": "{name} = float(sys.stdin.readline())",
-    "str": "{name} = sys.stdin.readline().rstrip()"
+    "int": "{name} = int(next(tokens))",
+    "float": "{name} = float(next(tokens))",
+    "str": "{name} = next(tokens)"
   }
 }
