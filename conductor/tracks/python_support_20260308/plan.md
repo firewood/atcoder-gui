@@ -7,13 +7,13 @@
     - [x] `src/generator/templates/python.njk` を作成 (7bc4226)
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (b40c897)
 
-## Phase 2: Core Implementation
-- [ ] Task: `PythonGenerator` クラスの実装
-    - [ ] `CPlusPlusGenerator` をベースに `src/generator/python.ts` を作成
-- [ ] Task: `PythonGenerator` のユニットテストの実装
-    - [ ] `src/generator/python.test.ts` を作成
-    - [ ] 様々な入力形式に対して Python コードが正しく生成されることを確認
-- [ ] Task: Conductor - User Manual Verification 'Phase 2' (Protocol in workflow.md)
+## Phase 2: Core Implementation [checkpoint: 8158e53]
+- [x] Task: `PythonGenerator` クラスの実装 (3574777)
+    - [x] `CPlusPlusGenerator` をベースに `src/generator/python.ts` を作成 (3574777)
+- [x] Task: `PythonGenerator` のユニットテストの実装 (3574777)
+    - [x] `src/generator/python.test.ts` を作成 (3574777)
+    - [x] 様々な入力形式に対して Python コードが正しく生成されることを確認 (3574777)
+- [x] Task: Conductor - User Manual Verification 'Phase 2' (8158e53)
 
 ## Phase 3: Integration
 - [ ] Task: 言語選択をサポートするための `gen2.ts` の更新
