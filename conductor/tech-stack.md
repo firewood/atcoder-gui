@@ -17,8 +17,8 @@
 
 ## 4. Configuration & Templating
 - **Config Management:** [conf](https://github.com/sindresorhus/conf)
-- **Data Format:** [JSON5](https://json5.org/)
-- **Templating Engine:** [Nunjucks](https://mozilla.github.io/nunjucks/)
+- **Data Format:** [JSON5](https://json5.org/) (Used for language-specific generator configs)
+- **Templating Engine:** [Nunjucks](https://mozilla.github.io/nunjucks/) (Used for code generation templates for C++ and Python)
 
 ## 5. Deployment & CI/CD
 - **CI/CD:** [GitHub Actions](https://github.com/features/actions)
