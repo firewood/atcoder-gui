@@ -1,0 +1,8 @@
+{
+  "track_id": "gen2_home_support_20260317",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-17T21:40:00Z",
+  "updated_at": "2026-03-17T21:40:00Z",
+  "description": "gen2コマンドでも ~ をサポートしたい"
+}
