@@ -13,3 +13,6 @@
 - [x] Task: Update `src/main.ts` to use `expandHomeDir` for the `cd` command. (a8d1b97)
 - [x] Task: Add integration test for the `cd` command in `src/tests/scenario.test.ts` or similar. (daa2fcc)
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Integration into CLI' (Protocol in workflow.md) (5778d98)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions (d3716a6)
