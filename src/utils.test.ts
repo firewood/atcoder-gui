@@ -1,10 +1,36 @@
 import { describe, test, expect } from 'vitest';
-import { formatLWPDate } from './utils.js';
+import { formatLWPDate, expandHomeDir } from './utils.js';
+import os from 'os';
+import path from 'path';
 
 /**
  * Test suite for utils.ts
  * Tests utility functions used throughout the application
  */
+
+describe('expandHomeDir', () => {
+  const home = os.homedir();
+
+  test('should expand ~ to home directory', () => {
+    expect(expandHomeDir('~')).toBe(home);
+  });
+
+  test('should expand ~/path to home directory with path', () => {
+    expect(expandHomeDir('~/documents')).toBe(path.join(home, 'documents'));
+  });
+
+  test('should NOT expand path/~/other', () => {
+    expect(expandHomeDir('documents/~/other')).toBe('documents/~/other');
+  });
+
+  test('should NOT expand absolute paths', () => {
+    expect(expandHomeDir('/usr/bin')).toBe('/usr/bin');
+  });
+
+  test('should NOT expand regular relative paths', () => {
+    expect(expandHomeDir('src/main.ts')).toBe('src/main.ts');
+  });
+});
 
 describe('formatLWPDate', () => {
   test('should format date in Python LWPCookieJar format', () => {

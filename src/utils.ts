@@ -2,6 +2,22 @@
  * Utility functions for atcoder-gui
  */
 
+import os from 'os';
+import path from 'path';
+
+/**
+ * Expand home directory (~) in a path
+ * @param filepath Path to expand
+ * @returns Path with ~ replaced by home directory
+ */
+export function expandHomeDir(filepath: string): string {
+  if (filepath === '~' || filepath.startsWith('~/')) {
+    const home = os.homedir();
+    return filepath === '~' ? home : path.join(home, filepath.slice(2));
+  }
+  return filepath;
+}
+
 /**
  * Format date for Python LWPCookieJar format: "2026-05-22 13:20:38Z"
  * @param date Date object to format
