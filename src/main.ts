@@ -10,6 +10,7 @@ import { CookieExporter } from "./cookie-export.js";
 import { GenManager } from "./gen.js";
 import { Gen2Manager } from "./gen2.js";
 import { ProblemManager } from "./problem.js";
+import { expandHomeDir } from "./utils.js";
 import { execSync } from "child_process";
 
 export class AtCoderGUI {
@@ -249,8 +250,9 @@ export class AtCoderGUI {
         case "cd":
           {
             const dir = args.length < 2 ? this.getConfig().workspaceDir : args[1];
+            const expandedDir = expandHomeDir(dir);
             try {
-              process.chdir(dir);
+              process.chdir(expandedDir);
               console.log(`Current directory: ${process.cwd()}`);
             } catch (err) {
               console.error(`Error changing directory: ${err}`);
