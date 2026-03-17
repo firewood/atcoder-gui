@@ -249,7 +249,7 @@ export class AtCoderGUI {
 
         case "cd":
           {
-            const dir = args.length < 2 ? this.getConfig().workspaceDir : args[1];
+            const dir = args.length < 2 ? (this.getConfig().workspaceDir || "~") : args[1];
             const expandedDir = expandHomeDir(dir);
             try {
               process.chdir(expandedDir);
