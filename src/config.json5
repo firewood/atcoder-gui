@@ -20,6 +20,9 @@
 
   testCommand: 'make test',
 
-  // Default build command for C++
-  build_command_cpp: 'g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main',
+  // Default build commands
+  buildCommand: {
+    // Default build command for C++
+    cpp: 'g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main',
+  },
 }

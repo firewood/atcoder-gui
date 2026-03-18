@@ -26,7 +26,7 @@ export class BuildManager {
 
       if (codeFilename.endsWith(".cpp")) {
         const buildCommand =
-          this.configManager.getConfig().build_command_cpp ||
+          this.configManager.getConfig().buildCommand?.cpp ||
           "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main";
         console.log(`Executing build command: ${buildCommand}`);
         try {
