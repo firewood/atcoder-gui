@@ -76,7 +76,6 @@ export class Gen2Manager {
       let results = [];
       for (const problem of problems) {
         const problemDirPath = path.join(contestDirPath, problem.alphabet);
-
         if (!fs.existsSync(problemDirPath)) {
           fs.mkdirSync(problemDirPath, { recursive: true });
         }
