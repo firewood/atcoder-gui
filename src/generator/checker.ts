@@ -33,7 +33,7 @@ async function main() {
     const html = await fetchProblemContent(taskId);
 
     // Pipeline
-    const { multipleCases, queryType, variables, formatTree } =
+    const { multipleCases, queryType, samples, variables, formatTree } =
       generateParseResult(html, taskId, url);
 
     const parseResult = JSON.stringify(
@@ -44,6 +44,7 @@ async function main() {
         url,
         multipleCases,
         queryType,
+        samples,
         variables,
       },
       null,

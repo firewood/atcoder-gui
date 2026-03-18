@@ -1,4 +1,4 @@
-import { parseHtml } from "../analyzer/html-parser.js";
+import { parseHtml, Sample } from "../analyzer/html-parser.js";
 import { Lexer } from "../analyzer/lexer.js";
 import { Parser } from "../analyzer/parser.js";
 import { Analyzer } from "../analyzer/analyzer.js";
@@ -13,6 +13,7 @@ export interface ParseResult {
   url: string;
   multipleCases: boolean;
   queryType: boolean;
+  samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
 }
@@ -85,6 +86,7 @@ export function generateParseResult(
     url,
     multipleCases,
     queryType,
+    samples,
     variables,
     formatTree,
   };
