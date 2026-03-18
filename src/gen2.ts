@@ -7,6 +7,7 @@ import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
+import { expandHomeDir } from "./utils.js";
 
 export class Gen2Manager {
   private browserManager: BrowserManager;
@@ -57,11 +58,12 @@ export class Gen2Manager {
 
       console.log(`Found ${problems.length} problems.`);
 
-      const workspaceDir = this.configManager.getConfig().workspaceDir;
+      let workspaceDir = this.configManager.getConfig().workspaceDir;
       if (!workspaceDir) {
         console.error("Error: workspaceDir is not configured.");
         return;
       }
+      workspaceDir = expandHomeDir(workspaceDir);
 
       const contestDirPath = path.join(workspaceDir, contestId);
       if (!fs.existsSync(contestDirPath)) {
