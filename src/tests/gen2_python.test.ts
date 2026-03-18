@@ -4,6 +4,7 @@ import { BrowserManager } from '../browser';
 import { ConfigManager } from '../config';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 describe('Gen2Manager Python Integration', () => {
   let browserManager: BrowserManager;
@@ -83,5 +84,29 @@ describe('Gen2Manager Python Integration', () => {
     const metadata = JSON.parse(metadataCall[1]);
     expect(metadata.code_filename).toBe('main.cpp');
     expect(metadata.lang).toBe('cpp');
+  });
+
+  it('should generate python code in expanded home directory', async () => {
+    const contestId = 'abc999';
+    const mockHomeDir = '/mock/home';
+    vi.spyOn(os, 'homedir').mockReturnValue(mockHomeDir);
+    vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: '~/atcoder' });
+
+    const mockHtml = `
+      <table>
+        <tbody>
+          <tr>
+            <td><a href="/contests/abc999/tasks/abc999_a">A</a></td>
+            <td><a href="/contests/abc999/tasks/abc999_a">Problem A</a></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+
+    await gen2Manager.run(['gen2', contestId, '--lang', 'python']);
+
+    const expectedPath = path.join(mockHomeDir, 'atcoder', contestId, 'A');
+    expect(gen2Manager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python');
   });
 });
