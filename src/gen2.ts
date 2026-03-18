@@ -58,7 +58,10 @@ export class Gen2Manager {
 
       console.log(`Found ${problems.length} problems.`);
 
-      let workspaceDir = this.configManager.getConfig().workspaceDir;
+      const config = this.configManager.getConfig();
+      const createContestDir = config.create_contest_directory ?? true;
+
+      let workspaceDir = config.workspaceDir;
       if (!workspaceDir) {
         console.error("Error: workspaceDir is not configured.");
         return;
@@ -66,13 +69,16 @@ export class Gen2Manager {
       workspaceDir = expandHomeDir(workspaceDir);
 
       const contestDirPath = path.join(workspaceDir, contestId);
-      if (!fs.existsSync(contestDirPath)) {
+      if (createContestDir && !fs.existsSync(contestDirPath)) {
         fs.mkdirSync(contestDirPath, { recursive: true });
       }
 
       let results = [];
       for (const problem of problems) {
-        const problemDirPath = path.join(contestDirPath, problem.alphabet);
+        const problemDirPath = createContestDir
+          ? path.join(contestDirPath, problem.alphabet)
+          : path.join(workspaceDir, problem.id);
+
         if (!fs.existsSync(problemDirPath)) {
           fs.mkdirSync(problemDirPath, { recursive: true });
         }
@@ -113,7 +119,7 @@ export class Gen2Manager {
         console.log(`  Problem ${result.id}: ${result.success ? "SUCCEEDED" : "FAILED"}`);
       }
 
-      process.chdir(contestDirPath);
+      process.chdir(createContestDir ? contestDirPath : workspaceDir);
       console.log(`Current directory: ${process.cwd()}`);
     } else {
       const url = this.browserManager.getCurrentUrl();

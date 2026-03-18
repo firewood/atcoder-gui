@@ -15,6 +15,9 @@
 
   workspaceDir: '~/atcoder',
 
+  // Whether to create a directory for each contest
+  create_contest_directory: true,
+
   testCommand: 'make test',
 
   // Default build command for C++
