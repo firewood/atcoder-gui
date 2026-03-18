@@ -11,8 +11,12 @@
   windowSize: {
     width: 1200,
     height: 900,
+  },
 
   workspaceDir: '~/atcoder',
 
   testCommand: 'make test',
-}}
+
+  // Default build command for C++
+  build_command_cpp: 'g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main',
+}

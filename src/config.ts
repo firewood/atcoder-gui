@@ -16,6 +16,7 @@ export interface AppConfig {
   };
   workspaceDir?: string;
   testCommand?: string;
+  build_command_cpp?: string;
 }
 
 export class ConfigManager {
