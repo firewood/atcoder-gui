@@ -10,6 +10,7 @@ import { CookieExporter } from "./cookie-export.js";
 import { GenManager } from "./gen.js";
 import { Gen2Manager } from "./gen2.js";
 import { BuildManager } from "./build.js";
+import { TestManager } from "./test.js";
 import { ProblemManager } from "./problem.js";
 import { expandHomeDir } from "./utils.js";
 import { execSync } from "child_process";
@@ -22,6 +23,7 @@ export class AtCoderGUI {
   private genManager: GenManager;
   private gen2Manager: Gen2Manager;
   private buildManager: BuildManager;
+  private testManager: TestManager;
   private problemManager: ProblemManager;
   private rl: readline.Interface | null = null;
 
@@ -33,6 +35,7 @@ export class AtCoderGUI {
     this.genManager = new GenManager(this.browserManager);
     this.gen2Manager = new Gen2Manager(this.browserManager, this.configManager);
     this.buildManager = new BuildManager(this.configManager);
+    this.testManager = new TestManager(this.configManager, this.buildManager);
     this.problemManager = new ProblemManager(this.browserManager);
   }
 
@@ -246,16 +249,7 @@ export class AtCoderGUI {
           }
         // eslint-disable-next-line no-fallthrough
         case "test":
-          {
-            const testCommand = this.getConfig().testCommand;
-            if (testCommand) {
-              try {
-                execSync(testCommand, { encoding: "utf-8", stdio: "inherit" });
-              } catch (_) {}
-            } else {
-              console.log("Error: testCommand is not configured in config.json5");
-            }
-          }
+          await this.testManager.run(args);
           break;
 
         case "cd":
