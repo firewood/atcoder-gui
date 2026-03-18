@@ -13,6 +13,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Core Utility Integration (TDD)' (Protocol in workflow.md) [checkpoint: 1628b51]
 
 ## Phase 3: Integration and Final Verification
-- [ ] Task: Verify that both C++ and Python code generation correctly handle the expanded `workspaceDir`.
-- [ ] Task: Run the complete test suite to ensure no side effects or regressions in other areas.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Integration and Final Testing' (Protocol in workflow.md)
+- [x] Task: Verify that both C++ and Python code generation correctly handle the expanded `workspaceDir`. (734df54)
+- [x] Task: Run the complete test suite to ensure no side effects or regressions in other areas.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Integration and Final Testing' (Protocol in workflow.md) [checkpoint: 1eeb614]
