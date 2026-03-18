@@ -16,7 +16,9 @@ export interface AppConfig {
   };
   workspaceDir?: string;
   testCommand?: string;
-  build_command_cpp?: string;
+  buildCommand?: {
+    cpp?: string;
+  };
   create_contest_directory?: boolean;
 }
 
