@@ -58,15 +58,18 @@ export class Gen2Manager {
 
       console.log(`Found ${problems.length} problems.`);
 
-      let workspaceDir = this.configManager.getConfig().workspaceDir;
+      const config = this.configManager.getConfig();
+      const createContestDir = config.create_contest_directory ?? true;
+
+      let workspaceDir = config.workspaceDir;
       if (!workspaceDir) {
         console.error("Error: workspaceDir is not configured.");
         return;
       }
       workspaceDir = expandHomeDir(workspaceDir);
 
-      const contestDirPath = path.join(workspaceDir, contestId);
-      if (!fs.existsSync(contestDirPath)) {
+      const contestDirPath = createContestDir ? path.join(workspaceDir, contestId) : workspaceDir;
+      if (createContestDir && !fs.existsSync(contestDirPath)) {
         fs.mkdirSync(contestDirPath, { recursive: true });
       }
 
