@@ -23,6 +23,7 @@ describe('Gen2Manager Python Integration', () => {
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
     vi.spyOn(fs, 'writeFileSync').mockReturnValue(undefined);
+    vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
     
     // Mock generateCode to avoid hitting real AtCoder or complex pipeline logic in this test
     vi.spyOn(gen2Manager, 'generateCode').mockResolvedValue(true);

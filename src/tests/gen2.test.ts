@@ -18,11 +18,12 @@ describe('Gen2Manager', () => {
     gen2Manager = new Gen2Manager(browserManager, configManager);
 
     // Mock dependencies
-    vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
+    vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue(''); // Placeholder HTML
     vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: './temp' });
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
-    vi.spyOn(fs, 'writeFileSync').mockReturnValue(undefined);
+    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined); // Mock mkdirSync to do nothing
+    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined); // Mock writeFileSync
+    vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
   });
 
   it('should create directories and metadata.json for a contest', async () => {
