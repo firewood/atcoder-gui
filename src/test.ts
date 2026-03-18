@@ -32,7 +32,7 @@ export class TestManager {
 
       let execCommand = "";
       if (codeFilename.endsWith(".cpp")) {
-        execCommand = "./main";
+        execCommand = process.platform === "win32" ? "main" : "./main";
       } else {
         console.log(`Testing not supported for ${codeFilename}`);
         return;
