@@ -1,20 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Gen2Manager } from '../gen2';
+import { GenManager } from '../gen';
 import { BrowserManager } from '../browser';
 import { ConfigManager } from '../config';
 import fs from 'fs';
 import path from 'path';
 
-describe('Gen2Manager with create_contest_directory config', () => {
+describe('GenManager with create_contest_directory config', () => {
   let browserManager: BrowserManager;
   let configManager: ConfigManager;
-  let gen2Manager: Gen2Manager;
+  let genManager: GenManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
-    gen2Manager = new Gen2Manager(browserManager, configManager);
+    genManager = new GenManager(browserManager, configManager);
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
@@ -51,7 +51,7 @@ describe('Gen2Manager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     // Should NOT create contest directory
     const contestPath = path.join(workspaceDir, contestId);
@@ -106,7 +106,7 @@ describe('Gen2Manager with create_contest_directory config', () => {
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['in_1.txt', 'out_1.txt', 'main.cpp', 'metadata.json'] as any);
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
 
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     // Should delete old sample files
     expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining('in_1.txt'));
@@ -142,7 +142,7 @@ describe('Gen2Manager with create_contest_directory config', () => {
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     // Should NOT delete any files when create_contest_directory is true
     expect(unlinkSpy).not.toHaveBeenCalled();

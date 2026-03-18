@@ -8,7 +8,6 @@ import { ConfigManager, AppConfig } from "./config.js";
 import { SubmitManager } from "./submit.js";
 import { CookieExporter } from "./cookie-export.js";
 import { GenManager } from "./gen.js";
-import { Gen2Manager } from "./gen2.js";
 import { BuildManager } from "./build.js";
 import { TestManager } from "./test.js";
 import { ProblemManager } from "./problem.js";
@@ -21,7 +20,6 @@ export class AtCoderGUI {
   private submitManager: SubmitManager;
   private cookieExporter: CookieExporter;
   private genManager: GenManager;
-  private gen2Manager: Gen2Manager;
   private buildManager: BuildManager;
   private testManager: TestManager;
   private problemManager: ProblemManager;
@@ -32,8 +30,7 @@ export class AtCoderGUI {
     this.configManager = new ConfigManager();
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
-    this.genManager = new GenManager(this.browserManager);
-    this.gen2Manager = new Gen2Manager(this.browserManager, this.configManager);
+    this.genManager = new GenManager(this.browserManager, this.configManager);
     this.buildManager = new BuildManager(this.configManager);
     this.testManager = new TestManager(this.configManager, this.buildManager);
     this.problemManager = new ProblemManager(this.browserManager);
@@ -219,14 +216,6 @@ export class AtCoderGUI {
           await this.genManager.run(args);
           break;
 
-        case "gen2":
-          await this.gen2Manager.run(args);
-          break;
-
-        case "new":
-          await this.genManager.runAtcoderCli(args);
-          break;
-
         case "cp":
         case "copy":
         case "del":
@@ -283,9 +272,7 @@ Available commands:
   open <URL>           Open a URL in the browser
   config               Show current configuration
   submit <filename>    Submit solution to AtCoder
-  gen <contest-id>     Generate sample cases using atcoder-tools
-  gen2                 Generate main.cpp from current problem page
-  new <contest-id>     Generate sample cases using atcoder-cli
+  gen <contest-id>     Generate main.cpp from current problem page or contest ID
   make <args>          Execute make command
   test                 Execute test command
   build                Build the source code specified in metadata.json
