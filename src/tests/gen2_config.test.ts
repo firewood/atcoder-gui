@@ -57,8 +57,8 @@ describe('Gen2Manager with create_contest_directory config', () => {
     const contestPath = path.join(workspaceDir, contestId);
     expect(fs.mkdirSync).not.toHaveBeenCalledWith(contestPath, { recursive: true });
 
-    // Should create problem directory directly under workspaceDir using problem.id
-    const problemDirPath = path.join(workspaceDir, 'abc123_a');
+    // Should create problem directory directly under workspaceDir using problem.alphabet
+    const problemDirPath = path.join(workspaceDir, 'A');
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemDirPath, { recursive: true });
 
     // metadata.json should be in the problem directory

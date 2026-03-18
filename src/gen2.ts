@@ -68,16 +68,14 @@ export class Gen2Manager {
       }
       workspaceDir = expandHomeDir(workspaceDir);
 
-      const contestDirPath = path.join(workspaceDir, contestId);
+      const contestDirPath = createContestDir ? path.join(workspaceDir, contestId) : workspaceDir;
       if (createContestDir && !fs.existsSync(contestDirPath)) {
         fs.mkdirSync(contestDirPath, { recursive: true });
       }
 
       let results = [];
       for (const problem of problems) {
-        const problemDirPath = createContestDir
-          ? path.join(contestDirPath, problem.alphabet)
-          : path.join(workspaceDir, problem.id);
+        const problemDirPath = path.join(contestDirPath, problem.alphabet);
 
         if (!fs.existsSync(problemDirPath)) {
           fs.mkdirSync(problemDirPath, { recursive: true });
@@ -119,7 +117,7 @@ export class Gen2Manager {
         console.log(`  Problem ${result.id}: ${result.success ? "SUCCEEDED" : "FAILED"}`);
       }
 
-      process.chdir(createContestDir ? contestDirPath : workspaceDir);
+      process.chdir(contestDirPath);
       console.log(`Current directory: ${process.cwd()}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
