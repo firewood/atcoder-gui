@@ -9,6 +9,7 @@ import { SubmitManager } from "./submit.js";
 import { CookieExporter } from "./cookie-export.js";
 import { GenManager } from "./gen.js";
 import { Gen2Manager } from "./gen2.js";
+import { BuildManager } from "./build.js";
 import { ProblemManager } from "./problem.js";
 import { expandHomeDir } from "./utils.js";
 import { execSync } from "child_process";
@@ -20,6 +21,7 @@ export class AtCoderGUI {
   private cookieExporter: CookieExporter;
   private genManager: GenManager;
   private gen2Manager: Gen2Manager;
+  private buildManager: BuildManager;
   private problemManager: ProblemManager;
   private rl: readline.Interface | null = null;
 
@@ -30,6 +32,7 @@ export class AtCoderGUI {
     this.cookieExporter = new CookieExporter(this.browserManager);
     this.genManager = new GenManager(this.browserManager);
     this.gen2Manager = new Gen2Manager(this.browserManager, this.configManager);
+    this.buildManager = new BuildManager(this.configManager);
     this.problemManager = new ProblemManager(this.browserManager);
   }
 
@@ -37,9 +40,13 @@ export class AtCoderGUI {
    * Initialize the application
    */
   async init(): Promise<void> {
-    await this.browserManager.launch(this.getConfig());
-    const url = this.getConfig().defaultUrl || "https://atcoder.jp";
-    await this.browserManager.openUrl(url);
+    try {
+      await this.browserManager.launch(this.getConfig());
+      const url = this.getConfig().defaultUrl || "https://atcoder.jp";
+      await this.browserManager.openUrl(url);
+    } catch (error) {
+      console.warn("Warning: Failed to launch browser. Some commands may not work.", error);
+    }
   }
 
   /**
@@ -201,6 +208,10 @@ export class AtCoderGUI {
           }
           break;
 
+        case "build":
+          await this.buildManager.run(args);
+          break;
+
         case "gen":
           await this.genManager.run(args);
           break;
@@ -283,6 +294,7 @@ Available commands:
   new <contest-id>     Generate sample cases using atcoder-cli
   make <args>          Execute make command
   test                 Execute test command
+  build                Build the source code specified in metadata.json
   export <target>      Export data to external tools
   cd <directory>       Change current directory
   close                Close the browser (if running)
