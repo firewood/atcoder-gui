@@ -4,6 +4,7 @@ import { BrowserManager } from '../browser';
 import { ConfigManager } from '../config';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 describe('Gen2Manager', () => {
   let browserManager: BrowserManager;
@@ -11,6 +12,7 @@ describe('Gen2Manager', () => {
   let gen2Manager: Gen2Manager;
 
   beforeEach(() => {
+    vi.clearAllMocks();
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
     gen2Manager = new Gen2Manager(browserManager, configManager);
@@ -104,5 +106,33 @@ describe('Gen2Manager', () => {
         2,
       ),
     );
+  });
+
+  it('should expand home directory (~) in workspaceDir', async () => {
+    const contestId = 'abc999';
+    const mockHomeDir = '/mock/home';
+    vi.spyOn(os, 'homedir').mockReturnValue(mockHomeDir);
+    vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: '~/atcoder' });
+
+    const mockHtml = `
+      <html>
+        <body>
+          <table>
+            <tbody>
+              <tr>
+                <td><a href="/contests/abc999/tasks/abc999_a">A</a></td>
+                <td><a href="/contests/abc999/tasks/abc999_a">Problem A</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+
+    await gen2Manager.run(['gen2', contestId]);
+
+    const expectedPath = path.join(mockHomeDir, 'atcoder', contestId);
+    expect(fs.mkdirSync).toHaveBeenCalledWith(expectedPath, { recursive: true });
   });
 });
