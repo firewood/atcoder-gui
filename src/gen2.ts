@@ -143,11 +143,8 @@ export class Gen2Manager {
     try {
       const html = await this.browserManager.fetchRawHtml(url);
       if (html) {
-        const { multipleCases, queryType, variables, formatTree } = generateParseResult(
-          html,
-          taskId,
-          url,
-        );
+        const { multipleCases, queryType, samples, variables, formatTree } =
+          generateParseResult(html, taskId, url);
 
         if (!formatTree) throw new Error("Format tree is undefined");
 
@@ -168,6 +165,16 @@ export class Gen2Manager {
 
         fs.writeFileSync(path.join(savePath, filename), code);
         console.log(`Saved ${lang} code to ${filename}`);
+
+        samples.forEach((sample, index) => {
+          const inFilename = `in_${index + 1}.txt`;
+          const outFilename = `out_${index + 1}.txt`;
+          fs.writeFileSync(path.join(savePath, inFilename), sample.input);
+          fs.writeFileSync(path.join(savePath, outFilename), sample.output);
+          console.log(`Saved sample input to ${inFilename}`);
+          console.log(`Saved sample output to ${outFilename}`);
+        });
+
         return true;
       }
     } catch (e) {
