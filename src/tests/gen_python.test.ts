@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Gen2Manager } from '../gen2';
+import { GenManager } from '../gen';
 import { BrowserManager } from '../browser';
 import { ConfigManager } from '../config';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-describe('Gen2Manager Python Integration', () => {
+describe('GenManager Python Integration', () => {
   let browserManager: BrowserManager;
   let configManager: ConfigManager;
-  let gen2Manager: Gen2Manager;
+  let genManager: GenManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
-    gen2Manager = new Gen2Manager(browserManager, configManager);
+    genManager = new GenManager(browserManager, configManager);
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
@@ -26,7 +26,7 @@ describe('Gen2Manager Python Integration', () => {
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
     
     // Mock generateCode to avoid hitting real AtCoder or complex pipeline logic in this test
-    vi.spyOn(gen2Manager, 'generateCode').mockResolvedValue(true);
+    vi.spyOn(genManager, 'generateCode').mockResolvedValue(true);
   });
 
   it('should use main.py and python lang in metadata when --lang python is provided', async () => {
@@ -44,7 +44,7 @@ describe('Gen2Manager Python Integration', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId, '--lang', 'python']);
+    await genManager.run(['gen', contestId, '--lang', 'python']);
 
     // Check if metadata.json was written with python settings
     const problemAPath = path.join('./temp', contestId, 'A');
@@ -58,7 +58,7 @@ describe('Gen2Manager Python Integration', () => {
     expect(metadata.lang).toBe('python');
     
     // Check if generateCode was called with 'python' lang
-    expect(gen2Manager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python');
   });
 
   it('should use main.cpp by default', async () => {
@@ -76,7 +76,7 @@ describe('Gen2Manager Python Integration', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     const metadataCall = (fs.writeFileSync as any).mock.calls.find((call: any[]) => 
       call[0].endsWith('metadata.json')
@@ -105,9 +105,9 @@ describe('Gen2Manager Python Integration', () => {
     `;
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId, '--lang', 'python']);
+    await genManager.run(['gen', contestId, '--lang', 'python']);
 
     const expectedPath = path.join(mockHomeDir, 'atcoder', contestId, 'A');
-    expect(gen2Manager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python');
   });
 });

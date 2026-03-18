@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { Gen2Manager } from '../gen2';
+import { GenManager } from '../gen';
 import { BrowserManager } from '../browser';
 import { ConfigManager } from '../config';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-describe('Gen2Manager', () => {
+describe('GenManager', () => {
   let browserManager: BrowserManager;
   let configManager: ConfigManager;
-  let gen2Manager: Gen2Manager;
+  let genManager: GenManager;
 
   beforeEach(() => {
     vi.clearAllMocks();
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
-    gen2Manager = new Gen2Manager(browserManager, configManager);
+    genManager = new GenManager(browserManager, configManager);
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue(''); // Placeholder HTML
@@ -49,7 +49,7 @@ describe('Gen2Manager', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     const contestPath = path.join('./temp', contestId);
     expect(fs.mkdirSync).toHaveBeenCalledWith(contestPath, { recursive: true });
@@ -131,7 +131,7 @@ describe('Gen2Manager', () => {
     `;
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await gen2Manager.run(['gen2', contestId]);
+    await genManager.run(['gen', contestId]);
 
     const expectedPath = path.join(mockHomeDir, 'atcoder', contestId);
     expect(fs.mkdirSync).toHaveBeenCalledWith(expectedPath, { recursive: true });

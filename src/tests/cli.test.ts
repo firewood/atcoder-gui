@@ -27,11 +27,9 @@ vi.mock('../cookie-export.js', () => ({
 }));
 
 vi.mock('../gen.js', () => ({
-  GenManager: class {}
-}));
-
-vi.mock('../gen2.js', () => ({
-  Gen2Manager: class {}
+  GenManager: class {
+    run = vi.fn().mockResolvedValue(undefined);
+  }
 }));
 
 vi.mock('../problem.js', () => ({
