@@ -112,6 +112,9 @@ export class Gen2Manager {
       for (const result of results) {
         console.log(`  Problem ${result.id}: ${result.success ? "SUCCEEDED" : "FAILED"}`);
       }
+
+      process.chdir(contestDirPath);
+      console.log(`Current directory: ${process.cwd()}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
       const match = url?.match(/\w+:\/\/atcoder\.jp\/contests\/(\w+)\/tasks\/(\w+)/);
