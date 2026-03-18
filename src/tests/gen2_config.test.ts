@@ -71,6 +71,51 @@ describe('Gen2Manager with create_contest_directory config', () => {
     expect(process.chdir).toHaveBeenCalledWith(workspaceDir);
   });
 
+  it('should delete existing sample files when create_contest_directory is false', async () => {
+    const contestId = 'abc123';
+    const workspaceDir = './temp';
+    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+      workspaceDir: workspaceDir,
+      create_contest_directory: false
+    });
+
+    const mockHtml = `
+      <html>
+        <body>
+          <div id="task-statement">
+            <span class="lang-en">
+              <div id="pre-field-input">
+                <pre>N</pre>
+              </div>
+            </span>
+          </div>
+          <table>
+            <tbody>
+              <tr>
+                <td><a href="/contests/abc123/tasks/abc123_a">A</a></td>
+                <td><a href="/contests/abc123/tasks/abc123_a">Problem A</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
+    vi.spyOn(fs, 'readdirSync').mockReturnValue(['in_1.txt', 'out_1.txt', 'main.cpp', 'metadata.json'] as any);
+    const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
+
+    await gen2Manager.run(['gen2', contestId]);
+
+    // Should delete old sample files
+    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining('in_1.txt'));
+    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining('out_1.txt'));
+    // Should NOT delete other files
+    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining('main.cpp'));
+    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining('metadata.json'));
+  });
+
   it('should follow default behavior when create_contest_directory is true', async () => {
     const contestId = 'abc123';
     const workspaceDir = './temp';
@@ -96,7 +141,11 @@ describe('Gen2Manager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
+    const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
     await gen2Manager.run(['gen2', contestId]);
+
+    // Should NOT delete any files when create_contest_directory is true
+    expect(unlinkSpy).not.toHaveBeenCalled();
 
     // Should create contest directory
     const contestPath = path.join(workspaceDir, contestId);

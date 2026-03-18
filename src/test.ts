@@ -39,7 +39,7 @@ export class TestManager {
       }
 
       const files = fs.readdirSync(".");
-      const inputFiles = files.filter(f => /^in_.\.txt$/.test(f)).sort();
+      const inputFiles = files.filter(f => /^in_.+\.txt$/.test(f)).sort();
 
       if (inputFiles.length === 0) {
         console.log("No test cases (in_?.txt) found.");
@@ -47,7 +47,7 @@ export class TestManager {
       }
 
       for (const inFile of inputFiles) {
-        const testId = inFile.match(/^in_(.)\.txt$/)?.[1];
+        const testId = inFile.match(/^in_(.+)\.txt$/)?.[1];
         const outFile = `out_${testId}.txt`;
 
         if (!fs.existsSync(outFile)) {

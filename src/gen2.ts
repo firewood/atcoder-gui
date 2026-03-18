@@ -140,6 +140,19 @@ export class Gen2Manager {
     savePath: string,
     lang: string = "cpp",
   ): Promise<boolean> {
+    const config = this.configManager.getConfig();
+    const createContestDir = config.create_contest_directory ?? true;
+
+    if (!createContestDir && fs.existsSync(savePath)) {
+      const files = fs.readdirSync(savePath);
+      for (const file of files) {
+        if (/^(in|out)_.*\.txt$/.test(file)) {
+          fs.unlinkSync(path.join(savePath, file));
+          console.log(`Deleted old sample file: ${file}`);
+        }
+      }
+    }
+
     const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
 
     await new Promise((_) => setTimeout(_, 500));
