@@ -118,6 +118,7 @@ export class GenManager {
 
       process.chdir(contestDirPath);
       console.log(`Current directory: ${process.cwd()}`);
+      await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
       const match = url?.match(/\w+:\/\/atcoder\.jp\/contests\/(\w+)\/tasks\/(\w+)/);

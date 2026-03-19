@@ -19,6 +19,7 @@ describe('GenManager Python Integration', () => {
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
+    vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
     vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: './temp' });
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
