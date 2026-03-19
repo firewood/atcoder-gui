@@ -10,18 +10,55 @@ describe('GenManager with create_contest_directory config', () => {
   let configManager: ConfigManager;
   let genManager: GenManager;
 
+  const mockProblemPage = `
+    <html>
+      <body>
+        <section>
+          <h3>Input Format</h3><pre>N</pre>
+        </section>
+        <section>
+          <h3>Sample Input 1</h3><pre>1</pre>
+        </section>
+        <section>
+          <h3>Sample Output 1</h3><pre>1</pre>
+        </section>
+      </body>
+    </html>
+  `;
+
+  const mockCppConfig = JSON.stringify({
+    indent_width: 1,
+    indent_type: "tab",
+    type: { int: "long long" },
+    default: { int: "0" },
+    arg: { int: "{name}" },
+    declare: { int: "long long {name};" },
+    input: { int: "std::cin >> {name};" },
+    loop: { header: "for", footer: "}" }
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock fs before anything else
+    vi.spyOn(fs, 'existsSync').mockImplementation(() => true);
+    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
+    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
+        if (p.toString().endsWith('.json5')) return mockCppConfig;
+        if (p.toString().endsWith('.njk')) return '{{ input_part }}';
+        if (p.toString().includes('session.json')) return '{}';
+        return '';
+    });
+    vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
+
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
     genManager = new GenManager(browserManager, configManager);
 
-    // Mock dependencies
+    // Mock other dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
     vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
-    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
-    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
     // Suppress console.log
     vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -50,7 +87,19 @@ describe('GenManager with create_contest_directory config', () => {
       </html>
     `;
 
-    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    (browserManager.fetchRawHtml as any).mockImplementation((url: string) => {
+      if (url.includes('/tasks/')) {
+        return Promise.resolve(mockProblemPage);
+      }
+      return Promise.resolve(mockHtml);
+    });
+
+    // Mock existsSync specifically for this test's expectations
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
+      if (p.toString() === path.join(workspaceDir, contestId)) return false;
+      if (p.toString().endsWith('A')) return false;
+      return true;
+    });
 
     await genManager.run(['gen', contestId]);
 
@@ -83,13 +132,6 @@ describe('GenManager with create_contest_directory config', () => {
     const mockHtml = `
       <html>
         <body>
-          <div id="task-statement">
-            <span class="lang-en">
-              <div id="pre-field-input">
-                <pre>N</pre>
-              </div>
-            </span>
-          </div>
           <table>
             <tbody>
               <tr>
@@ -102,7 +144,13 @@ describe('GenManager with create_contest_directory config', () => {
       </html>
     `;
 
-    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    (browserManager.fetchRawHtml as any).mockImplementation((url: string) => {
+      if (url.includes('/tasks/')) {
+        return Promise.resolve(mockProblemPage);
+      }
+      return Promise.resolve(mockHtml);
+    });
+
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['in_1.txt', 'out_1.txt', 'main.cpp', 'metadata.json'] as any);
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
@@ -140,7 +188,18 @@ describe('GenManager with create_contest_directory config', () => {
       </html>
     `;
 
-    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    (browserManager.fetchRawHtml as any).mockImplementation((url: string) => {
+      if (url.includes('/tasks/')) {
+        return Promise.resolve(mockProblemPage);
+      }
+      return Promise.resolve(mockHtml);
+    });
+
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
+        if (p.toString() === path.join(workspaceDir, contestId)) return false;
+        if (p.toString().endsWith('A')) return false;
+        return true;
+    });
 
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
     await genManager.run(['gen', contestId]);

@@ -27,7 +27,21 @@ describe('GenManager Python Integration', () => {
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
     
     // Mock generateCode to avoid hitting real AtCoder or complex pipeline logic in this test
-    vi.spyOn(genManager, 'generateCode').mockResolvedValue(true);
+    vi.spyOn(genManager, 'generateCode').mockImplementation(async (contestId, taskId, savePath, lang, alphabet) => {
+      const filename = lang === 'python' ? 'main.py' : 'main.cpp';
+      const metadata = {
+        code_filename: filename,
+        judge: { judge_type: 'normal' },
+        lang: lang === 'python' ? 'python' : 'cpp',
+        problem: {
+          alphabet: alphabet || 'A',
+          contest: { contest_id: contestId },
+          problem_id: taskId
+        }
+      };
+      fs.writeFileSync(path.join(savePath, 'metadata.json'), JSON.stringify(metadata, null, 2));
+      return true;
+    });
   });
 
   it('should use main.py and python lang in metadata when --lang python is provided', async () => {
@@ -59,7 +73,7 @@ describe('GenManager Python Integration', () => {
     expect(metadata.lang).toBe('python');
     
     // Check if generateCode was called with 'python' lang
-    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python', 'A');
   });
 
   it('should use main.cpp by default', async () => {
@@ -109,6 +123,6 @@ describe('GenManager Python Integration', () => {
     await genManager.run(['gen', contestId, '--lang', 'python']);
 
     const expectedPath = path.join(mockHomeDir, 'atcoder', contestId, 'A');
-    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python', 'A');
   });
 });

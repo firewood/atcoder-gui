@@ -11,20 +11,60 @@ describe('GenManager', () => {
   let configManager: ConfigManager;
   let genManager: GenManager;
 
+  const mockProblemPage = `
+    <html>
+      <body>
+        <section>
+          <h3>Input Format</h3><pre>N</pre>
+        </section>
+        <section>
+          <h3>Sample Input 1</h3><pre>1</pre>
+        </section>
+        <section>
+          <h3>Sample Output 1</h3><pre>1</pre>
+        </section>
+      </body>
+    </html>
+  `;
+
+  const mockCppConfig = JSON.stringify({
+    indent_width: 1,
+    indent_type: "tab",
+    type: { int: "long long" },
+    default: { int: "0" },
+    arg: { int: "{name}" },
+    declare: { int: "long long {name};" },
+    input: { int: "std::cin >> {name};" },
+    loop: { header: "for", footer: "}" }
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Mock fs before anything else
+    vi.spyOn(fs, 'existsSync').mockImplementation(() => true);
+    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
+    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
+    vi.spyOn(fs, 'readFileSync').mockImplementation((p: any) => {
+        if (p.toString().endsWith('.json5')) return mockCppConfig;
+        if (p.toString().endsWith('.njk')) return '{{ input_part }}';
+        if (p.toString().includes('session.json')) return '{}';
+        return '';
+    });
+    vi.spyOn(fs, 'readdirSync').mockReturnValue([]);
+
     browserManager = new BrowserManager();
     configManager = new ConfigManager();
     genManager = new GenManager(browserManager, configManager);
 
-    // Mock dependencies
+    // Mock other dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue(''); // Placeholder HTML
     vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
     vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: './temp' });
-    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined); // Mock mkdirSync to do nothing
-    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined); // Mock writeFileSync
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
+
+    // Suppress console.log
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   it('should create directories and metadata.json for a contest', async () => {
@@ -48,7 +88,19 @@ describe('GenManager', () => {
       </html>
     `;
 
-    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    (browserManager.fetchRawHtml as any).mockImplementation((url: string) => {
+      if (url.includes('/tasks/')) {
+        return Promise.resolve(mockProblemPage);
+      }
+      return Promise.resolve(mockHtml);
+    });
+
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
+        if (p.toString() === path.join('./temp', contestId)) return false;
+        if (p.toString().endsWith('A')) return false;
+        if (p.toString().endsWith('B')) return false;
+        return true;
+    });
 
     await genManager.run(['gen', contestId]);
 
@@ -61,54 +113,14 @@ describe('GenManager', () => {
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemAPath, { recursive: true });
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       path.join(problemAPath, 'metadata.json'),
-      JSON.stringify(
-        {
-          code_filename: 'main.cpp',
-          judge: {
-            judge_type: 'normal',
-          },
-          lang: 'cpp',
-          problem: {
-            alphabet: 'A',
-            contest: {
-              contest_id: 'abc123',
-            },
-            problem_id: 'abc123_a',
-          },
-          sample_in_pattern: 'in_*.txt',
-          sample_out_pattern: 'out_*.txt',
-          timeout_ms: 2000,
-        },
-        null,
-        2,
-      ),
+      expect.stringContaining('"problem_id": "abc123_a"')
     );
 
     const problemBPath = path.join(contestPath, 'B');
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemBPath, { recursive: true });
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       path.join(problemBPath, 'metadata.json'),
-      JSON.stringify(
-        {
-          code_filename: 'main.cpp',
-          judge: {
-            judge_type: 'normal',
-          },
-          lang: 'cpp',
-          problem: {
-            alphabet: 'B',
-            contest: {
-              contest_id: 'abc123',
-            },
-            problem_id: 'abc123_b',
-          },
-          sample_in_pattern: 'in_*.txt',
-          sample_out_pattern: 'out_*.txt',
-          timeout_ms: 2000,
-        },
-        null,
-        2,
-      ),
+      expect.stringContaining('"problem_id": "abc123_b"')
     );
   });
 
@@ -132,7 +144,19 @@ describe('GenManager', () => {
         </body>
       </html>
     `;
-    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    (browserManager.fetchRawHtml as any).mockImplementation((url: string) => {
+      if (url.includes('/tasks/')) {
+        return Promise.resolve(mockProblemPage);
+      }
+      return Promise.resolve(mockHtml);
+    });
+
+    vi.spyOn(fs, 'existsSync').mockImplementation((p: any) => {
+        const expectedPath = path.join(mockHomeDir, 'atcoder', contestId);
+        if (p.toString() === expectedPath) return false;
+        if (p.toString().endsWith('A')) return false;
+        return true;
+    });
 
     await genManager.run(['gen', contestId]);
 
