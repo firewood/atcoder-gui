@@ -116,7 +116,7 @@ export class TestManager {
               stdout,
               expectedOutput,
               metadata.judge?.judge_type,
-              metadata.judge?.error,
+              metadata.judge?.errorTolerance,
             )
           ) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);

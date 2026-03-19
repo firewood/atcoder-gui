@@ -11,7 +11,7 @@ export interface ParseResult {
   multipleCases: boolean;
   queryType: boolean;
   judgeType: string;
-  error?: number;
+  errorTolerance?: number;
 }
 
 export function parseHtml(html: string): ParseResult {
@@ -22,7 +22,7 @@ export function parseHtml(html: string): ParseResult {
   let multipleCases = false;
   let queryType = false;
   let judgeType = "normal";
-  let error: number | undefined = undefined;
+  let errorTolerance: number | undefined = undefined;
 
   const checkFloatingPoint = (text: string) => {
     const sectionText = text.toLowerCase();
@@ -33,13 +33,13 @@ export function parseHtml(html: string): ParseResult {
       sectionText.includes("relative error")
     ) {
       judgeType = "decimal";
-      if (error === undefined) {
+      if (errorTolerance === undefined) {
         // Try to extract error tolerance like 10^{-6}
         const match = text.match(/10\^{?(-?\d+)}?/);
         if (match) {
-          error = Math.pow(10, parseInt(match[1]));
+          errorTolerance = Math.pow(10, parseInt(match[1]));
         } else {
-          error = 1e-6;
+          errorTolerance = 1e-6;
         }
       }
     }
@@ -101,7 +101,7 @@ export function parseHtml(html: string): ParseResult {
         if (content.match(/\d+\.\d+/) || content.match(/\d+[eE][+-]?\d+/)) {
           if (judgeType === "normal") {
             judgeType = "decimal";
-            if (error === undefined) error = 1e-6;
+            if (errorTolerance === undefined) errorTolerance = 1e-6;
           }
         }
       }
@@ -144,6 +144,6 @@ export function parseHtml(html: string): ParseResult {
     multipleCases,
     queryType,
     judgeType,
-    error,
+    errorTolerance,
   };
 }

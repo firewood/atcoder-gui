@@ -146,7 +146,7 @@ export class GenManager {
           multipleCases,
           queryType,
           judgeType,
-          error,
+          errorTolerance,
           samples,
           variables,
           formatTree,
@@ -176,7 +176,7 @@ export class GenManager {
           code_filename: filename,
           judge: {
             judge_type: judgeType,
-            error: error,
+            error: errorTolerance,
           },
           lang: lang === "python" || lang === "py" ? "python" : "cpp",
           problem: {

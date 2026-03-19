@@ -14,7 +14,7 @@ export interface ParseResult {
   multipleCases: boolean;
   queryType: boolean;
   judgeType: string;
-  error?: number;
+  errorTolerance?: number;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
@@ -30,8 +30,14 @@ export function generateParseResult(
 
   console.log("Parsing HTML...");
 
-  let { inputFormat, samples, multipleCases, queryType, judgeType, error } =
-    parseHtml(html);
+  let {
+    inputFormat,
+    samples,
+    multipleCases,
+    queryType,
+    judgeType,
+    errorTolerance,
+  } = parseHtml(html);
 
   if (!inputFormat) {
     throw new Error("Could not find Input Format section in HTML.");
@@ -90,7 +96,7 @@ export function generateParseResult(
     multipleCases,
     queryType,
     judgeType,
-    error,
+    errorTolerance,
     samples,
     variables,
     formatTree,
