@@ -118,6 +118,7 @@ export class GenManager {
 
       process.chdir(contestDirPath);
       console.log(`Current directory: ${process.cwd()}`);
+      await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
       const match = url?.match(/\w+:\/\/atcoder\.jp\/contests\/(\w+)\/tasks\/(\w+)/);
@@ -185,8 +186,14 @@ export class GenManager {
         samples.forEach((sample, index) => {
           const inFilename = `in_${index + 1}.txt`;
           const outFilename = `out_${index + 1}.txt`;
-          fs.writeFileSync(path.join(savePath, inFilename), sample.input);
-          fs.writeFileSync(path.join(savePath, outFilename), sample.output);
+          let input = sample.input;
+          let output = sample.output;
+          if (process.platform === "win32") {
+            input = input.replace(/\r?\n/g, "\r\n");
+            output = output.replace(/\r?\n/g, "\r\n");
+          }
+          fs.writeFileSync(path.join(savePath, inFilename), input);
+          fs.writeFileSync(path.join(savePath, outFilename), output);
           console.log(`Saved sample input to ${inFilename}`);
           console.log(`Saved sample output to ${outFilename}`);
         });

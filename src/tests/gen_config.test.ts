@@ -18,6 +18,7 @@ describe('GenManager with create_contest_directory config', () => {
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
+    vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
     vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
