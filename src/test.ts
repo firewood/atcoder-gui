@@ -68,19 +68,22 @@ export class TestManager {
           }).trim();
 
           if (stdout === expectedOutput) {
-            console.log(`${inFile}: \x1b[32mPASSED\x1b[0m`);
+            console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
           } else {
-            console.log(`${inFile}: \x1b[31mFAILED\x1b[0m`);
-            console.log("Expected:");
+            console.log(`# ${inFile} ... \x1b[31mWA\x1b[0m`);
+            console.log("\x1b[35m[Input]\x1b[0m");
+            console.log(input.trim());
+            console.log("\x1b[35m[Expected]\x1b[0m");
             console.log(expectedOutput);
-            console.log("Actual:");
+            console.log("\x1b[35m[Received]\x1b[0m");
             console.log(stdout);
+            console.log("");
           }
         } catch (error: any) {
           if (error.code === "ETIMEDOUT" || error.signal === "SIGTERM") {
-            console.log(`${inFile}: \x1b[31mFAILED\x1b[0m (Timeout)`);
+            console.log(`# ${inFile} ... \x1b[33mTLE\x1b[0m`);
           } else {
-            console.log(`${inFile}: \x1b[31mFAILED\x1b[0m (Execution Error)`);
+            console.log(`# ${inFile} ... \x1b[33mRE\x1b[0m`);
             if (error.stderr) {
               console.error(error.stderr);
             }

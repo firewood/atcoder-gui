@@ -71,7 +71,47 @@ describe('TestManager timeout handling', () => {
         timeout: 1000
       })
     );
-    // \x1b[31m is red
-    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('FAILED\x1b[0m (Timeout)'));
+    // \x1b[33m is yellow (TLE)
+    expect(console.log).toHaveBeenCalledWith(expect.stringContaining('# in_1.txt ... \x1b[33mTLE\x1b[0m'));
+  });
+
+  it('should handle WA when output does not match expected', async () => {
+    // Mock metadata.json
+    const metadata = {
+      code_filename: 'main.cpp',
+      timeout_ms: 1000
+    };
+
+    (fs.existsSync as any).mockImplementation((path: string) => {
+      if (path === 'metadata.json') return true;
+      if (path === 'in_1.txt') return true;
+      if (path === 'out_1.txt') return true;
+      return false;
+    });
+
+    (fs.readFileSync as any).mockImplementation((path: string) => {
+      if (path === 'metadata.json') return JSON.stringify(metadata);
+      if (path === 'in_1.txt') return '100\n';
+      if (path === 'out_1.txt') return '1\n';
+      return '';
+    });
+
+    (fs.readdirSync as any).mockReturnValue(['main.cpp', 'metadata.json', 'in_1.txt', 'out_1.txt']);
+
+    // Mock buildManager.run to do nothing
+    (buildManager.run as any).mockResolvedValue(undefined);
+
+    // Mock execSync to return incorrect output
+    (execSync as any).mockReturnValue('2');
+
+    await testManager.run([]);
+
+    expect(console.log).toHaveBeenCalledWith('# in_1.txt ... \x1b[31mWA\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Input]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('100');
+    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Expected]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('1');
+    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Received]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('2');
   });
 });
