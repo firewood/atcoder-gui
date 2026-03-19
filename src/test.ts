@@ -47,6 +47,9 @@ export class TestManager {
         return;
       }
 
+      let passedCount = 0;
+      let totalCount = 0;
+
       for (const inFile of inputFiles) {
         const testId = inFile.match(/^in_(.+)\.txt$/)?.[1];
         const outFile = `out_${testId}.txt`;
@@ -56,6 +59,7 @@ export class TestManager {
           continue;
         }
 
+        totalCount++;
         const input = fs.readFileSync(inFile, "utf-8");
         const expectedOutput = fs.readFileSync(outFile, "utf-8").trim();
 
@@ -69,6 +73,7 @@ export class TestManager {
 
           if (stdout === expectedOutput) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
+            passedCount++;
           } else {
             console.log(`# ${inFile} ... \x1b[31mWA\x1b[0m`);
             console.log("\x1b[35m[Input]\x1b[0m");
@@ -89,6 +94,12 @@ export class TestManager {
             }
           }
         }
+      }
+
+      if (passedCount === totalCount) {
+        console.log("\x1b[32mPassed all test cases!!!\x1b[0m");
+      } else {
+        console.log(`\x1b[31mSome cases FAILED\x1b[0m (passed ${passedCount} of ${totalCount})`);
       }
     } catch (error) {
       console.error("Error reading or parsing metadata.json:", error);
