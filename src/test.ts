@@ -40,7 +40,7 @@ export class TestManager {
       }
 
       const files = fs.readdirSync(".");
-      const inputFiles = files.filter(f => /^in_.+\.txt$/.test(f)).sort();
+      const inputFiles = files.filter((f) => /^in_.+\.txt$/.test(f)).sort();
 
       if (inputFiles.length === 0) {
         console.log("No test cases (in_?.txt) found.");
@@ -71,11 +71,11 @@ export class TestManager {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
           } else {
             console.log(`# ${inFile} ... \x1b[31mWA\x1b[0m`);
-            console.log("\x1b[35m[Input]\x1b[0m");
+            console.log("\x1b[95m[Input]\x1b[0m");
             console.log(input.trim());
-            console.log("\x1b[35m[Expected]\x1b[0m");
+            console.log("\x1b[95m[Expected]\x1b[0m");
             console.log(expectedOutput);
-            console.log("\x1b[35m[Received]\x1b[0m");
+            console.log("\x1b[95m[Received]\x1b[0m");
             console.log(stdout);
             console.log("");
           }
