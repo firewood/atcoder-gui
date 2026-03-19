@@ -39,9 +39,9 @@ describe("Scenario Tests: Expected Results", () => {
       const html = await fetchProblemContent(taskId);
       const result = generateParseResult(html, taskId, url);
 
-      // Remove formatTree and samples from result as they are not in the expected JSON
+      // Remove formatTree, samples, judgeType and error from result as they are not in the expected JSON
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { formatTree, samples, ...actual } = result;
+      const { formatTree, samples, judgeType, error, ...actual } = result;
 
       // Ensure variables are sorted or consistent if needed,
       // but usually JSON equality is enough if order matches.

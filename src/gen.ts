@@ -80,34 +80,15 @@ export class GenManager {
           fs.mkdirSync(problemDirPath, { recursive: true });
         }
 
-        const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
-        const metadata: AtCoderToolsMetadata = {
-          code_filename: code_filename,
-          judge: {
-            judge_type: "normal",
-          },
-          lang: lang === "python" || lang === "py" ? "python" : "cpp",
-          problem: {
-            alphabet: problem.alphabet,
-            contest: {
-              contest_id: contestId,
-            },
-            problem_id: problem.id,
-          },
-          sample_in_pattern: "in_*.txt",
-          sample_out_pattern: "out_*.txt",
-          timeout_ms: 2000,
-        };
-
-        fs.writeFileSync(
-          path.join(problemDirPath, "metadata.json"),
-          JSON.stringify(metadata, null, 2),
-        );
-        console.log(`Created metadata.json for problem ${problem.alphabet}`);
-
         results.push({
           id: problem.alphabet,
-          success: await this.generateCode(contestId, problem.id, problemDirPath, lang),
+          success: await this.generateCode(
+            contestId,
+            problem.id,
+            problemDirPath,
+            lang,
+            problem.alphabet,
+          ),
         });
       }
 
@@ -140,6 +121,7 @@ export class GenManager {
     taskId: string,
     savePath: string,
     lang: string = "cpp",
+    alphabet?: string,
   ): Promise<boolean> {
     const config = this.configManager.getConfig();
     const createContestDir = config.create_contest_directory ?? true;
@@ -160,8 +142,15 @@ export class GenManager {
     try {
       const html = await this.browserManager.fetchRawHtml(url);
       if (html) {
-        const { multipleCases, queryType, samples, variables, formatTree } =
-          generateParseResult(html, taskId, url);
+        const {
+          multipleCases,
+          queryType,
+          judgeType,
+          error,
+          samples,
+          variables,
+          formatTree,
+        } = generateParseResult(html, taskId, url);
 
         if (!formatTree) throw new Error("Format tree is undefined");
 
@@ -182,6 +171,31 @@ export class GenManager {
 
         fs.writeFileSync(path.join(savePath, filename), code);
         console.log(`Saved ${lang} code to ${filename}`);
+
+        const metadata: AtCoderToolsMetadata = {
+          code_filename: filename,
+          judge: {
+            judge_type: judgeType,
+            error: error,
+          },
+          lang: lang === "python" || lang === "py" ? "python" : "cpp",
+          problem: {
+            alphabet: alphabet || taskId.split("_").pop()?.toUpperCase() || "",
+            contest: {
+              contest_id: contestId,
+            },
+            problem_id: taskId,
+          },
+          sample_in_pattern: "in_*.txt",
+          sample_out_pattern: "out_*.txt",
+          timeout_ms: 2000,
+        };
+
+        fs.writeFileSync(
+          path.join(savePath, "metadata.json"),
+          JSON.stringify(metadata, null, 2),
+        );
+        console.log(`Saved metadata.json to ${savePath}`);
 
         samples.forEach((sample, index) => {
           const inFilename = `in_${index + 1}.txt`;

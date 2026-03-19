@@ -49,17 +49,9 @@ describe('GenManager Python Integration', () => {
 
     // Check if metadata.json was written with python settings
     const problemAPath = path.join('./temp', contestId, 'A');
-    const metadataCall = (fs.writeFileSync as any).mock.calls.find((call: any[]) => 
-      call[0].endsWith('metadata.json')
-    );
-    
-    expect(metadataCall).toBeDefined();
-    const metadata = JSON.parse(metadataCall[1]);
-    expect(metadata.code_filename).toBe('main.py');
-    expect(metadata.lang).toBe('python');
     
     // Check if generateCode was called with 'python' lang
-    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'python', 'A');
   });
 
   it('should use main.cpp by default', async () => {
@@ -79,13 +71,8 @@ describe('GenManager Python Integration', () => {
 
     await genManager.run(['gen', contestId]);
 
-    const metadataCall = (fs.writeFileSync as any).mock.calls.find((call: any[]) => 
-      call[0].endsWith('metadata.json')
-    );
-    
-    const metadata = JSON.parse(metadataCall[1]);
-    expect(metadata.code_filename).toBe('main.cpp');
-    expect(metadata.lang).toBe('cpp');
+    const problemAPath = path.join('./temp', contestId, 'A');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc123_a', problemAPath, 'cpp', 'A');
   });
 
   it('should generate python code in expanded home directory', async () => {
@@ -109,6 +96,6 @@ describe('GenManager Python Integration', () => {
     await genManager.run(['gen', contestId, '--lang', 'python']);
 
     const expectedPath = path.join(mockHomeDir, 'atcoder', contestId, 'A');
-    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python');
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, 'abc999_a', expectedPath, 'python', 'A');
   });
 });
