@@ -118,6 +118,7 @@ export class GenManager {
 
       process.chdir(contestDirPath);
       console.log(`Current directory: ${process.cwd()}`);
+      await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
       const match = url?.match(/\w+:\/\/atcoder\.jp\/contests\/(\w+)\/tasks\/(\w+)/);
@@ -130,7 +131,10 @@ export class GenManager {
         taskId = match[2];
       const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
       console.log(`Generating ${code_filename} for task: ${taskId}`);
-      await this.generateCode(contestId, taskId, ".", lang);
+      const success = await this.generateCode(contestId, taskId, ".", lang);
+      if (success) {
+        await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
+      }
     }
   }
 

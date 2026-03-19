@@ -19,6 +19,7 @@ describe('GenManager', () => {
 
     // Mock dependencies
     vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue(''); // Placeholder HTML
+    vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
     vi.spyOn(configManager, 'getConfig').mockReturnValue({ workspaceDir: './temp' });
     vi.spyOn(fs, 'existsSync').mockReturnValue(false);
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined); // Mock mkdirSync to do nothing
@@ -50,6 +51,8 @@ describe('GenManager', () => {
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
     await genManager.run(['gen', contestId]);
+
+    expect(browserManager.openUrl).toHaveBeenCalledWith(`https://atcoder.jp/contests/${contestId}`);
 
     const contestPath = path.join('./temp', contestId);
     expect(fs.mkdirSync).toHaveBeenCalledWith(contestPath, { recursive: true });
@@ -133,7 +136,21 @@ describe('GenManager', () => {
 
     await genManager.run(['gen', contestId]);
 
+    expect(browserManager.openUrl).toHaveBeenCalledWith(`https://atcoder.jp/contests/${contestId}`);
+
     const expectedPath = path.join(mockHomeDir, 'atcoder', contestId);
     expect(fs.mkdirSync).toHaveBeenCalledWith(expectedPath, { recursive: true });
+  });
+
+  it('should open contest page for a single problem generation', async () => {
+    const contestId = 'abc123';
+    const taskId = 'abc123_a';
+    vi.spyOn(browserManager, 'getCurrentUrl').mockReturnValue(`https://atcoder.jp/contests/${contestId}/tasks/${taskId}`);
+    // Mock generateCode to return true to trigger openUrl
+    vi.spyOn(genManager as any, 'generateCode').mockResolvedValue(true);
+
+    await genManager.run(['gen']);
+
+    expect(browserManager.openUrl).toHaveBeenCalledWith(`https://atcoder.jp/contests/${contestId}`);
   });
 });
