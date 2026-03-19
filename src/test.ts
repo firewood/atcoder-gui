@@ -24,6 +24,7 @@ export class TestManager {
     try {
       const metadata: any = JSON.parse(fs.readFileSync("metadata.json", "utf-8"));
       const codeFilename = metadata.code_filename;
+      const timeoutMs = metadata.timeout_ms;
 
       if (!codeFilename) {
         console.error("Error: code_filename not found in metadata.json");
@@ -62,7 +63,8 @@ export class TestManager {
           const stdout = execSync(execCommand, {
             input: input,
             encoding: "utf-8",
-            stdio: ["pipe", "pipe", "inherit"]
+            stdio: ["pipe", "pipe", "inherit"],
+            timeout: timeoutMs,
           }).trim();
 
           if (stdout === expectedOutput) {
@@ -75,9 +77,13 @@ export class TestManager {
             console.log(stdout);
           }
         } catch (error: any) {
-          console.log(`${inFile}: \x1b[31mFAILED\x1b[0m (Execution Error)`);
-          if (error.stderr) {
-            console.error(error.stderr);
+          if (error.code === "ETIMEDOUT" || error.signal === "SIGTERM") {
+            console.log(`${inFile}: \x1b[31mFAILED\x1b[0m (Timeout)`);
+          } else {
+            console.log(`${inFile}: \x1b[31mFAILED\x1b[0m (Execution Error)`);
+            if (error.stderr) {
+              console.error(error.stderr);
+            }
           }
         }
       }
