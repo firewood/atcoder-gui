@@ -131,10 +131,7 @@ export class GenManager {
         taskId = match[2];
       const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
       console.log(`Generating ${code_filename} for task: ${taskId}`);
-      const success = await this.generateCode(contestId, taskId, ".", lang);
-      if (success) {
-        await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
-      }
+      await this.generateCode(contestId, taskId, ".", lang);
     }
   }
 

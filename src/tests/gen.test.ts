@@ -142,15 +142,16 @@ describe('GenManager', () => {
     expect(fs.mkdirSync).toHaveBeenCalledWith(expectedPath, { recursive: true });
   });
 
-  it('should open contest page for a single problem generation', async () => {
+  it('should not open contest page again for a single problem generation', async () => {
     const contestId = 'abc123';
     const taskId = 'abc123_a';
     vi.spyOn(browserManager, 'getCurrentUrl').mockReturnValue(`https://atcoder.jp/contests/${contestId}/tasks/${taskId}`);
-    // Mock generateCode to return true to trigger openUrl
+    // Mock generateCode to return true
     vi.spyOn(genManager as any, 'generateCode').mockResolvedValue(true);
 
     await genManager.run(['gen']);
 
-    expect(browserManager.openUrl).toHaveBeenCalledWith(`https://atcoder.jp/contests/${contestId}`);
+    // openUrl should NOT be called because the page is already open
+    expect(browserManager.openUrl).not.toHaveBeenCalled();
   });
 });
