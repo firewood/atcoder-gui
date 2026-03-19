@@ -80,34 +80,9 @@ export class GenManager {
           fs.mkdirSync(problemDirPath, { recursive: true });
         }
 
-        const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
-        const metadata: AtCoderToolsMetadata = {
-          code_filename: code_filename,
-          judge: {
-            judge_type: "normal",
-          },
-          lang: lang === "python" || lang === "py" ? "python" : "cpp",
-          problem: {
-            alphabet: problem.alphabet,
-            contest: {
-              contest_id: contestId,
-            },
-            problem_id: problem.id,
-          },
-          sample_in_pattern: "in_*.txt",
-          sample_out_pattern: "out_*.txt",
-          timeout_ms: 2000,
-        };
-
-        fs.writeFileSync(
-          path.join(problemDirPath, "metadata.json"),
-          JSON.stringify(metadata, null, 2),
-        );
-        console.log(`Created metadata.json for problem ${problem.alphabet}`);
-
         results.push({
           id: problem.alphabet,
-          success: await this.generateCode(contestId, problem.id, problemDirPath, lang),
+          success: await this.generateCode(contestId, problem.id, problemDirPath, lang, problem.alphabet),
         });
       }
 
@@ -135,11 +110,24 @@ export class GenManager {
     }
   }
 
+  private isDecimalProblem(samples: { output: string }[]): boolean {
+    for (const sample of samples) {
+      const tokens = sample.output.split(/\s+/);
+      for (const token of tokens) {
+        if (token && !isNaN(Number(token)) && (token.includes(".") || token.toLowerCase().includes("e"))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   async generateCode(
     contestId: string,
     taskId: string,
     savePath: string,
     lang: string = "cpp",
+    alphabet?: string,
   ): Promise<boolean> {
     const config = this.configManager.getConfig();
     const createContestDir = config.create_contest_directory ?? true;
@@ -191,6 +179,30 @@ export class GenManager {
           console.log(`Saved sample input to ${inFilename}`);
           console.log(`Saved sample output to ${outFilename}`);
         });
+
+        const metadata: AtCoderToolsMetadata = {
+          code_filename: filename,
+          judge: {
+            judge_type: this.isDecimalProblem(samples) ? "decimal" : "normal",
+          },
+          lang: lang === "python" || lang === "py" ? "python" : "cpp",
+          problem: {
+            alphabet: alphabet || taskId.split("_").pop()?.toUpperCase() || "",
+            contest: {
+              contest_id: contestId,
+            },
+            problem_id: taskId,
+          },
+          sample_in_pattern: "in_*.txt",
+          sample_out_pattern: "out_*.txt",
+          timeout_ms: 2000,
+        };
+        if (metadata.judge.judge_type === "decimal") {
+          metadata.judge.error = 1e-6;
+        }
+
+        fs.writeFileSync(path.join(savePath, "metadata.json"), JSON.stringify(metadata, null, 2));
+        console.log(`Created metadata.json for problem ${metadata.problem.alphabet}`);
 
         return true;
       }

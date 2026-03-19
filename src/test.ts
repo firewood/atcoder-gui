@@ -57,7 +57,7 @@ export class TestManager {
         }
 
         const input = fs.readFileSync(inFile, "utf-8");
-        const expectedOutput = fs.readFileSync(outFile, "utf-8").trim();
+        const expectedOutput = fs.readFileSync(outFile, "utf-8");
 
         try {
           const stdout = execSync(execCommand, {
@@ -65,18 +65,18 @@ export class TestManager {
             encoding: "utf-8",
             stdio: ["pipe", "pipe", "inherit"],
             timeout: timeoutMs,
-          }).trim();
+          });
 
-          if (stdout === expectedOutput) {
+          if (this.compareOutputs(stdout, expectedOutput, metadata)) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
           } else {
             console.log(`# ${inFile} ... \x1b[31mWA\x1b[0m`);
             console.log("\x1b[35m[Input]\x1b[0m");
             console.log(input.trim());
             console.log("\x1b[35m[Expected]\x1b[0m");
-            console.log(expectedOutput);
+            console.log(expectedOutput.trim());
             console.log("\x1b[35m[Received]\x1b[0m");
-            console.log(stdout);
+            console.log(stdout.trim());
             console.log("");
           }
         } catch (error: any) {
@@ -93,5 +93,39 @@ export class TestManager {
     } catch (error) {
       console.error("Error reading or parsing metadata.json:", error);
     }
+  }
+
+  private compareOutputs(actual: string, expected: string, metadata: any): boolean {
+    const actualTokens = actual.trim().split(/\s+/);
+    const expectedTokens = expected.trim().split(/\s+/);
+
+    if (actualTokens.length !== expectedTokens.length) {
+      return false;
+    }
+
+    const judgeType = metadata.judge?.judge_type;
+    const tolerance = metadata.judge?.error || 1e-6;
+
+    for (let i = 0; i < actualTokens.length; i++) {
+      if (actualTokens[i] === expectedTokens[i]) {
+        continue;
+      }
+
+      if (judgeType === "decimal") {
+        const a = parseFloat(actualTokens[i]);
+        const b = parseFloat(expectedTokens[i]);
+
+        if (!isNaN(a) && !isNaN(b)) {
+          const diff = Math.abs(a - b);
+          if (diff < tolerance || diff / Math.max(Math.abs(a), Math.abs(b)) < tolerance) {
+            continue;
+          }
+        }
+      }
+
+      return false;
+    }
+
+    return true;
   }
 }
