@@ -94,7 +94,8 @@ export class GenManager {
 
       console.log(`${contestId} code generation results:`);
       for (const result of results) {
-        console.log(`  Problem ${result.id}: ${result.success ? "SUCCEEDED" : "FAILED"}`);
+        const status = result.success ? "\x1b[32mSUCCEEDED\x1b[0m" : "\x1b[31mFAILED\x1b[0m";
+        console.log(`  Problem ${result.id}: ${status}`);
       }
 
       process.chdir(contestDirPath);
