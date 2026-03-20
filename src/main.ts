@@ -99,6 +99,12 @@ export class AtCoderGUI {
       this.rl?.close();
     });
 
+    const workspaceDir = this.getConfig().workspaceDir;
+    if (workspaceDir) {
+      process.chdir(expandHomeDir(workspaceDir));
+      console.log(`Current directory: ${process.cwd()}`);
+    }
+
     console.log('Type "help" for available commands or "exit" to quit');
     this.rl.prompt();
 
@@ -243,7 +249,7 @@ export class AtCoderGUI {
 
         case "cd":
           {
-            const dir = args.length < 2 ? (this.getConfig().workspaceDir || "~") : args[1];
+            const dir = args.length >= 2 ? args[1] : this.getConfig().workspaceDir || "~";
             const expandedDir = expandHomeDir(dir);
             try {
               process.chdir(expandedDir);
