@@ -29,7 +29,8 @@ export interface AtCoderToolsMetadata {
   code_filename: string;
   judge: {
     judge_type: string;
-    errorTolerance?: number;
+    error_type?: string;
+    diff?: number;
   };
   lang: string;
   problem: {

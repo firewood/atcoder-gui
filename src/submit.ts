@@ -1,25 +1,7 @@
-import { readFileSync, existsSync } from 'fs';
-import * as path from 'path';
-import { BrowserManager } from './browser.js';
-import { AtCoderCliContestConfig, AtCoderToolsMetadata } from './types.js';
-
-interface MetadataJson {
-  code_filename: string;
-  judge: {
-    judge_type: string;
-  };
-  lang: string;
-  problem: {
-    alphabet: string;
-    contest: {
-      contest_id: string;
-    };
-    problem_id: string;
-  };
-  sample_in_pattern: string;
-  sample_out_pattern: string;
-  timeout_ms: number;
-}
+import { readFileSync, existsSync } from "fs";
+import * as path from "path";
+import { BrowserManager } from "./browser.js";
+import { AtCoderCliContestConfig, AtCoderToolsMetadata } from "./types.js";
 
 export class SubmitManager {
   private browserManager: BrowserManager;
@@ -33,18 +15,26 @@ export class SubmitManager {
    */
   async submitSolution(filename: string | undefined): Promise<boolean> {
     try {
-      const atcoderToolsMetadataPath = './metadata.json';
-      const atcoderCliMetadataPath = '../contest.acc.json';
+      const atcoderToolsMetadataPath = "./metadata.json";
+      const atcoderCliMetadataPath = "../contest.acc.json";
       if (existsSync(atcoderToolsMetadataPath)) {
-        const metadata: AtCoderToolsMetadata = JSON.parse(readFileSync(atcoderToolsMetadataPath, 'utf-8'));
-        this.pasteToBrowser(metadata.problem.contest.contest_id, metadata.problem.problem_id, filename || metadata.code_filename);
+        const metadata: AtCoderToolsMetadata = JSON.parse(
+          readFileSync(atcoderToolsMetadataPath, "utf-8"),
+        );
+        this.pasteToBrowser(
+          metadata.problem.contest.contest_id,
+          metadata.problem.problem_id,
+          filename || metadata.code_filename,
+        );
         return true;
       } else if (existsSync(atcoderCliMetadataPath)) {
         if (!filename) {
-          console.error('Error: filename is required');
+          console.error("Error: filename is required");
           return false;
         }
-        const metadata: AtCoderCliContestConfig = JSON.parse(readFileSync(atcoderCliMetadataPath, 'utf-8'));
+        const metadata: AtCoderCliContestConfig = JSON.parse(
+          readFileSync(atcoderCliMetadataPath, "utf-8"),
+        );
         const problem_id = path.basename(process.cwd());
         for (const task of metadata.tasks) {
           if (task.directory?.path == problem_id) {
@@ -53,15 +43,19 @@ export class SubmitManager {
           }
         }
       } else {
-        console.error('Error: metadata not found in current directory');
+        console.error("Error: metadata not found in current directory");
       }
     } catch (error) {
-      console.error('Error during submission:', error);
+      console.error("Error during submission:", error);
     }
     return false;
   }
 
-  private async pasteToBrowser(contestId: string, problemId: string, sourceCodePath: string): Promise<void> {
+  private async pasteToBrowser(
+    contestId: string,
+    problemId: string,
+    sourceCodePath: string,
+  ): Promise<void> {
     if (!existsSync(sourceCodePath)) {
       console.error(`Error: ${sourceCodePath} not found in current directory`);
       return;
@@ -83,14 +77,14 @@ export class SubmitManager {
    */
   private parseMetadata(metadataPath: string): { contestId: string; problemId: string } {
     try {
-      const metadataContent = readFileSync(metadataPath, 'utf-8');
-      const metadata: MetadataJson = JSON.parse(metadataContent);
+      const metadataContent = readFileSync(metadataPath, "utf-8");
+      const metadata: AtCoderToolsMetadata = JSON.parse(metadataContent);
 
       const contestId = metadata.problem.contest.contest_id;
       const problemId = metadata.problem.problem_id;
 
       if (!contestId || !problemId) {
-        throw new Error('contest_id or problem_id not found in metadata.json');
+        throw new Error("contest_id or problem_id not found in metadata.json");
       }
 
       return { contestId, problemId };
@@ -104,7 +98,7 @@ export class SubmitManager {
    */
   private readSourceCode(mainCppPath: string): string {
     try {
-      return readFileSync(mainCppPath, 'utf-8');
+      return readFileSync(mainCppPath, "utf-8");
     } catch (error) {
       throw new Error(`Failed to read main.cpp: ${error}`);
     }
@@ -117,14 +111,14 @@ export class SubmitManager {
     try {
       const page = this.browserManager.getCurrentPage();
       if (!page) {
-        throw new Error('No active page found');
+        throw new Error("No active page found");
       }
 
       // Wait for the page to load
-      await page.waitForLoadState('domcontentloaded');
+      await page.waitForLoadState("domcontentloaded");
 
       // Find the source code textarea (common selectors for AtCoder)
-      const textareaSelector = '#editor .ace_text-input';
+      const textareaSelector = "#editor .ace_text-input";
       await page.waitForSelector(textareaSelector, { timeout: 10000 });
 
       // Set min-height for the editor textarea
@@ -133,9 +127,9 @@ export class SubmitManager {
       // Clear existing content and paste source code
       await page.fill(textareaSelector, sourceCode);
 
-      console.log('✓ Copied!');
+      console.log("✓ Copied!");
     } catch (error) {
-      console.error('Failed to fill source code area:', error);
+      console.error("Failed to fill source code area:", error);
     }
   }
 }

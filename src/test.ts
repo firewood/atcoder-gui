@@ -2,6 +2,7 @@ import * as fs from "fs";
 import { execSync } from "child_process";
 import { ConfigManager } from "./config.js";
 import { BuildManager } from "./build.js";
+import { AtCoderToolsMetadata } from "./types.js";
 
 export class TestManager {
   private configManager: ConfigManager;
@@ -35,8 +36,7 @@ export class TestManager {
 
         if (!isNaN(actualNum) && !isNaN(expectedNum)) {
           const diff = Math.abs(actualNum - expectedNum);
-          const relativeDiff =
-            expectedNum === 0 ? diff : diff / Math.abs(expectedNum);
+          const relativeDiff = expectedNum === 0 ? diff : diff / Math.abs(expectedNum);
           if (diff > errorTolerance && relativeDiff > errorTolerance) {
             return false;
           }
@@ -62,7 +62,7 @@ export class TestManager {
     await this.buildManager.run(args);
 
     try {
-      const metadata: any = JSON.parse(fs.readFileSync("metadata.json", "utf-8"));
+      const metadata: AtCoderToolsMetadata = JSON.parse(fs.readFileSync("metadata.json", "utf-8"));
       const codeFilename = metadata.code_filename;
       const timeoutMs = metadata.timeout_ms;
 
@@ -116,7 +116,7 @@ export class TestManager {
               stdout,
               expectedOutput,
               metadata.judge?.judge_type,
-              metadata.judge?.errorTolerance,
+              metadata.judge?.diff,
             )
           ) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);

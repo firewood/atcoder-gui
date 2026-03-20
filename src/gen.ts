@@ -176,7 +176,8 @@ export class GenManager {
           code_filename: filename,
           judge: {
             judge_type: judgeType,
-            error: errorTolerance,
+            error_type: "absolute_or_relative",
+            diff: errorTolerance,
           },
           lang: lang === "python" || lang === "py" ? "python" : "cpp",
           problem: {
@@ -191,10 +192,7 @@ export class GenManager {
           timeout_ms: 2000,
         };
 
-        fs.writeFileSync(
-          path.join(savePath, "metadata.json"),
-          JSON.stringify(metadata, null, 2),
-        );
+        fs.writeFileSync(path.join(savePath, "metadata.json"), JSON.stringify(metadata, null, 2));
         console.log(`Saved metadata.json to ${savePath}`);
 
         samples.forEach((sample, index) => {
