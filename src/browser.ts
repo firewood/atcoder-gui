@@ -54,7 +54,7 @@ export class BrowserManager {
 
     const windowSizeOption = config.windowSize ? `--window-size=${config.windowSize?.width},${config.windowSize?.height}` : '';
     this.browser = await chromium.launch({
-      headless: false, // UI mode
+      headless: process.env.CI === 'true' || process.env.HEADLESS === 'true', // UI mode
       args: [
             '--disable-blink-features=AutomationControlled',
             windowSizeOption,

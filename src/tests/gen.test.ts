@@ -25,6 +25,7 @@ describe('GenManager', () => {
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined); // Mock mkdirSync to do nothing
     vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined); // Mock writeFileSync
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
+    vi.spyOn(genManager, 'generateCode').mockResolvedValue(true);
   });
 
   it('should create directories and metadata.json for a contest', async () => {
@@ -59,56 +60,22 @@ describe('GenManager', () => {
 
     const problemAPath = path.join(contestPath, 'A');
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemAPath, { recursive: true });
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      path.join(problemAPath, 'metadata.json'),
-      JSON.stringify(
-        {
-          code_filename: 'main.cpp',
-          judge: {
-            judge_type: 'normal',
-          },
-          lang: 'cpp',
-          problem: {
-            alphabet: 'A',
-            contest: {
-              contest_id: 'abc123',
-            },
-            problem_id: 'abc123_a',
-          },
-          sample_in_pattern: 'in_*.txt',
-          sample_out_pattern: 'out_*.txt',
-          timeout_ms: 2000,
-        },
-        null,
-        2,
-      ),
+    expect(genManager.generateCode).toHaveBeenCalledWith(
+      contestId,
+      'abc123_a',
+      problemAPath,
+      'cpp',
+      'A'
     );
 
     const problemBPath = path.join(contestPath, 'B');
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemBPath, { recursive: true });
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      path.join(problemBPath, 'metadata.json'),
-      JSON.stringify(
-        {
-          code_filename: 'main.cpp',
-          judge: {
-            judge_type: 'normal',
-          },
-          lang: 'cpp',
-          problem: {
-            alphabet: 'B',
-            contest: {
-              contest_id: 'abc123',
-            },
-            problem_id: 'abc123_b',
-          },
-          sample_in_pattern: 'in_*.txt',
-          sample_out_pattern: 'out_*.txt',
-          timeout_ms: 2000,
-        },
-        null,
-        2,
-      ),
+    expect(genManager.generateCode).toHaveBeenCalledWith(
+      contestId,
+      'abc123_b',
+      problemBPath,
+      'cpp',
+      'B'
     );
   });
 

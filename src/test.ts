@@ -12,6 +12,46 @@ export class TestManager {
     this.buildManager = buildManager;
   }
 
+  private compareOutputs(
+    actual: string,
+    expected: string,
+    judgeType: string,
+    errorTolerance: number = 1e-6,
+  ): boolean {
+    const actualTokens = actual.split(/\s+/).filter((t) => t.length > 0);
+    const expectedTokens = expected.split(/\s+/).filter((t) => t.length > 0);
+
+    if (actualTokens.length !== expectedTokens.length) {
+      return false;
+    }
+
+    for (let i = 0; i < actualTokens.length; i++) {
+      const actualToken = actualTokens[i];
+      const expectedToken = expectedTokens[i];
+
+      if (judgeType === "decimal") {
+        const actualNum = parseFloat(actualToken);
+        const expectedNum = parseFloat(expectedToken);
+
+        if (!isNaN(actualNum) && !isNaN(expectedNum)) {
+          const diff = Math.abs(actualNum - expectedNum);
+          const relativeDiff =
+            expectedNum === 0 ? diff : diff / Math.abs(expectedNum);
+          if (diff > errorTolerance && relativeDiff > errorTolerance) {
+            return false;
+          }
+          continue;
+        }
+      }
+
+      if (actualToken !== expectedToken) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   async run(args: string[]): Promise<void> {
     if (!fs.existsSync("metadata.json")) {
       console.error("Error: metadata.json not found in the current directory.");
@@ -71,7 +111,14 @@ export class TestManager {
             timeout: timeoutMs,
           }).trim();
 
-          if (stdout === expectedOutput) {
+          if (
+            this.compareOutputs(
+              stdout,
+              expectedOutput,
+              metadata.judge?.judge_type,
+              metadata.judge?.errorTolerance,
+            )
+          ) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
             passedCount++;
           } else {

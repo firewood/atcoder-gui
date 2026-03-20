@@ -10,6 +10,8 @@ export interface ParseResult {
   samples: Sample[];
   multipleCases: boolean;
   queryType: boolean;
+  judgeType: string;
+  errorTolerance?: number;
 }
 
 export function parseHtml(html: string): ParseResult {
@@ -19,6 +21,29 @@ export function parseHtml(html: string): ParseResult {
   const tempSamples: Record<string, { input?: string; output?: string }> = {};
   let multipleCases = false;
   let queryType = false;
+  let judgeType = "normal";
+  let errorTolerance: number | undefined = undefined;
+
+  const checkFloatingPoint = (text: string) => {
+    const sectionText = text.toLowerCase();
+    if (
+      sectionText.includes("絶対誤差") ||
+      sectionText.includes("相対誤差") ||
+      sectionText.includes("absolute error") ||
+      sectionText.includes("relative error")
+    ) {
+      judgeType = "decimal";
+      if (errorTolerance === undefined) {
+        // Try to extract error tolerance like 10^{-6}
+        const match = text.match(/10\^{?(-?\d+)}?/);
+        if (match) {
+          errorTolerance = Math.pow(10, parseInt(match[1]));
+        } else {
+          errorTolerance = 1e-6;
+        }
+      }
+    }
+  };
 
   $("h3").each((_, element) => {
     const text = $(element).text().trim();
@@ -45,6 +70,8 @@ export function parseHtml(html: string): ParseResult {
       } else if (pres.length > 0) {
         inputFormat = pres.eq(0).text();
       }
+    } else if (text.match(/^(Problem Statement|問題文|Output|出力)$/i)) {
+      checkFloatingPoint(section.text());
     } else {
       const inputMatch = text.match(/^Sample Input\s*(\d+)?$/i);
       if (inputMatch) {
@@ -70,6 +97,13 @@ export function parseHtml(html: string): ParseResult {
           content = pre.text();
         }
         tempSamples[id].output = content;
+
+        if (content.match(/\d+\.\d+/) || content.match(/\d+[eE][+-]?\d+/)) {
+          if (judgeType === "normal") {
+            judgeType = "decimal";
+            if (errorTolerance === undefined) errorTolerance = 1e-6;
+          }
+        }
       }
     }
   });
@@ -109,5 +143,7 @@ export function parseHtml(html: string): ParseResult {
     samples,
     multipleCases,
     queryType,
+    judgeType,
+    errorTolerance,
   };
 }

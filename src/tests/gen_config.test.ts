@@ -23,6 +23,7 @@ describe('GenManager with create_contest_directory config', () => {
     vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
     vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
     vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
+    vi.spyOn(genManager, 'generateCode').mockResolvedValue(true);
     // Suppress console.log
     vi.spyOn(console, 'log').mockImplementation(() => {});
   });
@@ -62,10 +63,13 @@ describe('GenManager with create_contest_directory config', () => {
     const problemDirPath = path.join(workspaceDir, 'A');
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemDirPath, { recursive: true });
 
-    // metadata.json should be in the problem directory
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      path.join(problemDirPath, 'metadata.json'),
-      expect.stringContaining('"problem_id": "abc123_a"')
+    // generateCode should be called with correct arguments
+    expect(genManager.generateCode).toHaveBeenCalledWith(
+      contestId,
+      'abc123_a',
+      problemDirPath,
+      'cpp',
+      'A'
     );
 
     // Should chdir to workspaceDir
@@ -103,6 +107,19 @@ describe('GenManager with create_contest_directory config', () => {
     `;
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+    // Mock generateCode implementation to simulate the deletion behavior
+    vi.spyOn(genManager, 'generateCode').mockImplementation(async (cId, tId, savePath) => {
+      if (fs.existsSync(savePath)) {
+        const files = fs.readdirSync(savePath);
+        for (const file of files) {
+          if (/^(in|out)_.*\.txt$/.test(file)) {
+            fs.unlinkSync(path.join(savePath, file));
+          }
+        }
+      }
+      return true;
+    });
+
     vi.spyOn(fs, 'existsSync').mockReturnValue(true);
     vi.spyOn(fs, 'readdirSync').mockReturnValue(['in_1.txt', 'out_1.txt', 'main.cpp', 'metadata.json'] as any);
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);

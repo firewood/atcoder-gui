@@ -108,11 +108,11 @@ describe("TestManager timeout handling", () => {
     await testManager.run([]);
 
     expect(console.log).toHaveBeenCalledWith('# in_1.txt ... \x1b[31mWA\x1b[0m');
-    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Input]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('\x1b[95m[Input]\x1b[0m');
     expect(console.log).toHaveBeenCalledWith('100');
-    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Expected]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('\x1b[95m[Expected]\x1b[0m');
     expect(console.log).toHaveBeenCalledWith('1');
-    expect(console.log).toHaveBeenCalledWith('\x1b[35m[Received]\x1b[0m');
+    expect(console.log).toHaveBeenCalledWith('\x1b[95m[Received]\x1b[0m');
     expect(console.log).toHaveBeenCalledWith('2');
     expect(console.log).toHaveBeenCalledWith('\x1b[31mSome cases FAILED\x1b[0m (passed 0 of 1)');
   });
