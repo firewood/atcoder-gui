@@ -32,6 +32,8 @@ export class UniversalGenerator {
     variables: Variable[],
     multipleCases?: boolean,
     queryCases?: boolean,
+    yesStr?: string,
+    noStr?: string,
   ): TemplateContext {
     let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
@@ -74,6 +76,8 @@ export class UniversalGenerator {
 
     return {
       prediction_success: true,
+      yes_str: yesStr,
+      no_str: noStr,
       formal_arguments: this.generateFormalArguments(declarableVariables),
       actual_arguments: this.generateActualArguments(declarableVariables),
       input_part: inputPart,

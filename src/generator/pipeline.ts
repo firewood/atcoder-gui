@@ -15,6 +15,8 @@ export interface ParseResult {
   queryType: boolean;
   judgeType: string;
   errorTolerance?: number;
+  yesStr?: string;
+  noStr?: string;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
@@ -37,6 +39,8 @@ export function generateParseResult(
     queryType,
     judgeType,
     errorTolerance,
+    yesStr,
+    noStr,
   } = parseHtml(html);
 
   if (!inputFormat) {
@@ -97,6 +101,8 @@ export function generateParseResult(
     queryType,
     judgeType,
     errorTolerance,
+    yesStr,
+    noStr,
     samples,
     variables,
     formatTree,
