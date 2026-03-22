@@ -121,6 +121,7 @@ export function parseHtml(html: string): ParseResult {
     ["YES", "NO"],
     ["Possible", "Impossible"],
     ["POSSIBLE", "IMPOSSIBLE"],
+    ["Takahashi", "Aoki"],
   ];
 
   for (const [y, n] of yesNoPairs) {
