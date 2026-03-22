@@ -12,6 +12,8 @@ export interface ParseResult {
   queryType: boolean;
   judgeType: string;
   errorTolerance?: number;
+  yesStr?: string;
+  noStr?: string;
 }
 
 export function parseHtml(html: string): ParseResult {
@@ -23,6 +25,8 @@ export function parseHtml(html: string): ParseResult {
   let queryType = false;
   let judgeType = "normal";
   let errorTolerance: number | undefined = undefined;
+  let yesStr: string | undefined = undefined;
+  let noStr: string | undefined = undefined;
 
   const checkFloatingPoint = (text: string) => {
     const sectionText = text.toLowerCase();
@@ -110,6 +114,23 @@ export function parseHtml(html: string): ParseResult {
 
   // Convert tempSamples to array
   const ids = Object.keys(tempSamples).sort((a, b) => Number(a) - Number(b));
+
+  const allOutputs = ids.map((id) => tempSamples[id].output?.trim()).filter(Boolean) as string[];
+  const yesNoPairs = [
+    ["Yes", "No"],
+    ["YES", "NO"],
+    ["Possible", "Impossible"],
+    ["POSSIBLE", "IMPOSSIBLE"],
+  ];
+
+  for (const [y, n] of yesNoPairs) {
+    if (allOutputs.includes(y) && allOutputs.includes(n)) {
+      yesStr = y;
+      noStr = n;
+      break;
+    }
+  }
+
   for (const id of ids) {
     const s = tempSamples[id];
     if (s.input !== undefined && s.output !== undefined) {
@@ -145,5 +166,7 @@ export function parseHtml(html: string): ParseResult {
     queryType,
     judgeType,
     errorTolerance,
+    yesStr,
+    noStr,
   };
 }

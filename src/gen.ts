@@ -148,6 +148,8 @@ export class GenManager {
           queryType,
           judgeType,
           errorTolerance,
+          yesStr,
+          noStr,
           samples,
           variables,
           formatTree,
@@ -161,12 +163,26 @@ export class GenManager {
         if (lang === "python" || lang === "py") {
           console.log("Generating Python Code...");
           const generator = new PythonGenerator(this.configManager);
-          code = generator.generate(formatTree, variables, multipleCases, queryType);
+          code = generator.generate(
+            formatTree,
+            variables,
+            multipleCases,
+            queryType,
+            yesStr,
+            noStr,
+          );
           filename = "main.py";
         } else {
           console.log("Generating C++ Code...");
           const generator = new CPlusPlusGenerator(this.configManager);
-          code = generator.generate(formatTree, variables, multipleCases, queryType);
+          code = generator.generate(
+            formatTree,
+            variables,
+            multipleCases,
+            queryType,
+            yesStr,
+            noStr,
+          );
           filename = "main.cpp";
         }
 

@@ -60,8 +60,17 @@ export class CPlusPlusGenerator {
     }[],
     multipleCases?: boolean,
     queryCases?: boolean,
+    yesStr?: string,
+    noStr?: string,
   ): string {
-    const context = this.generator.generate(format, variables, multipleCases, queryCases);
+    const context = this.generator.generate(
+      format,
+      variables,
+      multipleCases,
+      queryCases,
+      yesStr,
+      noStr,
+    );
     return nunjucks.renderString(this.template, context);
   }
 }
