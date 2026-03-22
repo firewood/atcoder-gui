@@ -170,7 +170,8 @@ export class UniversalGenerator {
           declaredVariables.add(variable.name);
         }
 
-        lines.push(this.generateItemInput(itemNode, variables));
+        const itemInput = this.generateItemInput(itemNode, variables);
+        if (itemInput) lines.push(itemInput);
       } else if (node.type === "loop") {
         const loopNode = node as LoopNode;
         if (skipLoopVar && this.stringifyNode(loopNode.end) === skipLoopVar) {
@@ -197,7 +198,7 @@ export class UniversalGenerator {
     return lines;
   }
 
-  private generateItemInput(node: ItemNode, variables: Variable[]): string {
+  private generateItemInput(node: ItemNode, variables: Variable[]): string | null {
     const variable = variables.find((v) => v.name === node.name);
     if (!variable) return `// Unknown variable ${node.name}`;
 
@@ -241,6 +242,34 @@ export class UniversalGenerator {
     declaredVariables: Set<string>,
   ): string[] {
     const lines: string[] = [];
+
+    // Check if this loop is just indexing into a string vector
+    // e.g. for(int i=0; i<N; i++) { cin >> S[j]; } where S is vector<string>
+    const bodyLinesRaw = this.generateInput(node.body, variables, declaredVariables);
+
+    let isInnerStringLoop = false;
+    const visit = (n: ASTNode) => {
+        if (n.type === 'item') {
+            const item = n as ItemNode;
+            const variable = variables.find(v => v.name === item.name);
+            if (variable && variable.type === VarType.String && variable.dims === 1) {
+                if (item.indices.length > 1 && this.stringifyNode(item.indices[1]) === node.variable) {
+                    isInnerStringLoop = true;
+                }
+            }
+        } else if (n.type === 'loop') {
+            (n as LoopNode).body.forEach(visit);
+        }
+    };
+    node.body.forEach(visit);
+
+    if (isInnerStringLoop) {
+        // Suppress this loop and just read the string once per row
+        return Array.from(new Set(bodyLinesRaw));
+    }
+
+    if (bodyLinesRaw.length === 0) return [];
+
     // Loop header
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
 
@@ -253,12 +282,7 @@ export class UniversalGenerator {
     });
 
     lines.push(header);
-
-    // Body
-    const bodyLines = this.generateInput(node.body, variables, declaredVariables);
-    lines.push(...bodyLines.map((l) => this.indent + l)); // Add indent
-
-    // Footer
+    lines.push(...bodyLinesRaw.map((l) => this.indent + l)); // Add indent
     lines.push(this.config.loop.footer);
 
     return lines;
@@ -336,14 +360,7 @@ export class UniversalGenerator {
     if (!node) return "";
     switch (node.type) {
       case "ident":
-        return (node as any).value; // TODO: Check Token vs AST structure. FormatTree uses strings? No, ASTNode.
-      // FormatNode children are ASTNode. But ASTNode definition in types.ts is minimal.
-      // Looking at types.ts:
-      // export interface Token { type: TokenType; value?: string | number; ... }
-      // export interface ASTNode { type: string; }
-      // export interface NumberNode extends ASTNode { type: 'number'; value: number; }
-      // export interface BinOpNode { ... left, right, op ... }
-
+        return (node as any).value;
       case "item":
         return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
       case "number":

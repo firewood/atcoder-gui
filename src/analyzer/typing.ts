@@ -113,6 +113,9 @@ function collapseLoops(node: ASTNode): {
     }
     if (n.type === "loop") {
       const loop = n as LoopNode;
+
+      const transformedBody = loop.body.map(transform);
+
       // Check if collapsible
       // Condition: body contains exactly one ItemNode, possibly nested in FormatNodes
       let item: ItemNode | null = null;
@@ -130,13 +133,15 @@ function collapseLoops(node: ASTNode): {
             }
           } else if (child.type === "break" || child.type === "dots") {
             // Ignore break/dots
+          } else if (child.type === "loop") {
+             isSimple = false;
           } else {
             isSimple = false; // Other nodes like nested loops or binops
           }
         }
       };
 
-      checkBody(loop.body);
+      checkBody(transformedBody);
 
       if (isSimple && item) {
         const originalItem = item as ItemNode;
@@ -159,10 +164,10 @@ function collapseLoops(node: ASTNode): {
         }
       }
 
-      // If not collapsible, recurse
+      // If not collapsible, use the (potentially transformed) body
       return {
         ...loop,
-        body: loop.body.map(transform),
+        body: transformedBody,
       };
     }
     return n;
@@ -175,8 +180,8 @@ function collapseLoops(node: ASTNode): {
 export function inferTypesFromInstances(
   node: FormatNode,
   instances: string[],
-): { types: Record<string, VarType>; collapsedVars: Set<string> } {
-  if (instances.length === 0) return { types: {}, collapsedVars: new Set() };
+): { types: Record<string, VarType>; collapsedVars: Set<string>; collapsedAst: FormatNode } {
+  if (instances.length === 0) return { types: {}, collapsedVars: new Set(), collapsedAst: node };
 
   let firstError: any;
   try {
@@ -186,25 +191,31 @@ export function inferTypesFromInstances(
       const types = getVarTypesFromMatchResult(values);
       finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
     }
-    return { types: finalTypes || {}, collapsedVars: new Set() };
+    return { types: finalTypes || {}, collapsedVars: new Set(), collapsedAst: node };
   } catch (e) {
     firstError = e;
   }
 
-  const { collapsedAst, collapsedVars } = collapseLoops(node);
-  if (collapsedVars.size > 0) {
-    try {
-      let finalTypes: Record<string, VarType> | null = null;
-      for (const instance of instances) {
-        const values = matchFormat(collapsedAst as FormatNode, instance);
-        const types = getVarTypesFromMatchResult(values);
-        finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
+  let currentAst = node;
+  let allCollapsedVars = new Set<string>();
+
+  while (true) {
+      const { collapsedAst, collapsedVars } = collapseLoops(currentAst);
+      if (collapsedVars.size === 0) break;
+
+      try {
+        let finalTypes: Record<string, VarType> | null = null;
+        for (const instance of instances) {
+          const values = matchFormat(collapsedAst as FormatNode, instance);
+          const types = getVarTypesFromMatchResult(values);
+          finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
+        }
+        collapsedVars.forEach(v => allCollapsedVars.add(v));
+        return { types: finalTypes || {}, collapsedVars: allCollapsedVars, collapsedAst: collapsedAst as FormatNode };
+      } catch (_) {
+        currentAst = collapsedAst as FormatNode;
+        collapsedVars.forEach(v => allCollapsedVars.add(v));
       }
-      return { types: finalTypes || {}, collapsedVars };
-    } catch (_) {
-      // Both failed. Throw the FIRST error usually.
-      throw firstError;
-    }
   }
 
   throw firstError;

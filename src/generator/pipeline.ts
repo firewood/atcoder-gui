@@ -64,13 +64,13 @@ export function generateParseResult(
 
   console.log("Analyzing...");
   const analyzer = new Analyzer();
-  const formatTree = analyzer.analyze(rawAst);
+  const rawAnalyzedAst = analyzer.analyze(rawAst);
   // console.log('AST:', JSON.stringify(formatTree, null, 2));
 
   console.log("Inferring Types...");
   const sampleInputs = samples.map((s) => s.input);
-  const { types, collapsedVars } = inferTypesFromInstances(
-    formatTree,
+  const { types, collapsedVars, collapsedAst: formatTree } = inferTypesFromInstances(
+    rawAnalyzedAst,
     sampleInputs,
   );
   // console.log('Inferred Types:', types);

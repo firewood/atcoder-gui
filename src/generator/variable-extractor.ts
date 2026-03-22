@@ -25,6 +25,7 @@ export class VariableExtractor {
   }
 
   extract(node: FormatNode): void {
+    this.vars.clear();
     this.visit(node, []);
   }
 
@@ -86,15 +87,31 @@ export class VariableExtractor {
   }
 
   getVariables(types: Record<string, VarType>): VariableInfo[] {
-    return Array.from(this.vars.entries()).map(([name, info]) => {
+    const vars: VariableInfo[] = [];
+    for (const [name, info] of this.vars.entries()) {
       let dims = info.dims;
       let indices = info.indices;
       const type = types[name] || VarType.ValueInt;
 
-      // Rule 1: Explicitly collapsed variables (Standard match failed, Collapse succeeded)
+      // Rule 1: Collapse dimensions for collapsed variables
       if (this.collapsedVars.has(name) && dims > 0) {
-        dims -= 1;
-        indices = indices.slice(0, -1);
+          // If it's a string, we might have already reduced dims in Typing.ts
+          // But VariableExtractor.visit() might have seen the original number of indices.
+          // We need to ensure dims and indices reflect the collapsed state.
+          if (type === VarType.String) {
+              // Special case for grid of chars -> vector of strings
+              if (dims === 2 && info.loopDepth === 2) {
+                  dims = 1;
+                  indices = [indices[0]];
+              } else if (dims === 1 && info.loopDepth === 1) {
+                  dims = 0;
+                  indices = [];
+              }
+          } else {
+              // Rule 1: Explicitly collapsed variables (Standard match failed, Collapse succeeded)
+              dims -= 1;
+              indices = indices.slice(0, -1);
+          }
       }
       // Rule 2: String anomaly (Standard match succeeded, but Analyzer produced disconnected dimensions)
       // If type is String, and dimensions exceed the loop depth, it implies we are indexing implicitly into the string.
@@ -112,12 +129,13 @@ export class VariableExtractor {
         }
       }
 
-      return {
+      vars.push({
         name,
         type,
         dims,
         indices,
-      };
-    });
+      });
+    }
+    return vars;
   }
 }
