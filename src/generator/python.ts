@@ -23,7 +23,7 @@ export class PythonGenerator {
     let configPath = DEFAULT_CONFIG_PATH;
     let templatePath = DEFAULT_TEMPLATE_PATH;
 
-    if (configManager) {
+    if (configManager?.isUserConfigEnabled()) {
       const configDir = configManager.getConfigDirPath();
       const localPythonJson5Path = path.join(configDir, "python.json5");
       const localPythonNjkPath = path.join(configDir, "python.njk");

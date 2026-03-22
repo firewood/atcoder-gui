@@ -4,8 +4,11 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
+import os from "os";
 const require = createRequire(import.meta.url);
 const { version } = require("../package.json");
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export interface AppConfig {
   theme?: "light" | "dark";
@@ -24,8 +27,16 @@ export interface AppConfig {
 
 export class ConfigManager {
   private conf: Conf<AppConfig>;
+  private userConfigEnabled: boolean;
 
-  constructor() {
+  constructor(useUserConfig: boolean = false) {
+    this.userConfigEnabled = useUserConfig;
+
+    // Read default config.json5 template for defaults
+    const defaultTemplatePath = join(__dirname, "config.json5");
+    const defaultTemplate = readFileSync(defaultTemplatePath, "utf-8");
+    const defaults = JSON5.parse(defaultTemplate);
+
     this.conf = new Conf<AppConfig>({
       projectName: "atcoder-gui",
       projectVersion: version,
@@ -33,11 +44,14 @@ export class ConfigManager {
       fileExtension: "json5",
       serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
       deserialize: (text: string): AppConfig => JSON5.parse(text),
-      defaults: {},
+      defaults,
+      cwd: useUserConfig ? undefined : os.tmpdir(),
     });
 
     // Initialize user config with default template on first launch
-    this.initializeUserConfigIfNeeded();
+    if (this.userConfigEnabled) {
+      this.initializeUserConfigIfNeeded();
+    }
   }
 
   /**
@@ -56,8 +70,7 @@ export class ConfigManager {
         }
 
         // Read default config.json5 template
-        const defaultConfigPath = dirname(fileURLToPath(import.meta.url));
-        const defaultTemplate = readFileSync(join(defaultConfigPath, "config.json5"), "utf-8");
+        const defaultTemplate = readFileSync(join(__dirname, "config.json5"), "utf-8");
 
         // Write the template directly to user config path using fs
         writeFileSync(this.conf.path, defaultTemplate, "utf-8");
@@ -138,6 +151,10 @@ export class ConfigManager {
    */
   getSize(): number {
     return this.conf.size;
+  }
+
+  isUserConfigEnabled(): boolean {
+    return this.userConfigEnabled;
   }
 
   getVersion(): string {
