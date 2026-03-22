@@ -27,7 +27,7 @@ export class AtCoderGUI {
 
   constructor() {
     this.browserManager = new BrowserManager();
-    this.configManager = new ConfigManager();
+    this.configManager = new ConfigManager(true);
     this.submitManager = new SubmitManager(this.browserManager);
     this.cookieExporter = new CookieExporter(this.browserManager);
     this.genManager = new GenManager(this.browserManager, this.configManager);
@@ -318,7 +318,7 @@ async function ui_main(): Promise<void> {
  */
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const configManager = new ConfigManager();
+  const configManager = new ConfigManager(true);
 
   if (args.includes("version") || args.includes("--version") || args.includes("-v")) {
     console.log(configManager.getVersion());

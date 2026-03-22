@@ -199,6 +199,7 @@ describe("CPlusPlusGenerator", () => {
       // Mock ConfigManager to return the temp directory path
       const mockConfigManager = {
         getConfigDirPath: () => tempDir,
+        isUserConfigEnabled: () => true,
       } as unknown as ConfigManager;
 
       // Mock data (minimal)

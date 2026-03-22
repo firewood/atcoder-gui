@@ -23,7 +23,7 @@ export class CPlusPlusGenerator {
     let configPath = DEFAULT_CONFIG_PATH;
     let templatePath = DEFAULT_TEMPLATE_PATH;
 
-    if (configManager) {
+    if (configManager?.isUserConfigEnabled()) {
       const configDir = configManager.getConfigDirPath();
       const localCppJson5Path = path.join(configDir, "cpp.json5");
       const localCppNjkPath = path.join(configDir, "cpp.njk");
