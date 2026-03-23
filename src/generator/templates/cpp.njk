@@ -17,11 +17,18 @@
 #include <ctime>
 #include <cstdio>
 #include <cassert>
+{% if mod %}
+#include <atcoder/modint>
+{% endif %}
+
 using namespace std;
 
 {% if mod %}
 {% set cpp_return_type = "mint" %}
 const long long MOD = {{ mod }};
+{% if mod == 998244353 or mod == 1000000007 %}
+using mint = atcoder::modint{{ mod }};
+{% endif %}
 {% elif yes_str %}
 {% set cpp_return_type = "bool" %}
 const string YES = "{{ yes_str }}";
