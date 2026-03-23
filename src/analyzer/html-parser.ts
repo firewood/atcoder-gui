@@ -189,7 +189,7 @@ export function parseHtml(html: string): ParseResult {
     noStr,
     mod,
     returnType,
-    multipleLines,
+    multipleLines: multipleCases ? false : multipleLines,
   };
 }
 
