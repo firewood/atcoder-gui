@@ -22,4 +22,4 @@
     - [x] Call `analyze` in `generateParseResult`.
     - [x] Pass `return_type` to the template context.
 - [x] Task: Verify integration with existing tests (ensure no regression).
-- [ ] Task: Conductor - User Manual Verification 'Integration' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Integration' (Protocol in workflow.md) [checkpoint: 8afe245].
