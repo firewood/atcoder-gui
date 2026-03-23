@@ -175,8 +175,13 @@ function collapseLoops(node: ASTNode): {
 export function inferTypesFromInstances(
   node: FormatNode,
   instances: string[],
-): { types: Record<string, VarType>; collapsedVars: Set<string> } {
-  if (instances.length === 0) return { types: {}, collapsedVars: new Set() };
+): {
+  types: Record<string, VarType>;
+  collapsedVars: Set<string>;
+  collapsedAst: FormatNode;
+} {
+  if (instances.length === 0)
+    return { types: {}, collapsedVars: new Set(), collapsedAst: node };
 
   let firstError: any;
   try {
@@ -186,7 +191,11 @@ export function inferTypesFromInstances(
       const types = getVarTypesFromMatchResult(values);
       finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
     }
-    return { types: finalTypes || {}, collapsedVars: new Set() };
+    return {
+      types: finalTypes || {},
+      collapsedVars: new Set(),
+      collapsedAst: node,
+    };
   } catch (e) {
     firstError = e;
   }
@@ -200,7 +209,11 @@ export function inferTypesFromInstances(
         const types = getVarTypesFromMatchResult(values);
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
-      return { types: finalTypes || {}, collapsedVars };
+      return {
+        types: finalTypes || {},
+        collapsedVars,
+        collapsedAst: collapsedAst as FormatNode,
+      };
     } catch (_) {
       // Both failed. Throw the FIRST error usually.
       throw firstError;
