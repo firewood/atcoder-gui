@@ -19,6 +19,7 @@ export interface ParseResult {
   noStr?: string;
   mod?: number;
   returnType: string;
+  multipleLines: boolean;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
@@ -45,6 +46,7 @@ export function generateParseResult(
     noStr,
     mod,
     returnType,
+    multipleLines,
   } = parseHtml(html);
 
   if (!inputFormat) {
@@ -112,6 +114,7 @@ export function generateParseResult(
     noStr,
     mod,
     returnType,
+    multipleLines,
     samples,
     variables,
     formatTree: finalFormatTree,

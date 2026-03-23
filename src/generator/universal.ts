@@ -36,6 +36,7 @@ export class UniversalGenerator {
     noStr?: string,
     mod?: number,
     returnType: string = "void",
+    multipleLines?: boolean,
   ): TemplateContext {
     let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
@@ -86,6 +87,7 @@ export class UniversalGenerator {
       actual_arguments: this.generateActualArguments(declarableVariables),
       input_part: inputPart,
       multiple_cases: multipleCases,
+      multiple_lines: multipleLines || undefined,
       query_cases: queryCases,
       query_loop_var: queryLoopVar,
       tools: {

@@ -71,7 +71,8 @@ describe("return type inference", () => {
   it("should detect multiple_lines return type", () => {
     const html = wrapHtml("N", ["1\n2\n3", "4\n5"]);
     const result = parseHtml(html);
-    expect(result.returnType).toBe("multiple_lines");
+    expect(result.returnType).toBe("int_array");
+    expect(result.multipleLines).toBe(true);
   });
 
   it("should detect void return type when outputs are mixed or empty", () => {
