@@ -207,6 +207,10 @@ export class UniversalGenerator {
 
     const typeKey = this.mapVarType(variable.type);
 
+    // Filter indices to match variable dimensions (taking from the END)
+    // e.g. if variable S is 1D string vector, but AST has S[N][i], we want S[i]
+    const relevantIndices = node.indices.slice(node.indices.length - variable.dims);
+
     if (variable.dims === 0) {
       return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
         name: variable.name,
@@ -216,7 +220,7 @@ export class UniversalGenerator {
       // The AST for 'item' in a loop has indices.
       const access = this.formatString(this.config.access.seq, {
         name: variable.name,
-        index: this.stringifyNode(node.indices[0]),
+        index: this.stringifyNode(relevantIndices[0]),
       });
       return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
         name: access,
@@ -224,8 +228,8 @@ export class UniversalGenerator {
     } else if (variable.dims === 2) {
       const access = this.formatString(this.config.access["2d_seq"], {
         name: variable.name,
-        index_i: this.stringifyNode(node.indices[0]),
-        index_j: this.stringifyNode(node.indices[1]),
+        index_i: this.stringifyNode(relevantIndices[0]),
+        index_j: this.stringifyNode(relevantIndices[1]),
       });
       return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
         name: access,

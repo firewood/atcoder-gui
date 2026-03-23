@@ -66,7 +66,7 @@ export function evalAST(node: ASTNode, env: Record<string, any>): number {
 export function matchFormat(
   node: FormatNode,
   input: string,
-): Record<string, any> {
+): { env: Record<string, any>; consumedAll: boolean } {
   // Tokenize input by whitespace
   const tokens = input.trim().split(/\s+/);
   if (tokens.length === 1 && tokens[0] === "") {
@@ -149,5 +149,38 @@ export function matchFormat(
   }
 
   processNode(node);
-  return env;
+  return { env, consumedAll: tokenIndex === tokens.length };
+}
+
+export function isFullMatch(node: FormatNode, input: string): boolean {
+  try {
+    const tokens = input.trim().split(/\s+/).filter(t => t !== "");
+    const env: Record<string, any> = {};
+    let tokenIndex = 0;
+    const consume = () => {
+        if (tokenIndex >= tokens.length) throw new Error();
+        return tokens[tokenIndex++];
+    };
+    const process = (ast: ASTNode) => {
+        if (ast.type === "format") (ast as FormatNode).children.forEach(process);
+        else if (ast.type === "item") {
+            const val = consume();
+            env[(ast as ItemNode).name] = val;
+        } else if (ast.type === "dots" || ast.type === "vdots") {
+            // ignore
+        } else if (ast.type === "loop") {
+            const loop = ast as LoopNode;
+            const start = evalAST(loop.start, env);
+            const end = evalAST(loop.end, env);
+            const count = Math.max(0, end - start + 1);
+            for (let i = 0; i < count; i++) {
+                loop.body.forEach(process);
+            }
+        }
+    };
+    process(node);
+    return tokenIndex === tokens.length;
+  } catch (e) {
+    return false;
+  }
 }

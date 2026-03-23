@@ -1,5 +1,6 @@
 import { FormatNode, VarType, ASTNode, LoopNode, ItemNode } from "./types.js";
-import { matchFormat } from "./match.js";
+import { matchFormat, isFullMatch } from "./match.js";
+import { Analyzer } from "./analyzer.js";
 
 export class TypingError extends Error {
   constructor(message: string) {
@@ -175,37 +176,48 @@ function collapseLoops(node: ASTNode): {
 export function inferTypesFromInstances(
   node: FormatNode,
   instances: string[],
-): { types: Record<string, VarType>; collapsedVars: Set<string> } {
-  if (instances.length === 0) return { types: {}, collapsedVars: new Set() };
-
-  let firstError: any;
-  try {
-    let finalTypes: Record<string, VarType> | null = null;
-    for (const instance of instances) {
-      const values = matchFormat(node, instance);
-      const types = getVarTypesFromMatchResult(values);
-      finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
-    }
-    return { types: finalTypes || {}, collapsedVars: new Set() };
-  } catch (e) {
-    firstError = e;
+): {
+  types: Record<string, VarType>;
+  collapsedVars: Set<string>;
+  collapsedAst: FormatNode;
+} {
+  if (instances.length === 0) {
+    return { types: {}, collapsedVars: new Set(), collapsedAst: node };
   }
 
-  const { collapsedAst, collapsedVars } = collapseLoops(node);
-  if (collapsedVars.size > 0) {
+  let currentNode: FormatNode = node;
+  const allCollapsedVars = new Set<string>();
+
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
     try {
       let finalTypes: Record<string, VarType> | null = null;
+      let someNotFullMatch = false;
       for (const instance of instances) {
-        const values = matchFormat(collapsedAst as FormatNode, instance);
-        const types = getVarTypesFromMatchResult(values);
+        const { env, consumedAll } = matchFormat(currentNode, instance);
+        if (!consumedAll) someNotFullMatch = true;
+        const types = getVarTypesFromMatchResult(env);
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
-      return { types: finalTypes || {}, collapsedVars };
-    } catch (_) {
-      // Both failed. Throw the FIRST error usually.
-      throw firstError;
+
+      if (!someNotFullMatch || allCollapsedVars.size === 0) {
+          return {
+            types: finalTypes || {},
+            collapsedVars: allCollapsedVars,
+            collapsedAst: currentNode,
+          };
+      }
+      throw new Error("Not a full match");
+    } catch (e) {
+      const { collapsedAst, collapsedVars } = collapseLoops(currentNode);
+      if (collapsedVars.size === 0) {
+        throw e;
+      }
+      const analyzer = new Analyzer();
+      currentNode = analyzer.analyze(collapsedAst as FormatNode);
+      for (const v of collapsedVars) {
+        allCollapsedVars.add(v);
+      }
     }
   }
-
-  throw firstError;
 }

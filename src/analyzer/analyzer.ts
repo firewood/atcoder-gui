@@ -5,8 +5,22 @@ export class Analyzer {
     const childrenWithoutBreaks = root.children.filter(
       (n) => n.type !== "break",
     );
-    const newChildren = this.normalize(childrenWithoutBreaks);
-    return { ...root, children: newChildren };
+    let currentChildren = childrenWithoutBreaks;
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+        const newChildren = this.normalize(currentChildren);
+        if (this.areChildrenEqual(newChildren, currentChildren)) break;
+        currentChildren = newChildren;
+    }
+    return { ...root, children: currentChildren };
+  }
+
+  private areChildrenEqual(a: ASTNode[], b: ASTNode[]): boolean {
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+          if (!this.areNodesEqual(a[i], b[i])) return false;
+      }
+      return true;
   }
 
   private normalize(nodes: ASTNode[]): ASTNode[] {
@@ -14,8 +28,8 @@ export class Analyzer {
     let i = 0;
     while (i < nodes.length) {
       const node = nodes[i];
-      if (node.type === "dots") {
-        const loop = this.detectLoop(nodes, i);
+      if (node.type === "dots" || node.type === "vdots") {
+        const loop = this.detectLoop(nodes, i, node.type);
         if (loop) {
           const { K, loopNode } = loop;
           for (let k = 0; k < K; k++) result.pop();
@@ -23,7 +37,7 @@ export class Analyzer {
           while (this.tryExtendLoop(result, loopNode)) {
             // extended
           }
-
+          loopNode.body = this.normalize(loopNode.body);
           result.push(loopNode);
           i += K + 1; // Skip dots and right side (K items)
           continue;
@@ -66,7 +80,8 @@ export class Analyzer {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const template = loopNode.body[i];
-      if (!this.matchesTemplate(node, template, loopNode.variable, indexVal))
+      if (template.type !== "item") return false; // Loop body elements are items in our current logic
+      if (!this.matchesTemplate(node, template as ItemNode, loopNode.variable, indexVal))
         return false;
     }
     return true;
@@ -107,6 +122,7 @@ export class Analyzer {
   private detectLoop(
     nodes: ASTNode[],
     dotsIndex: number,
+    dotsType: string,
   ): { K: number; loopNode: LoopNode } | null {
     for (let K = 1; K <= dotsIndex; K++) {
       if (dotsIndex + K >= nodes.length) break;
@@ -116,8 +132,9 @@ export class Analyzer {
 
       if (this.match(left, right)) {
         const loopNode = this.createLoop(
-          left as ItemNode[],
-          right as ItemNode[],
+          left,
+          right,
+          dotsType,
         );
         if (loopNode) return { K, loopNode };
       }
@@ -137,49 +154,82 @@ export class Analyzer {
     return true;
   }
 
-  private createLoop(left: ItemNode[], right: ItemNode[]): LoopNode | null {
-    const firstL = left[0];
-    const firstR = right[0];
+  private createLoop(left: ASTNode[], right: ASTNode[], dotsType: string): LoopNode | null {
+    const diffs: { path: string[]; start: ASTNode; end: ASTNode }[] = [];
 
-    let diffIndex = -1;
-    if (firstL.indices.length !== firstR.indices.length) return null;
+    const findDiffs = (a: ASTNode, b: ASTNode, path: string[]) => {
+      if (this.areNodesEqual(a, b)) return;
 
-    for (let j = 0; j < firstL.indices.length; j++) {
-      if (!this.areNodesEqual(firstL.indices[j], firstR.indices[j])) {
-        diffIndex = j;
-        break;
+      if (a.type === "item" && b.type === "item") {
+        const ia = a as ItemNode;
+        const ib = b as ItemNode;
+        if (ia.name === ib.name && ia.indices.length === ib.indices.length) {
+          ia.indices.forEach((idx, i) => findDiffs(idx, ib.indices[i], [...path, `indices[${i}]`]));
+          return;
+        }
       }
+
+      if (a.type === "binop" && b.type === "binop") {
+         const ba = a as BinOpNode;
+         const bb = b as BinOpNode;
+         if (ba.op === bb.op) {
+             findDiffs(ba.left, bb.left, [...path, "left"]);
+             findDiffs(ba.right, bb.right, [...path, "right"]);
+             return;
+         }
+      }
+
+      diffs.push({ path, start: a, end: b });
+    };
+
+    for (let i = 0; i < left.length; i++) {
+       findDiffs(left[i], right[i], [`[${i}]`]);
     }
 
-    if (diffIndex === -1) return null;
+    if (diffs.length === 0) return null;
 
-    const start = firstL.indices[diffIndex];
-    const end = firstR.indices[diffIndex];
+    // Pick a representative difference to define the loop range
+    const dIdx = (dotsType === "dots") ? diffs.length - 1 : 0;
+    const representative = diffs[dIdx];
+    const { start, end } = representative;
 
-    const loopVar = this.generateLoopVar(start, end, left, right);
+    // All diffs that share the same start and end should be replaced by the loop variable
+    const pathsToReplace = diffs
+      .filter(d => this.areNodesEqual(d.start, start) && this.areNodesEqual(d.end, end))
+      .map(d => d.path.join("."));
 
-    // Check consistency for other items
-    for (let k = 1; k < left.length; k++) {
-      const l = left[k];
-      const r = right[k];
-      if (l.indices.length !== r.indices.length) return null;
-      if (l.indices.length <= diffIndex) return null;
+    const loopVar = this.generateLoopVar(start, end, left);
 
-      for (let j = 0; j < l.indices.length; j++) {
-        if (j === diffIndex) continue;
-        if (!this.areNodesEqual(l.indices[j], r.indices[j])) return null;
+    const replaceAt = (n: ASTNode, currentPath: string[]): ASTNode => {
+      if (pathsToReplace.includes(currentPath.join("."))) {
+          return { type: "item", name: loopVar, indices: [] } as ItemNode;
       }
-    }
+      if (n.type === "item") {
+          const item = n as ItemNode;
+          const newIndices = item.indices.map((idx, i) => replaceAt(idx, [...currentPath, `indices[${i}]`]));
+          return { ...item, indices: newIndices };
+      }
+      if (n.type === "loop") {
+          const loop = n as LoopNode;
+          return {
+              ...loop,
+              start: replaceAt(loop.start, [...currentPath, "start"]),
+              end: replaceAt(loop.end, [...currentPath, "end"]),
+              body: loop.body.map((child, i) => replaceAt(child, [...currentPath, `body[${i}]`]))
+          };
+      }
+      if (n.type === "binop") {
+          const bin = n as BinOpNode;
+          return {
+              ...bin,
+              left: replaceAt(bin.left, [...currentPath, "left"]),
+              right: replaceAt(bin.right, [...currentPath, "right"])
+          };
+      }
+      return JSON.parse(JSON.stringify(n));
+    };
 
-    const body = left.map((item) => {
-      const newIndices = [...item.indices];
-      newIndices[diffIndex] = {
-        type: "item",
-        name: loopVar,
-        indices: [],
-      } as ItemNode;
-      return { ...item, indices: newIndices };
-    });
+    const body = left.map((node, i) => replaceAt(node, [`[${i}]`]));
 
     return {
       type: "loop",
@@ -193,34 +243,40 @@ export class Analyzer {
   private generateLoopVar(
     start: ASTNode,
     end: ASTNode,
-    left: ItemNode[],
-    right: ItemNode[],
+    body: ASTNode[],
   ): string {
     const used = new Set<string>();
     const extract = (node: ASTNode) => {
+      if (!node) return;
       if (node.type === "item") {
-        used.add((node as ItemNode).name);
-        (node as ItemNode).indices.forEach(extract);
-      }
-      if (node.type === "binop") {
+        const item = node as ItemNode;
+        used.add(item.name);
+        item.indices.forEach(extract);
+      } else if (node.type === "binop") {
         extract((node as BinOpNode).left);
         extract((node as BinOpNode).right);
-      }
-      if (node.type === "loop") {
-        // Shouldn't happen in raw AST unless recursive?
+      } else if (node.type === "loop") {
+        const loop = node as LoopNode;
+        used.add(loop.variable);
+        extract(loop.start);
+        extract(loop.end);
+        loop.body.forEach(extract);
       }
     };
 
     extract(start);
     extract(end);
-    left.forEach(extract); // Extract from indices of left items
-    right.forEach(extract); // Extract from indices of right items
+    body.forEach(extract);
 
     const candidates = ["i", "j", "k", "l", "m"];
     for (const c of candidates) {
       if (!used.has(c)) return c;
     }
-    return "i";
+    for (let i = 0; i < 26; i++) {
+        const c = String.fromCharCode(97 + i);
+        if (!used.has(c)) return c;
+    }
+    return "idx";
   }
 
   private areNodesEqual(a: ASTNode, b: ASTNode): boolean {
@@ -240,15 +296,58 @@ export class Analyzer {
       return (a as any).value === (b as any).value;
     }
     if (a.type === "binop") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const ba = a as any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bb = b as any;
+      const ba = a as BinOpNode;
+      const bb = b as BinOpNode;
       return (
         ba.op === bb.op &&
         this.areNodesEqual(ba.left, bb.left) &&
         this.areNodesEqual(ba.right, bb.right)
       );
+    }
+    if (a.type === "loop") {
+        const la = a as LoopNode;
+        const lb = b as LoopNode;
+        if (!this.areNodesEqual(la.start, lb.start)) return false;
+        if (!this.areNodesEqual(la.end, lb.end)) return false;
+        if (la.body.length !== lb.body.length) return false;
+        for (let i = 0; i < la.body.length; i++) {
+            if (!this.areNodesAlphaEqual(la.body[i], lb.body[i], la.variable, lb.variable)) return false;
+        }
+        return true;
+    }
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+
+  private areNodesAlphaEqual(a: ASTNode, b: ASTNode, varA: string, varB: string): boolean {
+    if (a.type === "item" && b.type === "item") {
+        const ia = a as ItemNode;
+        const ib = b as ItemNode;
+        if (ia.name === varA && ia.indices.length === 0) {
+            return ib.name === varB && ib.indices.length === 0;
+        }
+        if (ib.name === varB && ib.indices.length === 0) return false;
+
+        if (ia.name !== ib.name) return false;
+        if (ia.indices.length !== ib.indices.length) return false;
+        for (let i = 0; i < ia.indices.length; i++) {
+            if (!this.areNodesAlphaEqual(ia.indices[i], ib.indices[i], varA, varB)) return false;
+        }
+        return true;
+    }
+    if (a.type !== b.type) return false;
+    if (a.type === "number") return (a as any).value === (b as any).value;
+    if (a.type === "binop") {
+        const ba = a as BinOpNode;
+        const bb = b as BinOpNode;
+        return ba.op === bb.op && this.areNodesAlphaEqual(ba.left, bb.left, varA, varB) && this.areNodesAlphaEqual(ba.right, bb.right, varA, varB);
+    }
+    if (a.type === "loop") {
+        const la = a as LoopNode;
+        const lb = b as LoopNode;
+        return this.areNodesAlphaEqual(la.start, lb.start, varA, varB) &&
+               this.areNodesAlphaEqual(la.end, lb.end, varA, varB) &&
+               la.body.length === lb.body.length &&
+               la.body.every((n, i) => this.areNodesAlphaEqual(n, lb.body[i], varA, varB));
     }
     return JSON.stringify(a) === JSON.stringify(b);
   }

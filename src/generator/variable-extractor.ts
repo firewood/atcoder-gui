@@ -91,25 +91,10 @@ export class VariableExtractor {
       let indices = info.indices;
       const type = types[name] || VarType.ValueInt;
 
-      // Rule 1: Explicitly collapsed variables (Standard match failed, Collapse succeeded)
-      if (this.collapsedVars.has(name) && dims > 0) {
-        dims -= 1;
-        indices = indices.slice(0, -1);
-      }
-      // Rule 2: String anomaly (Standard match succeeded, but Analyzer produced disconnected dimensions)
-      // If type is String, and dimensions exceed the loop depth, it implies we are indexing implicitly into the string.
-      // e.g. loops=1, indices=2 (S[N][i]). This means S[i] is a string. We drop the extra index.
-      else if (type === VarType.String && dims > info.loopDepth) {
-        // const excess = dims - info.loopDepth;
-        dims = info.loopDepth;
-        // Keep the last 'dims' indices (assuming loop vars are inner)
-        // E.g. [N, i], depth=1. excess=1. slice(-1) -> [i].
-        // If depth=0 (scalar usage outside loop), but indices=1? -> dims=0.
-        if (dims === 0) {
-          indices = [];
-        } else {
-          indices = indices.slice(-dims);
-        }
+      // If type is String, it takes up one dimension of indices
+      if (type === VarType.String && dims > 0) {
+          dims -= 1;
+          indices = indices.slice(0, dims);
       }
 
       return {

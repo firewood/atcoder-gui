@@ -64,20 +64,21 @@ export function generateParseResult(
 
   console.log("Analyzing...");
   const analyzer = new Analyzer();
-  const formatTree = analyzer.analyze(rawAst);
+  let formatTree = analyzer.analyze(rawAst);
   // console.log('AST:', JSON.stringify(formatTree, null, 2));
 
   console.log("Inferring Types...");
   const sampleInputs = samples.map((s) => s.input);
-  const { types, collapsedVars } = inferTypesFromInstances(
-    formatTree,
-    sampleInputs,
-  );
+  const {
+    types,
+    collapsedAst: finalAst,
+  } = inferTypesFromInstances(formatTree, sampleInputs);
   // console.log('Inferred Types:', types);
+  formatTree = finalAst;
+  // console.log('Final AST:', JSON.stringify(formatTree, null, 2));
 
   console.log("Extracting Variables...");
   const extractor = new VariableExtractor();
-  extractor.setCollapsedVars(collapsedVars);
   extractor.extract(formatTree);
   const variables = extractor.getVariables(types);
 

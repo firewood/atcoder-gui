@@ -32,9 +32,13 @@ export class Parser {
       this.consume();
       return { type: "break" };
     }
-    if (token.type === "dots" || token.type === "vdots") {
+    if (token.type === "dots") {
       this.consume();
       return { type: "dots" };
+    }
+    if (token.type === "vdots") {
+      this.consume();
+      return { type: "vdots" };
     }
     // Skip commas
     if (token.type === "comma") {
