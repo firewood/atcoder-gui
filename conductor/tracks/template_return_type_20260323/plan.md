@@ -12,7 +12,7 @@
     - [x] Implement `analyze(html: string, samples: string[], yesStr?: string): string`.
     - [x] Implement modulo regex logic.
     - [x] Implement sample analysis logic.
-- [~] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md).
+- [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md) [checkpoint: 80bddcf].
 
 ## Phase 2: Integration
 - [ ] Task: Update `src/generator/types.ts`.
