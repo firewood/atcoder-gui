@@ -33,17 +33,8 @@ async function main() {
     const html = await fetchProblemContent(taskId);
 
     // Pipeline
-    const {
-      multipleCases,
-      queryType,
-      yesStr,
-      noStr,
-      mod,
-      returnType,
-      samples,
-      variables,
-      formatTree,
-    } = generateParseResult(html, taskId, url);
+    const { multipleCases, queryType, yesStr, noStr, mod, returnType, multipleLines, samples, variables, formatTree } =
+      generateParseResult(html, taskId, url);
 
     const parseResult = JSON.stringify(
       {
@@ -57,6 +48,7 @@ async function main() {
         noStr,
         mod,
         returnType,
+        multipleLines,
         samples,
         variables,
       },
@@ -80,6 +72,7 @@ async function main() {
       noStr,
       mod,
       returnType,
+      multipleLines,
     );
 
     fs.writeFileSync(cppPath, code);

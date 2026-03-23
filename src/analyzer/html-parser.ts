@@ -176,7 +176,7 @@ export function parseHtml(html: string): ParseResult {
     }
   }
 
-  const { returnType, multipleLines } = inferReturnType(allOutputs, mod, judgeType);
+  const { returnType, multipleLines } = inferReturnType(allOutputs, mod, judgeType, multipleCases);
 
   return {
     inputFormat: inputFormat.trim(),
@@ -197,6 +197,7 @@ function inferReturnType(
   outputs: string[],
   mod: number | undefined,
   judgeType: string,
+  multipleCases: boolean,
 ): { returnType: string; multipleLines: boolean } {
   if (outputs.length === 0) return { returnType: "void", multipleLines: false };
 
@@ -207,26 +208,23 @@ function inferReturnType(
       .filter((s) => s.length > 0),
   );
 
-  const isSingleValue = parsedOutputs.every((tokens) => tokens.length === 1);
+  const isSingleLine = outputs.every((out) => out.trim().split("\n").length === 1);
+  const isSingleValue = outputs.every((out) =>
+    out
+      .trim()
+      .split("\n")
+      .every((line) => line.split(/\s+/).length == 1),
+  );
   const isNumeric = (t: string): boolean => /^-?(?:\d+\.\d+|\d+)$/.test(t);
-  if (isSingleValue) {
-    const allTokens = parsedOutputs.map((t) => t[0]);
-    if (allTokens.every(isNumeric)) {
-      if (mod !== undefined) return { returnType: "modint", multipleLines: false };
-      if (judgeType === "decimal") return { returnType: "float", multipleLines: false };
-      return { returnType: "int", multipleLines: false };
-    }
-    return { returnType: "string", multipleLines: false };
-  }
-
   const isNumericAll = parsedOutputs.every((tokens) => tokens.every(isNumeric));
   if (isNumericAll) {
-    const isSingleLine = outputs.every((out) => out.trim().split("\n").length === 1);
-    if (isSingleLine) {
-      return { returnType: "int_array", multipleLines: false };
+    if (mod !== undefined) return { returnType: "modint", multipleLines: !isSingleLine };
+    if (judgeType === "decimal") return { returnType: "float", multipleLines: !isSingleLine };
+    if (isSingleValue && (multipleCases || isSingleLine)) {
+      return { returnType: "int", multipleLines: !isSingleLine };
     }
-    return { returnType: "int_array", multipleLines: true };
+    return { returnType: "int_array", multipleLines: !isSingleLine };
+  } else {
+    return { returnType: "string", multipleLines: !isSingleLine };
   }
-
-  return { returnType: "void", multipleLines: false };
 }

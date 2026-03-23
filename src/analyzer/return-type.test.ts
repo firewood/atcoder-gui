@@ -84,6 +84,6 @@ describe("return type inference", () => {
   it("should detect void if mixed types", () => {
     const html = wrapHtml("N", ["1 2", "string"]);
     const result = parseHtml(html);
-    expect(result.returnType).toBe("void");
+    expect(result.returnType).toBe("string");
   });
 });
