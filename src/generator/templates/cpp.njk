@@ -76,6 +76,9 @@ void process_case() {
 int main() {
 {% endif %}
 {% if prediction_success %}
+{% if return_type == "float" %}
+    cout.precision(20);
+{% endif %}
 {{ input_part | safe }}
 {% if cpp_return_type == "void" %}
     solve({{ actual_arguments }});
