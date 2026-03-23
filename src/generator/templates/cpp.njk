@@ -32,7 +32,7 @@ const string NO = "{{ no_str }}";
 {% set cpp_return_type = "long double" %}
 {% elif return_type == "string" %}
 {% set cpp_return_type = "string" %}
-{% elif return_type == "int_array" or return_type == "multiple_lines" %}
+{% elif return_type == "int_array" %}
 {% set cpp_return_type = "vector<long long>" %}
 {% else %}
 {% set cpp_return_type = "void" %}
@@ -68,10 +68,11 @@ int main() {
 {{ input_part | safe }}
 {% if cpp_return_type == "void" %}
         solve({{ actual_arguments }});
-{% elif return_type == "int_array" or return_type == "multiple_lines" %}
+{% elif return_type == "int_array" %}
         auto ans = solve({{ actual_arguments }});
         for (int i = 0; i < ans.size(); i++) {
-            cout << (i ? " " : "") << ans[i];
+            if (i) cout << {{ "endl" if multiple_lines else '" "' }};
+            cout << ans[i];
         }
         cout << endl;
 {% elif yes_str %}
@@ -86,10 +87,11 @@ int main() {
 {{ input_part | safe }}
 {% if cpp_return_type == "void" %}
     solve({{ actual_arguments }});
-{% elif return_type == "int_array" or return_type == "multiple_lines" %}
+{% elif return_type == "int_array" %}
     auto ans = solve({{ actual_arguments }});
     for (int i = 0; i < ans.size(); i++) {
-        cout << (i ? " " : "") << ans[i];
+        if (i) cout << {{ "endl" if multiple_lines else '" "' }};
+        cout << ans[i];
     }
     cout << endl;
 {% elif yes_str %}

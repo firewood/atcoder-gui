@@ -152,6 +152,7 @@ export class GenManager {
           noStr,
           mod,
           returnType,
+          multipleLines,
           samples,
           variables,
           formatTree,
@@ -174,6 +175,7 @@ export class GenManager {
             noStr,
             mod,
             returnType,
+            multipleLines,
           );
           filename = "main.py";
         } else {
@@ -188,6 +190,7 @@ export class GenManager {
             noStr,
             mod,
             returnType,
+            multipleLines,
           );
           filename = "main.cpp";
         }

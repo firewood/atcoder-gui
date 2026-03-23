@@ -76,6 +76,7 @@ export interface TemplateContext {
   actual_arguments: string;
   input_part: string;
   multiple_cases?: boolean;
+  multiple_lines?: boolean;
   query_cases?: boolean;
   query_loop_var?: string;
   tools: {

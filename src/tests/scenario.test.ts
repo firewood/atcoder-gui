@@ -51,6 +51,7 @@ describe("Scenario Tests: Expected Results", () => {
         mod,
         returnType,
         errorTolerance,
+        multipleLines,
         ...actual
       } = result;
 

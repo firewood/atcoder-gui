@@ -49,9 +49,9 @@ def main():
 {{ input_part | safe }}
         {% if return_type == "void" -%}
         solve({{ actual_arguments }})
-        {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+        {%- elif return_type == "int_array" -%}
         ans = solve({{ actual_arguments }})
-        print(*ans)
+        print(*ans{{ ", sep='\\n'" if multiple_lines }})
         {%- else -%}
         ans = solve({{ actual_arguments }})
         print(ans)
@@ -60,9 +60,9 @@ def main():
 {{ input_part | safe }}
     {% if return_type == "void" -%}
     solve({{ actual_arguments }})
-    {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+    {%- elif return_type == "int_array" -%}
     ans = solve({{ actual_arguments }})
-    print(*ans)
+    print(*ans{{ ", sep='\\n'" if multiple_lines }})
     {%- else -%}
     ans = solve({{ actual_arguments }})
     print(ans)

@@ -64,6 +64,7 @@ export class CPlusPlusGenerator {
     noStr?: string,
     mod?: number,
     returnType: string = "void",
+    multipleLines?: boolean,
   ): string {
     const context = this.generator.generate(
       format,
@@ -74,6 +75,7 @@ export class CPlusPlusGenerator {
       noStr,
       mod,
       returnType,
+      multipleLines,
     );
     return nunjucks.renderString(this.template, context);
   }
