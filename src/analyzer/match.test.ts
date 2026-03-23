@@ -15,7 +15,7 @@ describe("matchFormat", () => {
     };
     const input = "3 4";
     const result = matchFormat(format, input);
-    expect(result).toEqual({ N: "3", M: "4" });
+    expect(result).toEqual({ env: { N: "3", M: "4" }, consumedAll: true });
   });
 
   it("should match array in loop", () => {
@@ -56,9 +56,9 @@ describe("matchFormat", () => {
     const input = "3 10 20 30";
     const result = matchFormat(format, input);
 
-    expect(result["N"]).toBe("3");
+    expect(result.env["N"]).toBe("3");
     // A should be map-like: { "0": "10", "1": "20", "2": "30" }
-    expect(result["A"]).toEqual({ "0": "10", "1": "20", "2": "30" });
+    expect(result.env["A"]).toEqual({ "0": "10", "1": "20", "2": "30" });
   });
 
   it("should handle newline and extra spaces", () => {
@@ -74,7 +74,7 @@ describe("matchFormat", () => {
           20
       `;
     const result = matchFormat(format, input);
-    expect(result).toEqual({ A: "10", B: "20" });
+    expect(result).toEqual({ env: { A: "10", B: "20" }, consumedAll: true });
   });
 
   it("should handle 2D array", () => {
@@ -127,9 +127,9 @@ describe("matchFormat", () => {
     const input = "2 3 1 2 3 4 5 6";
     const result = matchFormat(format, input);
 
-    expect(result["H"]).toBe("2");
-    expect(result["W"]).toBe("3");
-    expect(result["C"]).toEqual({
+    expect(result.env["H"]).toBe("2");
+    expect(result.env["W"]).toBe("3");
+    expect(result.env["C"]).toEqual({
       "0,0": "1",
       "0,1": "2",
       "0,2": "3",
