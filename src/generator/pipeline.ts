@@ -69,16 +69,17 @@ export function generateParseResult(
 
   console.log("Inferring Types...");
   const sampleInputs = samples.map((s) => s.input);
-  const { types, collapsedVars } = inferTypesFromInstances(
-    formatTree,
-    sampleInputs,
-  );
+  const {
+    types,
+    collapsedVars,
+    collapsedAst: finalFormatTree,
+  } = inferTypesFromInstances(formatTree, sampleInputs);
   // console.log('Inferred Types:', types);
 
   console.log("Extracting Variables...");
   const extractor = new VariableExtractor();
   extractor.setCollapsedVars(collapsedVars);
-  extractor.extract(formatTree);
+  extractor.extract(formatTree); // Use original formatTree
   const variables = extractor.getVariables(types);
 
   const queryVar = variables.find((v) => v.name === "query");
@@ -105,6 +106,6 @@ export function generateParseResult(
     noStr,
     samples,
     variables,
-    formatTree,
+    formatTree: finalFormatTree,
   };
 }
