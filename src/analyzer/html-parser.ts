@@ -14,6 +14,8 @@ export interface ParseResult {
   errorTolerance?: number;
   yesStr?: string;
   noStr?: string;
+  mod?: number;
+  returnType: string;
 }
 
 export function parseHtml(html: string): ParseResult {
@@ -27,6 +29,7 @@ export function parseHtml(html: string): ParseResult {
   let errorTolerance: number | undefined = undefined;
   let yesStr: string | undefined = undefined;
   let noStr: string | undefined = undefined;
+  let mod: number | undefined = undefined;
 
   const checkFloatingPoint = (text: string) => {
     const sectionText = text.toLowerCase();
@@ -46,6 +49,18 @@ export function parseHtml(html: string): ParseResult {
           errorTolerance = 1e-6;
         }
       }
+    }
+  };
+
+  const checkMod = (text: string) => {
+    if (text.includes("998244353")) {
+      mod = 998244353;
+    } else if (
+      text.includes("1000000007") ||
+      text.includes("10^9+7") ||
+      text.includes("10^{9}+7")
+    ) {
+      mod = 1000000007;
     }
   };
 
@@ -75,7 +90,11 @@ export function parseHtml(html: string): ParseResult {
         inputFormat = pres.eq(0).text();
       }
     } else if (text.match(/^(Problem Statement|問題文|Output|出力)$/i)) {
-      checkFloatingPoint(section.text());
+      const sectionText = section.text();
+      checkFloatingPoint(sectionText);
+      checkMod(sectionText);
+    } else if (text.match(/^Constraints|制約$/i)) {
+      checkMod(section.text());
     } else {
       const inputMatch = text.match(/^Sample Input\s*(\d+)?$/i);
       if (inputMatch) {
@@ -160,6 +179,8 @@ export function parseHtml(html: string): ParseResult {
     }
   }
 
+  const returnType = inferReturnType(allOutputs, mod, judgeType);
+
   return {
     inputFormat: inputFormat.trim(),
     samples,
@@ -169,5 +190,51 @@ export function parseHtml(html: string): ParseResult {
     errorTolerance,
     yesStr,
     noStr,
+    mod,
+    returnType,
   };
+}
+
+function inferReturnType(
+  outputs: string[],
+  mod: number | undefined,
+  judgeType: string,
+): string {
+  if (outputs.length === 0) return "void";
+
+  const parsedOutputs = outputs.map((out) =>
+    out
+      .trim()
+      .split(/\s+/)
+      .filter((s) => s.length > 0),
+  );
+
+  const isSingleValue = parsedOutputs.every((tokens) => tokens.length === 1);
+  if (isSingleValue) {
+    const allTokens = parsedOutputs.map((t) => t[0]);
+    const isNumeric = allTokens.every((t) => /^-?\d+$/.test(t));
+    if (isNumeric) {
+      if (mod !== undefined) return "modint";
+      if (judgeType === "decimal") return "double";
+      return "int";
+    }
+    const isFloat = allTokens.every((t) => !isNaN(Number(t)));
+    if (isFloat) {
+      return "double";
+    }
+    return "string";
+  }
+
+  const isNumericAll = parsedOutputs.every((tokens) =>
+    tokens.every((t) => !isNaN(Number(t))),
+  );
+  if (isNumericAll) {
+    const isSingleLine = outputs.every((out) => out.trim().split("\n").length === 1);
+    if (isSingleLine) {
+      return "int_array";
+    }
+    return "multiple_lines";
+  }
+
+  return "void";
 }

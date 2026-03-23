@@ -22,6 +22,7 @@ NO = "{{ no_str }}"
 
 {% if prediction_success -%}
 def solve({{ formal_arguments }}):
+    # return_type: {{ return_type }}
 {% if query_cases -%}
     for _ in range({{ query_loop_var }}):
         t = int(next(tokens))
@@ -46,10 +47,26 @@ def main():
     t = int(line)
     for _ in range(t):
 {{ input_part | safe }}
+        {% if return_type == "void" -%}
         solve({{ actual_arguments }})
+        {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+        ans = solve({{ actual_arguments }})
+        print(*ans)
+        {%- else -%}
+        ans = solve({{ actual_arguments }})
+        print(ans)
+        {%- endif %}
 {% else -%}
 {{ input_part | safe }}
+    {% if return_type == "void" -%}
     solve({{ actual_arguments }})
+    {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+    ans = solve({{ actual_arguments }})
+    print(*ans)
+    {%- else -%}
+    ans = solve({{ actual_arguments }})
+    print(ans)
+    {%- endif %}
 {% endif -%}
 {% else -%}
     # Failed to predict input format
