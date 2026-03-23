@@ -65,15 +65,17 @@ export function generateParseResult(
   console.log("Analyzing...");
   const analyzer = new Analyzer();
   const formatTree = analyzer.analyze(rawAst);
-  // console.log('AST:', JSON.stringify(formatTree, null, 2));
-
   console.log("Inferring Types...");
   const sampleInputs = samples.map((s) => s.input);
-  const {
+  let {
     types,
     collapsedVars,
     collapsedAst: finalFormatTree,
   } = inferTypesFromInstances(formatTree, sampleInputs);
+
+  if (collapsedVars.size > 0) {
+    finalFormatTree = analyzer.analyze(finalFormatTree);
+  }
   // console.log('Inferred Types:', types);
 
   console.log("Extracting Variables...");
