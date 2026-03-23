@@ -1,0 +1,8 @@
+{
+  "track_id": "template_return_type_20260323",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-03-23T10:00:00Z",
+  "updated_at": "2026-03-23T10:00:00Z",
+  "description": "Add return_type variable to template context for automatic C++ return type detection."
+}
