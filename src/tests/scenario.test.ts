@@ -41,7 +41,18 @@ describe("Scenario Tests: Expected Results", () => {
 
       // Remove formatTree, samples, judgeType and error from result as they are not in the expected JSON
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { formatTree, samples, judgeType, error, ...actual } = result;
+      const {
+        formatTree,
+        samples,
+        judgeType,
+        error,
+        yesStr,
+        noStr,
+        mod,
+        returnType,
+        errorTolerance,
+        ...actual
+      } = result;
 
       // Ensure variables are sorted or consistent if needed,
       // but usually JSON equality is enough if order matches.

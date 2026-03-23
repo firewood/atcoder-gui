@@ -17,6 +17,8 @@ export interface ParseResult {
   errorTolerance?: number;
   yesStr?: string;
   noStr?: string;
+  mod?: number;
+  returnType: string;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
@@ -41,6 +43,8 @@ export function generateParseResult(
     errorTolerance,
     yesStr,
     noStr,
+    mod,
+    returnType,
   } = parseHtml(html);
 
   if (!inputFormat) {
@@ -106,6 +110,8 @@ export function generateParseResult(
     errorTolerance,
     yesStr,
     noStr,
+    mod,
+    returnType,
     samples,
     variables,
     formatTree: finalFormatTree,

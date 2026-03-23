@@ -29,8 +29,23 @@ const string YES = "{{ yes_str }}";
 const string NO = "{{ no_str }}";
 {% endif -%}
 
+{% set cpp_return_type = "void" %}
+{% if return_type == "int" %}
+    {% set cpp_return_type = "long long" %}
+{% elif return_type == "modint" %}
+    {% set cpp_return_type = "long long" %}
+{% elif return_type == "double" %}
+    {% set cpp_return_type = "double" %}
+{% elif return_type == "string" %}
+    {% set cpp_return_type = "string" %}
+{% elif return_type == "int_array" or return_type == "multiple_lines" %}
+    {% set cpp_return_type = "vector<long long>" %}
+{% elif return_type != "void" %}
+    {% set cpp_return_type = return_type %}
+{% endif %}
+
 {% if prediction_success -%}
-void solve({{ formal_arguments }}) {
+{{ cpp_return_type }} solve({{ formal_arguments }}) {
 {% if query_cases -%}
     for (int i = 0 ; i < {{ query_loop_var }}; i++) {
         int type;
@@ -57,11 +72,33 @@ int main() {
     cin >> t;
     while (t--) {
 {{ input_part | safe }}
+        {% if cpp_return_type == "void" -%}
         solve({{ actual_arguments }});
+        {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+        auto ans = solve({{ actual_arguments }});
+        for (int i = 0; i < ans.size(); i++) {
+            cout << ans[i] << (i + 1 == ans.size() ? "" : " ");
+        }
+        cout << endl;
+        {%- else -%}
+        auto ans = solve({{ actual_arguments }});
+        cout << ans << endl;
+        {%- endif %}
     }
 {% else -%}
 {{ input_part | safe }}
+    {% if cpp_return_type == "void" -%}
     solve({{ actual_arguments }});
+    {%- elif return_type == "int_array" or return_type == "multiple_lines" -%}
+    auto ans = solve({{ actual_arguments }});
+    for (int i = 0; i < ans.size(); i++) {
+        cout << ans[i] << (i + 1 == ans.size() ? "" : " ");
+    }
+    cout << endl;
+    {%- else -%}
+    auto ans = solve({{ actual_arguments }});
+    cout << ans << endl;
+    {%- endif %}
 {% endif -%}
 {% else -%}
     // Failed to predict input format

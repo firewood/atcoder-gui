@@ -62,6 +62,8 @@ export class CPlusPlusGenerator {
     queryCases?: boolean,
     yesStr?: string,
     noStr?: string,
+    mod?: number,
+    returnType: string = "void",
   ): string {
     const context = this.generator.generate(
       format,
@@ -70,6 +72,8 @@ export class CPlusPlusGenerator {
       queryCases,
       yesStr,
       noStr,
+      mod,
+      returnType,
     );
     return nunjucks.renderString(this.template, context);
   }

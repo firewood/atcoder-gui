@@ -150,6 +150,8 @@ export class GenManager {
           errorTolerance,
           yesStr,
           noStr,
+          mod,
+          returnType,
           samples,
           variables,
           formatTree,
@@ -170,6 +172,8 @@ export class GenManager {
             queryType,
             yesStr,
             noStr,
+            mod,
+            returnType,
           );
           filename = "main.py";
         } else {
@@ -182,6 +186,8 @@ export class GenManager {
             queryType,
             yesStr,
             noStr,
+            mod,
+            returnType,
           );
           filename = "main.cpp";
         }

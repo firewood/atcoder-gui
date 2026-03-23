@@ -68,6 +68,7 @@ export interface CodeGeneratorConfig {
 
 export interface TemplateContext {
   mod?: number;
+  return_type: string;
   yes_str?: string;
   no_str?: string;
   prediction_success: boolean;
