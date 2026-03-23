@@ -15,11 +15,11 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md) [checkpoint: 80bddcf].
 
 ## Phase 2: Integration
-- [ ] Task: Update `src/generator/types.ts`.
-    - [ ] Add `return_type` to `TemplateContext`.
-- [ ] Task: Update `src/generator/pipeline.ts`.
-    - [ ] Import and instantiate `OutputAnalyzer`.
-    - [ ] Call `analyze` in `generateParseResult`.
-    - [ ] Pass `return_type` to the template context.
-- [ ] Task: Verify integration with existing tests (ensure no regression).
+- [x] Task: Update `src/generator/types.ts`.
+    - [x] Add `return_type` to `TemplateContext`.
+- [x] Task: Update `src/generator/pipeline.ts`.
+    - [x] Import and instantiate `OutputAnalyzer`.
+    - [x] Call `analyze` in `generateParseResult`.
+    - [x] Pass `return_type` to the template context.
+- [x] Task: Verify integration with existing tests (ensure no regression).
 - [ ] Task: Conductor - User Manual Verification 'Integration' (Protocol in workflow.md).

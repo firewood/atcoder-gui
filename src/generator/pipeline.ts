@@ -5,6 +5,7 @@ import { Analyzer } from "../analyzer/analyzer.js";
 import { inferTypesFromInstances } from "../analyzer/typing.js";
 import { VariableExtractor, VariableInfo } from "./variable-extractor.js";
 import { FormatNode, VarType } from "../analyzer/types.js";
+import { OutputAnalyzer } from "./output-analyzer.js";
 
 export interface ParseResult {
   contestId: string;
@@ -20,12 +21,13 @@ export interface ParseResult {
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
+  return_type: string;
 }
 
 export function generateParseResult(
   html: string,
   taskId: string,
-  url: string,
+  url:string
 ): ParseResult {
   const problemId = taskId.split("_").at(-1) || "";
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
@@ -95,6 +97,10 @@ export function generateParseResult(
     queryVar.type = VarType.Query;
   }
 
+  const outputAnalyzer = new OutputAnalyzer();
+  const sampleOutputs = samples.map((s) => s.output);
+  const return_type = outputAnalyzer.analyze(html, sampleOutputs, yesStr);
+
   return {
     contestId,
     problemId,
@@ -109,5 +115,6 @@ export function generateParseResult(
     samples,
     variables,
     formatTree: finalFormatTree,
+    return_type,
   };
 }

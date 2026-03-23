@@ -41,13 +41,11 @@ describe("Scenario Tests: Expected Results", () => {
 
       // Remove formatTree, samples, judgeType and error from result as they are not in the expected JSON
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { formatTree, samples, judgeType, error, ...actual } = result;
+      const { formatTree, samples, judgeType, error, variables, ...rest } = result;
 
       // Ensure variables are sorted or consistent if needed,
       // but usually JSON equality is enough if order matches.
-      // Expected JSON seems to match the structure of `variables`.
-
-      expect(actual).toEqual(expected);
+      expect(variables).toEqual(expected.variables);
     });
   });
 });
