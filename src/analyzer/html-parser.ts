@@ -55,11 +55,7 @@ export function parseHtml(html: string): ParseResult {
   const checkMod = (text: string) => {
     if (text.includes("998244353")) {
       mod = 998244353;
-    } else if (
-      text.includes("1000000007") ||
-      text.includes("10^9+7") ||
-      text.includes("10^{9}+7")
-    ) {
+    } else if (text.includes("1000000007") || text.includes("10^9+7") || text.includes("10^{9}+7")) {
       mod = 1000000007;
     }
   };
@@ -195,11 +191,7 @@ export function parseHtml(html: string): ParseResult {
   };
 }
 
-function inferReturnType(
-  outputs: string[],
-  mod: number | undefined,
-  judgeType: string,
-): string {
+function inferReturnType(outputs: string[], mod: number | undefined, judgeType: string): string {
   if (outputs.length === 0) return "void";
 
   const parsedOutputs = outputs.map((out) =>
@@ -210,24 +202,18 @@ function inferReturnType(
   );
 
   const isSingleValue = parsedOutputs.every((tokens) => tokens.length === 1);
+  const isNumeric = (t: string): boolean => /^-?(?:\d+\.\d+|\d+)$/.test(t);
   if (isSingleValue) {
     const allTokens = parsedOutputs.map((t) => t[0]);
-    const isNumeric = allTokens.every((t) => /^-?\d+$/.test(t));
-    if (isNumeric) {
+    if (allTokens.every(isNumeric)) {
       if (mod !== undefined) return "modint";
-      if (judgeType === "decimal") return "double";
+      if (judgeType === "decimal") return "float";
       return "int";
-    }
-    const isFloat = allTokens.every((t) => !isNaN(Number(t)));
-    if (isFloat) {
-      return "double";
     }
     return "string";
   }
 
-  const isNumericAll = parsedOutputs.every((tokens) =>
-    tokens.every((t) => !isNaN(Number(t))),
-  );
+  const isNumericAll = parsedOutputs.every((tokens) => tokens.every(isNumeric));
   if (isNumericAll) {
     const isSingleLine = outputs.every((out) => out.trim().split("\n").length === 1);
     if (isSingleLine) {

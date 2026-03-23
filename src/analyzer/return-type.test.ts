@@ -54,11 +54,11 @@ describe("return type inference", () => {
     expect(result.returnType).toBe("string");
   });
 
-  it("should detect double return type", () => {
+  it("should detect float return type", () => {
     // We need to trigger judgeType = 'decimal'
     const html = wrapHtml("N", ["3.14159"], "absolute error 10^-6");
     const result = parseHtml(html);
-    expect(result.returnType).toBe("double");
+    expect(result.returnType).toBe("float");
     expect(result.judgeType).toBe("decimal");
   });
 
@@ -81,8 +81,8 @@ describe("return type inference", () => {
   });
 
   it("should detect void if mixed types", () => {
-      const html = wrapHtml("N", ["1 2", "string"]);
-      const result = parseHtml(html);
-      expect(result.returnType).toBe("void");
+    const html = wrapHtml("N", ["1 2", "string"]);
+    const result = parseHtml(html);
+    expect(result.returnType).toBe("void");
   });
 });
