@@ -1,18 +1,18 @@
 # Implementation Plan: Template Return Type Definition
 
 ## Phase 1: Output Analysis Logic (TDD)
-- [ ] Task: Create `src/generator/output-analyzer.test.ts` defining test cases for:
-    - [ ] Modulo 998244353 detection.
-    - [ ] Modulo 1000000007 detection.
-    - [ ] Dynamic Modulo detection.
-    - [ ] Yes/No string detection.
-    - [ ] Vector/List detection.
-    - [ ] Default integer fallback.
-- [ ] Task: Create `src/generator/output-analyzer.ts` and implement `OutputAnalyzer` class to pass tests.
-    - [ ] Implement `analyze(html: string, samples: string[], yesStr?: string): string`.
-    - [ ] Implement modulo regex logic.
-    - [ ] Implement sample analysis logic.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md).
+- [x] Task: Create `src/generator/output-analyzer.test.ts` defining test cases for:
+    - [x] Modulo 998244353 detection.
+    - [x] Modulo 1000000007 detection.
+    - [x] Dynamic Modulo detection.
+    - [x] Yes/No string detection.
+    - [x] Vector/List detection.
+    - [x] Default integer fallback.
+- [x] Task: Create `src/generator/output-analyzer.ts` and implement `OutputAnalyzer` class to pass tests.
+    - [x] Implement `analyze(html: string, samples: string[], yesStr?: string): string`.
+    - [x] Implement modulo regex logic.
+    - [x] Implement sample analysis logic.
+- [~] Task: Conductor - User Manual Verification 'Phase 1' (Protocol in workflow.md).
 
 ## Phase 2: Integration
 - [ ] Task: Update `src/generator/types.ts`.
