@@ -29,6 +29,8 @@
 | `formal_arguments` | string | `solve` 関数の仮引数リスト（例：`long long N, vector<long long> A`）。 |
 | `actual_arguments` | string | `solve` 関数を呼び出す際の実引数リスト。 |
 | `multiple_cases` | boolean | `T` 個のテストケースを回す必要があるかどうか。 |
+| `multiple_columns` | boolean | 出力値が複数列（1行に複数の値）からなるかどうか。 |
+| `multiple_rows` | boolean | 出力値が複数行からなるかどうか。 |
 | `query_cases` | boolean | クエリ形式の問題かどうか。 |
 | `mod`, `yes_str`, `no_str`| mixed | 問題文から抽出された MOD 値や YES/NO 文字列（存在する場合）。 |
 

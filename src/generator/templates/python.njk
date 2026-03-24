@@ -49,23 +49,55 @@ def main():
 {{ input_part | safe }}
         {% if return_type == "void" -%}
         solve({{ actual_arguments }})
-        {%- elif return_type == "int_array" -%}
+        {%- elif multiple_rows -%}
         ans = solve({{ actual_arguments }})
-        print(*ans{{ ", sep='\\n'" if multiple_lines }})
+        {% if return_type == "bool" -%}
+        for a in ans:
+            print(YES if a else NO)
+        {%- else -%}
+        print(*ans, sep='\n')
+        {%- endif %}
+        {%- elif multiple_columns -%}
+        ans = solve({{ actual_arguments }})
+        {% if return_type == "bool" -%}
+        print(*(YES if a else NO for a in ans))
+        {%- else -%}
+        print(*ans)
+        {%- endif %}
         {%- else -%}
         ans = solve({{ actual_arguments }})
+        {% if return_type == "bool" -%}
+        print(YES if ans else NO)
+        {%- else -%}
         print(ans)
+        {%- endif %}
         {%- endif %}
 {% else -%}
 {{ input_part | safe }}
     {% if return_type == "void" -%}
     solve({{ actual_arguments }})
-    {%- elif return_type == "int_array" -%}
+    {%- elif multiple_rows -%}
     ans = solve({{ actual_arguments }})
-    print(*ans{{ ", sep='\\n'" if multiple_lines }})
+    {% if return_type == "bool" -%}
+    for a in ans:
+        print(YES if a else NO)
+    {%- else -%}
+    print(*ans, sep='\n')
+    {%- endif %}
+    {%- elif multiple_columns -%}
+    ans = solve({{ actual_arguments }})
+    {% if return_type == "bool" -%}
+    print(*(YES if a else NO for a in ans))
+    {%- else -%}
+    print(*ans)
+    {%- endif %}
     {%- else -%}
     ans = solve({{ actual_arguments }})
+    {% if return_type == "bool" -%}
+    print(YES if ans else NO)
+    {%- else -%}
     print(ans)
+    {%- endif %}
     {%- endif %}
 {% endif -%}
 {% else -%}

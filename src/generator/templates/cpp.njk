@@ -44,7 +44,7 @@ const string NO = "{{ no_str }}";
 {% elif return_type == "string" %}
 {% set cpp_return_value_type = "string" %}
 {% endif %}
-{% if mulple_columns or multiple_rows %}
+{% if multiple_columns or multiple_rows %}
 {% set cpp_return_type = "vector<" + cpp_return_value_type + ">" %}
 {% else %}
 {% set cpp_return_type = cpp_return_value_type %}
@@ -90,7 +90,7 @@ int main() {
     for (const auto ans : answers) {
         cout << {{cpp_output_value}} << endl;
     }
-{% elif mulple_columns %}
+{% elif multiple_columns %}
     auto answers = solve({{ actual_arguments }});
     for (int i = 0; i < answers.size(); i++) {
         const auto ans = answers[i];

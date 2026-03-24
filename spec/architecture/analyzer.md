@@ -12,6 +12,8 @@ Cheerioを使用して問題ページのHTMLを解析し、以下の情報を抽
 - **特殊フラグ**: 
     - `multipleCases`: `T` 個のテストケースが含まれる形式かどうかを判定。
     - `queryType`: クエリ形式の問題（例：クエリ数 $Q$ とそれに続く $Q$ 行の命令）かどうかを判定。
+    - `multipleColumns`: 出力値に複数列が含まれる（1行に複数の値がある）かどうかを判定。
+    - `multipleRows`: 出力値が複数行（かつ `multipleCases` ではない）かどうかを判定。
 
 ### 2. Lexer & Parser (`src/analyzer/lexer.ts`, `src/analyzer/parser.ts`)
 抽出された「入力形式」の文字列を解析し、初期のAST（抽象構文木）を構築します。
