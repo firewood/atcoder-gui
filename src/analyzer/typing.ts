@@ -187,8 +187,7 @@ export function inferTypesFromInstances(
   try {
     let finalTypes: Record<string, VarType> | null = null;
     for (const instance of instances) {
-      const { env, consumedAll } = matchFormat(node, instance);
-      if (!consumedAll) throw new TypingError("Match incomplete");
+      const { env } = matchFormat(node, instance);
       const types = getVarTypesFromMatchResult(env);
       finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
     }
@@ -206,8 +205,7 @@ export function inferTypesFromInstances(
     try {
       let finalTypes: Record<string, VarType> | null = null;
       for (const instance of instances) {
-        const { env, consumedAll } = matchFormat(collapsedAst as FormatNode, instance);
-        if (!consumedAll) throw new TypingError("Match incomplete");
+        const { env } = matchFormat(collapsedAst as FormatNode, instance);
         const types = getVarTypesFromMatchResult(env);
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
