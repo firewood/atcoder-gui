@@ -18,13 +18,16 @@ export class Analyzer {
         const loop = this.detectLoop(nodes, i, result);
         if (loop) {
           const { K_nodes, K_result, loopNode } = loop;
+          let currentCount = K_nodes * 2 + 1;
           for (let k = 0; k < K_result; k++) result.pop();
 
-          while (this.tryExtendLoop(result, loopNode)) {
-            // extended
+          while (true) {
+            const consumed = this.tryExtendLoop(result, loopNode);
+            if (consumed === 0) break;
+            currentCount += consumed;
           }
 
-          result.push({ node: loopNode, count: K_nodes * 2 + 1 });
+          result.push({ node: loopNode, count: currentCount });
           i += K_nodes + 1; // Skip dots and right side
           continue;
         }
@@ -39,8 +42,8 @@ export class Analyzer {
   private tryExtendLoop(
     result: { node: ASTNode; count: number }[],
     loopNode: LoopNode,
-  ): boolean {
-    if (loopNode.start.type !== "number") return false;
+  ): number {
+    if (loopNode.start.type !== "number") return 0;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentStart = (loopNode.start as any).value;
     const prevIndexVal = currentStart - 1;
@@ -48,17 +51,21 @@ export class Analyzer {
     // Body might have been normalized, so we should check its original length
     // But for extension, we check against the current result items
     const K = loopNode.body.length;
-    if (result.length < K) return false;
+    if (result.length < K) return 0;
 
     const candidate = result.slice(result.length - K).map((r) => r.node);
 
     if (this.matchLoopBody(candidate, loopNode, prevIndexVal)) {
-      for (let k = 0; k < K; k++) result.pop();
+      let consumed = 0;
+      for (let k = 0; k < K; k++) {
+        const p = result.pop();
+        if (p) consumed += p.count;
+      }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (loopNode.start as any).value = prevIndexVal;
-      return true;
+      return consumed;
     }
-    return false;
+    return 0;
   }
 
   private matchLoopBody(
@@ -71,54 +78,44 @@ export class Analyzer {
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
       const template = loopNode.body[i];
-      if (template.type === "item") {
-        if (
-          !this.matchesTemplate(
-            node,
-            template as ItemNode,
-            loopNode.variable,
-            indexVal,
-          )
-        )
-          return false;
-      } else {
-        // For non-items, they must match exactly for now
-        if (!this.areNodesEqual(node, template)) return false;
-      }
+      const substituted = this.substitute(template, loopNode.variable, indexVal);
+      if (!this.areNodesEqual(node, substituted)) return false;
     }
     return true;
   }
 
-  private matchesTemplate(
-    node: ASTNode,
-    template: ItemNode,
-    loopVar: string,
-    indexVal: number,
-  ): boolean {
-    if (node.type !== "item") return false;
-    const itemNode = node as ItemNode;
-    if (itemNode.name !== template.name) return false;
-    if (itemNode.indices.length !== template.indices.length) return false;
-
-    for (let j = 0; j < itemNode.indices.length; j++) {
-      const nodeIdx = itemNode.indices[j];
-      const templIdx = template.indices[j];
-
-      // Check if templIdx is the loop variable
-      if (
-        templIdx.type === "item" &&
-        (templIdx as ItemNode).name === loopVar &&
-        (templIdx as ItemNode).indices.length === 0
-      ) {
-        // Should match indexVal
-        if (nodeIdx.type !== "number" || (nodeIdx as any).value !== indexVal)
-          return false;
-      } else {
-        // Should be identical
-        if (!this.areNodesEqual(nodeIdx, templIdx)) return false;
+  private substitute(node: ASTNode, varName: string, value: number): ASTNode {
+    if (node.type === "item") {
+      const item = node as ItemNode;
+      if (item.name === varName && item.indices.length === 0) {
+        return { type: "number", value };
       }
+      return {
+        ...item,
+        indices: item.indices.map((idx) =>
+          this.substitute(idx, varName, value),
+        ),
+      };
     }
-    return true;
+    if (node.type === "loop") {
+      const loop = node as LoopNode;
+      if (loop.variable === varName) return node; // Shadowing
+      return {
+        ...loop,
+        start: this.substitute(loop.start, varName, value),
+        end: this.substitute(loop.end, varName, value),
+        body: loop.body.map((b) => this.substitute(b, varName, value)),
+      };
+    }
+    if (node.type === "binop") {
+      const bin = node as BinOpNode;
+      return {
+        ...bin,
+        left: this.substitute(bin.left, varName, value),
+        right: this.substitute(bin.right, varName, value),
+      };
+    }
+    return node;
   }
 
   private detectLoop(
@@ -146,7 +143,7 @@ export class Analyzer {
 
       const left = nodes.slice(dotsIndex - K_nodes, dotsIndex);
       const right = nodes.slice(dotsIndex + 1, dotsIndex + 1 + K_nodes);
-
+      
       if (this.match(left, right)) {
         const loopNode = this.createLoop(left, right);
         if (loopNode) return { K_nodes, K_result, loopNode };
@@ -167,8 +164,10 @@ export class Analyzer {
         const ll = l as LoopNode;
         const rr = r as LoopNode;
         if (ll.variable !== rr.variable) return false;
-        if (!this.areNodesEqual(ll.start, rr.start)) return false;
-        if (!this.areNodesEqual(ll.end, rr.end)) return false;
+        // Check structural equality of loop bounds/body roughly?
+        // match() is for detecting "similar structure".
+        // The detailed check is done in createLoop via findDifferences.
+        // So here we recurse loosely.
         if (!this.match(ll.body, rr.body)) return false;
       } else if (l.type === "dots") {
         continue; // Match dots
@@ -181,88 +180,71 @@ export class Analyzer {
   }
 
   private createLoop(left: ASTNode[], right: ASTNode[]): LoopNode | null {
-    // We assume match(left, right) is true, so they have same types
-    const firstL = left[0];
-    const firstR = right[0];
+    const diffs = this.findDifferences(left, right);
+    if (diffs.length === 0) return null;
 
-    let diffIndex = -1;
-    let diffNodeL: ASTNode | null = null;
-    let diffNodeR: ASTNode | null = null;
+    // Check consistency: all diffs must be between the same start/end values
+    const firstDiff = diffs[0];
+    const startNode = JSON.parse(JSON.stringify(firstDiff.left));
+    const endNode = JSON.parse(JSON.stringify(firstDiff.right));
 
-    if (firstL.type === "item") {
-      const l = firstL as ItemNode;
-      const r = firstR as ItemNode;
-      if (l.indices.length !== r.indices.length) return null;
-      for (let j = 0; j < l.indices.length; j++) {
-        if (!this.areNodesEqual(l.indices[j], r.indices[j])) {
-          if (diffIndex !== -1) return null; // More than one diff
-          diffIndex = j;
-          diffNodeL = l.indices[j];
-          diffNodeR = r.indices[j];
-        }
+    for (let i = 1; i < diffs.length; i++) {
+      if (
+        !this.areNodesEqual(diffs[i].left, startNode) ||
+        !this.areNodesEqual(diffs[i].right, endNode)
+      ) {
+        return null;
       }
     }
 
-    if (diffIndex === -1) return null;
-
-    const start = diffNodeL!;
-    const end = diffNodeR!;
-
-    const loopVar = this.generateLoopVar(start, end, left as any, right as any);
-
-    // Check consistency for other items
-    for (let k = 0; k < left.length; k++) {
-      const l = left[k];
-      const r = right[k];
-
-      if (l.type === "item") {
-        const li = l as ItemNode;
-        const ri = r as ItemNode;
-        for (let j = 0; j < li.indices.length; j++) {
-          if (k === 0 && j === diffIndex) continue;
-          if (j === diffIndex) {
-            // Must have the same difference
-            if (
-              !this.areNodesEqual(li.indices[j], diffNodeL!) ||
-              !this.areNodesEqual(ri.indices[j], diffNodeR!)
-            )
-              return null;
-          } else {
-            if (!this.areNodesEqual(li.indices[j], ri.indices[j])) return null;
-          }
-        }
-      }
-      // For dots or other nodes, they were already checked by match()
-    }
-
-    const body = left.map((node) => {
-      if (node.type === "item") {
-        const item = node as ItemNode;
-        const newIndices = [...item.indices];
-        newIndices[diffIndex] = {
-          type: "item",
-          name: loopVar,
-          indices: [],
-        } as ItemNode;
-        return { ...item, indices: newIndices };
-      }
-      return node;
-    });
+    // Use original nodes for generateLoopVar to ensure we check all used vars in original tree
+    // But startNode/endNode are clones, so pass firstDiff.left/right?
+    // Actually generateLoopVar uses them to extract used vars.
+    // Clones have same names, so it's fine.
+    const loopVar = this.generateLoopVar(startNode, endNode, left, right);
+    const newBody = this.replaceDiffsWithLoopVar(left, diffs, loopVar);
 
     return {
       type: "loop",
       variable: loopVar,
-      start,
-      end,
-      body: this.normalize(body),
+      start: startNode,
+      end: endNode,
+      body: this.normalize(newBody),
     };
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private replaceDiffsWithLoopVar(
+    nodes: ASTNode[],
+    diffs: Diff[],
+    loopVar: string,
+  ): ASTNode[] {
+    const clone = JSON.parse(JSON.stringify(nodes));
+
+    for (const diff of diffs) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let curr: any = clone;
+      const p = diff.path;
+      const lastKey = p[p.length - 1];
+
+      for (let i = 0; i < p.length - 1; i++) {
+        curr = curr[p[i]];
+      }
+
+      curr[lastKey] = {
+        type: "item",
+        name: loopVar,
+        indices: [],
+      };
+    }
+    return clone;
   }
 
   private generateLoopVar(
     start: ASTNode,
     end: ASTNode,
-    left: ItemNode[],
-    right: ItemNode[],
+    left: ASTNode[],
+    right: ASTNode[],
   ): string {
     const used = new Set<string>();
     const extract = (node: ASTNode) => {
@@ -275,14 +257,18 @@ export class Analyzer {
         extract((node as BinOpNode).right);
       }
       if (node.type === "loop") {
-        // Shouldn't happen in raw AST unless recursive?
+        const loop = node as LoopNode;
+        used.add(loop.variable);
+        extract(loop.start);
+        extract(loop.end);
+        loop.body.forEach(extract);
       }
     };
 
     extract(start);
     extract(end);
-    left.forEach(extract); // Extract from indices of left items
-    right.forEach(extract); // Extract from indices of right items
+    left.forEach(extract);
+    right.forEach(extract);
 
     const candidates = ["i", "j", "k", "l", "m"];
     for (const c of candidates) {
@@ -291,15 +277,94 @@ export class Analyzer {
     return "i";
   }
 
-  private areNodesEqual(a: ASTNode, b: ASTNode): boolean {
+  private findDifferences(
+    listA: ASTNode[],
+    listB: ASTNode[],
+    path: (string | number)[] = [],
+  ): Diff[] {
+    if (listA.length !== listB.length) return [];
+    const diffs: Diff[] = [];
+    for (let i = 0; i < listA.length; i++) {
+      diffs.push(...this.findNodeDiff(listA[i], listB[i], [...path, i]));
+    }
+    return diffs;
+  }
+
+  private findNodeDiff(
+    a: ASTNode,
+    b: ASTNode,
+    path: (string | number)[],
+  ): Diff[] {
+    if (this.areNodesEqual(a, b)) return [];
+
+    const diffs: Diff[] = [];
+
+    // Structural recursion for Items
+    if (a.type === "item" && b.type === "item") {
+      const ia = a as ItemNode;
+      const ib = b as ItemNode;
+      // If both have indices, treat as structure
+      if (ia.indices.length > 0 && ib.indices.length > 0) {
+        if (ia.name !== ib.name) return []; // Different arrays
+        if (ia.indices.length !== ib.indices.length) return [];
+        for (let i = 0; i < ia.indices.length; i++) {
+          diffs.push(
+            ...this.findNodeDiff(ia.indices[i], ib.indices[i], [
+              ...path,
+              "indices",
+              i,
+            ]),
+          );
+        }
+        return diffs;
+      }
+    }
+
+    if (a.type === "loop" && b.type === "loop") {
+      const la = a as LoopNode;
+      const lb = b as LoopNode;
+      diffs.push(...this.findNodeDiff(la.start, lb.start, [...path, "start"]));
+      diffs.push(...this.findNodeDiff(la.end, lb.end, [...path, "end"]));
+      diffs.push(...this.findDifferences(la.body, lb.body, [...path, "body"]));
+      return diffs;
+    }
+
+    if (a.type === "binop" && b.type === "binop") {
+      const ba = a as BinOpNode;
+      const bb = b as BinOpNode;
+      diffs.push(...this.findNodeDiff(ba.left, bb.left, [...path, "left"]));
+      diffs.push(...this.findNodeDiff(ba.right, bb.right, [...path, "right"]));
+      return diffs;
+    }
+
+    // Check if both are scalars (number or item without indices)
+    const isScalar = (n: ASTNode) =>
+      n.type === "number" ||
+      (n.type === "item" && (n as ItemNode).indices.length === 0);
+
+    if (isScalar(a) && isScalar(b)) {
+      return [{ path, left: a, right: b }];
+    }
+
+    // Structural mismatch
+    return [];
+  }
+
+  private areNodesEqual(
+    a: ASTNode,
+    b: ASTNode,
+    varMap: Map<string, string> = new Map(),
+  ): boolean {
     if (a.type !== b.type) return false;
     if (a.type === "item") {
       const ia = a as ItemNode;
       const ib = b as ItemNode;
-      if (ia.name !== ib.name) return false;
+      const mappedName = varMap.get(ia.name) || ia.name;
+      if (mappedName !== ib.name) return false;
       if (ia.indices.length !== ib.indices.length) return false;
       for (let i = 0; i < ia.indices.length; i++) {
-        if (!this.areNodesEqual(ia.indices[i], ib.indices[i])) return false;
+        if (!this.areNodesEqual(ia.indices[i], ib.indices[i], varMap))
+          return false;
       }
       return true;
     }
@@ -314,9 +379,24 @@ export class Analyzer {
       const bb = b as any;
       return (
         ba.op === bb.op &&
-        this.areNodesEqual(ba.left, bb.left) &&
-        this.areNodesEqual(ba.right, bb.right)
+        this.areNodesEqual(ba.left, bb.left, varMap) &&
+        this.areNodesEqual(ba.right, bb.right, varMap)
       );
+    }
+    if (a.type === "loop") {
+      const la = a as LoopNode;
+      const lb = b as LoopNode;
+      if (!this.areNodesEqual(la.start, lb.start, varMap)) return false;
+      if (!this.areNodesEqual(la.end, lb.end, varMap)) return false;
+
+      const newMap = new Map(varMap);
+      newMap.set(la.variable, lb.variable);
+
+      if (la.body.length !== lb.body.length) return false;
+      for (let i = 0; i < la.body.length; i++) {
+        if (!this.areNodesEqual(la.body[i], lb.body[i], newMap)) return false;
+      }
+      return true;
     }
     return JSON.stringify(a) === JSON.stringify(b);
   }
