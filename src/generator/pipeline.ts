@@ -70,7 +70,16 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   const analyzer = new Analyzer();
   const formatTree = analyzer.analyze(rawAst);
   console.log("Inferring Types...");
-  const sampleInputs = samples.map((s) => s.input);
+  let sampleInputs = samples.map((s) => s.input);
+  if (multipleCases) {
+    sampleInputs = sampleInputs.map((input) => {
+      const lines = input.split("\n");
+      if (lines.length > 0) {
+        lines.shift();
+      }
+      return lines.join("\n");
+    });
+  }
   let { types, collapsedVars, collapsedAst: finalFormatTree } = inferTypesFromInstances(formatTree, sampleInputs);
 
   if (collapsedVars.size > 0) {
