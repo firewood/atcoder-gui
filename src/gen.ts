@@ -82,13 +82,7 @@ export class GenManager {
 
         results.push({
           id: problem.alphabet,
-          success: await this.generateCode(
-            contestId,
-            problem.id,
-            problemDirPath,
-            lang,
-            problem.alphabet,
-          ),
+          success: await this.generateCode(contestId, problem.id, problemDirPath, lang, problem.alphabet),
         });
       }
 
@@ -152,7 +146,8 @@ export class GenManager {
           noStr,
           mod,
           returnType,
-          multipleLines,
+          multipleColumns,
+          multipleRows,
           samples,
           variables,
           formatTree,
@@ -175,7 +170,8 @@ export class GenManager {
             noStr,
             mod,
             returnType,
-            multipleLines,
+            multipleColumns,
+            multipleRows,
           );
           filename = "main.py";
         } else {
@@ -190,7 +186,8 @@ export class GenManager {
             noStr,
             mod,
             returnType,
-            multipleLines,
+            multipleColumns,
+            multipleRows,
           );
           filename = "main.cpp";
         }

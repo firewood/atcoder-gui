@@ -1,8 +1,8 @@
-import { parseHtml } from '../analyzer/html-parser.js';
-import { describe, it, expect } from 'vitest';
+import { parseHtml } from "../analyzer/html-parser.js";
+import { describe, it, expect } from "vitest";
 
-describe('html-parser multipleCases and multipleLines', () => {
-  it('should set multipleLines to false when multipleCases is true, even if output has multiple lines', () => {
+describe("html-parser multipleCases and multipleRows", () => {
+  it("should set multipleRows to false when multipleCases is true, even if output has multiple lines", () => {
     const html = `
       <section>
         <h3>Input Format</h3>
@@ -27,8 +27,7 @@ A_1 A_2 ... A_N</pre>
 
     const result = parseHtml(html);
     expect(result.multipleCases).toBe(true);
-    // Currently this is likely true because Sample Output 1 has 2 lines.
-    // The user wants it to be false.
-    expect(result.multipleLines).toBe(false);
+    expect(result.multipleColumns).toBe(true);
+    expect(result.multipleRows).toBe(false);
   });
 });

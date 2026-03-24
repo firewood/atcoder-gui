@@ -8,10 +8,7 @@ import { generateParseResult } from "../generator/pipeline.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "../../");
-const EXPECTED_RESULTS_DIR = path.join(
-  PROJECT_ROOT,
-  "test-resources/expected-results",
-);
+const EXPECTED_RESULTS_DIR = path.join(PROJECT_ROOT, "test-resources/expected-results");
 
 // Helper to read JSON
 function readJson(filepath: string) {
@@ -20,9 +17,7 @@ function readJson(filepath: string) {
 
 describe("Scenario Tests: Expected Results", () => {
   // Get all JSON files in the expected-results directory
-  const files = fs
-    .readdirSync(EXPECTED_RESULTS_DIR)
-    .filter((f) => f.endsWith(".json"));
+  const files = fs.readdirSync(EXPECTED_RESULTS_DIR).filter((f) => f.endsWith(".json"));
 
   if (files.length === 0) {
     console.warn("No expected result files found. Skipping scenario tests.");
@@ -39,19 +34,15 @@ describe("Scenario Tests: Expected Results", () => {
       const html = await fetchProblemContent(taskId);
       const result = generateParseResult(html, taskId, url);
 
-      // Remove formatTree, samples, judgeType and error from result as they are not in the expected JSON
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // Remove formatTree, samples, judgeType and errorTolerance from result as they are not in the expected JSON
       const {
-        formatTree,
-        samples,
-        judgeType,
-        error,
-        yesStr,
-        noStr,
-        mod,
-        returnType,
-        errorTolerance,
-        multipleLines,
+        formatTree: _formatTree,
+        samples: _samples,
+        judgeType: _judgeType,
+        yesStr: _yesStr,
+        noStr: _noStr,
+        mod: _mod,
+        errorTolerance: _errorTolerance,
         ...actual
       } = result;
 

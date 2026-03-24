@@ -5,6 +5,9 @@
   "url": "https://atcoder.jp/contests/abc432/tasks/abc432_e",
   "multipleCases": false,
   "queryType": true,
+  "returnType": "int",
+  "multipleColumns": false,
+  "multipleRows": true,
   "variables": [
     {
       "name": "N",

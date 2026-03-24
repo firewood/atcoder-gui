@@ -59,7 +59,8 @@ export class PythonGenerator {
     noStr?: string,
     mod?: number,
     returnType: string = "void",
-    multipleLines?: boolean,
+    multipleColumns?: boolean,
+    multipleRows?: boolean,
   ): string {
     const context = this.generator.generate(
       format,
@@ -70,7 +71,8 @@ export class PythonGenerator {
       noStr,
       mod,
       returnType,
-      multipleLines,
+      multipleColumns,
+      multipleRows,
     );
     return nunjucks.renderString(this.template, context);
   }

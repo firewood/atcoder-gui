@@ -19,17 +19,14 @@ export interface ParseResult {
   noStr?: string;
   mod?: number;
   returnType: string;
-  multipleLines: boolean;
+  multipleColumns: boolean;
+  multipleRows: boolean;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
 }
 
-export function generateParseResult(
-  html: string,
-  taskId: string,
-  url: string,
-): ParseResult {
+export function generateParseResult(html: string, taskId: string, url: string): ParseResult {
   const problemId = taskId.split("_").at(-1) || "";
   const contestId = taskId.slice(0, taskId.length - (problemId.length + 1));
 
@@ -46,7 +43,8 @@ export function generateParseResult(
     noStr,
     mod,
     returnType,
-    multipleLines,
+    multipleColumns,
+    multipleRows,
   } = parseHtml(html);
 
   if (!inputFormat) {
@@ -73,11 +71,7 @@ export function generateParseResult(
   const formatTree = analyzer.analyze(rawAst);
   console.log("Inferring Types...");
   const sampleInputs = samples.map((s) => s.input);
-  let {
-    types,
-    collapsedVars,
-    collapsedAst: finalFormatTree,
-  } = inferTypesFromInstances(formatTree, sampleInputs);
+  let { types, collapsedVars, collapsedAst: finalFormatTree } = inferTypesFromInstances(formatTree, sampleInputs);
 
   if (collapsedVars.size > 0) {
     finalFormatTree = analyzer.analyze(finalFormatTree);
@@ -114,7 +108,8 @@ export function generateParseResult(
     noStr,
     mod,
     returnType,
-    multipleLines,
+    multipleColumns,
+    multipleRows,
     samples,
     variables,
     formatTree: finalFormatTree,

@@ -5,19 +5,23 @@ export interface Sample {
   output: string;
 }
 
-export interface ParseResult {
+type OutputType = {
+  returnType: string;
+  yesStr?: string;
+  noStr?: string;
+  multipleColumns?: boolean;
+  multipleRows?: boolean;
+};
+
+type ParseResult = OutputType & {
   inputFormat: string;
   samples: Sample[];
   multipleCases: boolean;
   queryType: boolean;
   judgeType: string;
   errorTolerance?: number;
-  yesStr?: string;
-  noStr?: string;
   mod?: number;
-  returnType: string;
-  multipleLines: boolean;
-}
+};
 
 export function parseHtml(html: string): ParseResult {
   const $ = cheerio.load(html);
@@ -28,8 +32,6 @@ export function parseHtml(html: string): ParseResult {
   let queryType = false;
   let judgeType = "normal";
   let errorTolerance: number | undefined = undefined;
-  let yesStr: string | undefined = undefined;
-  let noStr: string | undefined = undefined;
   let mod: number | undefined = undefined;
 
   const checkFloatingPoint = (text: string) => {
@@ -132,21 +134,6 @@ export function parseHtml(html: string): ParseResult {
   const ids = Object.keys(tempSamples).sort((a, b) => Number(a) - Number(b));
 
   const allOutputs = ids.map((id) => tempSamples[id].output?.trim()).filter(Boolean) as string[];
-  const yesNoPairs = [
-    ["Yes", "No"],
-    ["YES", "NO"],
-    ["Possible", "Impossible"],
-    ["POSSIBLE", "IMPOSSIBLE"],
-    ["Takahashi", "Aoki"],
-  ];
-
-  for (const [y, n] of yesNoPairs) {
-    if (allOutputs.includes(y) && allOutputs.includes(n)) {
-      yesStr = y;
-      noStr = n;
-      break;
-    }
-  }
 
   for (const id of ids) {
     const s = tempSamples[id];
@@ -176,8 +163,6 @@ export function parseHtml(html: string): ParseResult {
     }
   }
 
-  const { returnType, multipleLines } = inferReturnType(allOutputs, mod, judgeType, multipleCases);
-
   return {
     inputFormat: inputFormat.trim(),
     samples,
@@ -185,21 +170,22 @@ export function parseHtml(html: string): ParseResult {
     queryType,
     judgeType,
     errorTolerance,
-    yesStr,
-    noStr,
     mod,
-    returnType,
-    multipleLines: multipleCases ? false : multipleLines,
+    ...inferReturnType(allOutputs, judgeType, mod, multipleCases),
   };
 }
 
 function inferReturnType(
   outputs: string[],
-  mod: number | undefined,
   judgeType: string,
+  mod: number | undefined,
   multipleCases: boolean,
-): { returnType: string; multipleLines: boolean } {
-  if (outputs.length === 0) return { returnType: "void", multipleLines: false };
+): OutputType {
+  if (outputs.length === 0) return { returnType: "void" };
+
+  let returnType = "string";
+  let yesStr: string | undefined = undefined;
+  let noStr: string | undefined = undefined;
 
   const parsedOutputs = outputs.map((out) =>
     out
@@ -218,13 +204,30 @@ function inferReturnType(
   const isNumeric = (t: string): boolean => /^-?(?:\d+\.\d+|\d+)$/.test(t);
   const isNumericAll = parsedOutputs.every((tokens) => tokens.every(isNumeric));
   if (isNumericAll) {
-    if (mod !== undefined) return { returnType: "modint", multipleLines: !isSingleLine };
-    if (judgeType === "decimal") return { returnType: "float", multipleLines: !isSingleLine };
-    if (isSingleValue && (multipleCases || isSingleLine)) {
-      return { returnType: "int", multipleLines: !isSingleLine };
+    if (judgeType === "decimal") {
+      returnType = "float";
+    } else if (mod !== undefined) {
+      returnType = "modint";
+    } else {
+      returnType = "int";
     }
-    return { returnType: "int_array", multipleLines: !isSingleLine };
   } else {
-    return { returnType: "string", multipleLines: !isSingleLine };
+    const yesNoPairs = [
+      ["Yes", "No"],
+      ["YES", "NO"],
+      ["Possible", "Impossible"],
+      ["POSSIBLE", "IMPOSSIBLE"],
+      ["Takahashi", "Aoki"],
+    ];
+    for (const [y, n] of yesNoPairs) {
+      const isBoolean = (t: string): boolean => t == y || t == n;
+      const isBooleanAll = parsedOutputs.every((tokens) => tokens.every(isBoolean));
+      if (isBooleanAll) {
+        returnType = "bool";
+        yesStr = y;
+        noStr = n;
+      }
+    }
   }
+  return { returnType, multipleColumns: !isSingleValue, multipleRows: !isSingleLine && !multipleCases, yesStr, noStr };
 }

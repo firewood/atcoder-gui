@@ -48,10 +48,10 @@ describe("return type inference", () => {
     expect(result.mod).toBe(1000000007);
   });
 
-  it("should detect string return type", () => {
+  it("should detect yes/no return type", () => {
     const html = wrapHtml("N", ["Yes", "No"]);
     const result = parseHtml(html);
-    expect(result.returnType).toBe("string");
+    expect(result.returnType).toBe("bool");
   });
 
   it("should detect float return type", () => {
@@ -62,17 +62,18 @@ describe("return type inference", () => {
     expect(result.judgeType).toBe("decimal");
   });
 
-  it("should detect int_array return type", () => {
+  it("should detect multipleColumns", () => {
     const html = wrapHtml("N", ["1 2 3", "4 5"]);
     const result = parseHtml(html);
-    expect(result.returnType).toBe("int_array");
+    expect(result.returnType).toBe("int");
+    expect(result.multipleColumns).toBe(true);
   });
 
-  it("should detect multiple_lines return type", () => {
+  it("should detect multipleRows", () => {
     const html = wrapHtml("N", ["1\n2\n3", "4\n5"]);
     const result = parseHtml(html);
-    expect(result.returnType).toBe("int_array");
-    expect(result.multipleLines).toBe(true);
+    expect(result.returnType).toBe("int");
+    expect(result.multipleRows).toBe(true);
   });
 
   it("should detect void return type when outputs are mixed or empty", () => {

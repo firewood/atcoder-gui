@@ -114,6 +114,8 @@ describe("boolean detection in htmlParser", () => {
       false,
       result.yesStr,
       result.noStr,
+      undefined,
+      "bool",
     );
 
     expect(code).toContain('const string YES = "Yes";');
@@ -145,6 +147,8 @@ describe("boolean detection in htmlParser", () => {
       false,
       result.yesStr,
       result.noStr,
+      undefined,
+      "bool",
     );
 
     expect(code).toContain('YES = "Yes"');

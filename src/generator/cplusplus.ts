@@ -41,10 +41,7 @@ export class CPlusPlusGenerator {
     const configContent = fs.readFileSync(configPath, "utf-8");
     const config = JSON5.parse(configContent) as CodeGeneratorConfig;
     this.generator = new UniversalGenerator(config);
-    this.template = fs
-      .readFileSync(templatePath, "utf-8")
-      .replaceAll("%}\r\n", "%}")
-      .replaceAll("%}\n", "%}");
+    this.template = fs.readFileSync(templatePath, "utf-8").replaceAll("%}\r\n", "%}").replaceAll("%}\n", "%}");
 
     // Configure nunjucks
     nunjucks.configure({ autoescape: false });
@@ -64,7 +61,8 @@ export class CPlusPlusGenerator {
     noStr?: string,
     mod?: number,
     returnType: string = "void",
-    multipleLines?: boolean,
+    multipleColumns?: boolean,
+    multipleRows?: boolean,
   ): string {
     const context = this.generator.generate(
       format,
@@ -75,7 +73,8 @@ export class CPlusPlusGenerator {
       noStr,
       mod,
       returnType,
-      multipleLines,
+      multipleColumns,
+      multipleRows,
     );
     return nunjucks.renderString(this.template, context);
   }

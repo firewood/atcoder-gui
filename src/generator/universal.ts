@@ -1,12 +1,4 @@
-import {
-  ASTNode,
-  FormatNode,
-  ItemNode,
-  LoopNode,
-  VarType,
-  BinOpNode,
-  NumberNode,
-} from "../analyzer/types.js";
+import { ASTNode, FormatNode, ItemNode, LoopNode, VarType, BinOpNode, NumberNode } from "../analyzer/types.js";
 import { CodeGeneratorConfig, TemplateContext } from "./types.js";
 
 type Variable = {
@@ -36,7 +28,8 @@ export class UniversalGenerator {
     noStr?: string,
     mod?: number,
     returnType: string = "void",
-    multipleLines?: boolean,
+    multipleColumns?: boolean,
+    multipleRows?: boolean,
   ): TemplateContext {
     let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
@@ -50,11 +43,7 @@ export class UniversalGenerator {
         const lastScalar = [...variables]
           .reverse()
           .find((v) => v.dims === 0 && (v.type === "int" || v.type === "index_int"));
-        if (
-          lastScalar &&
-          lastScalar.name.toUpperCase() !== "N" &&
-          lastScalar.name.toUpperCase() !== "M"
-        ) {
+        if (lastScalar && lastScalar.name.toUpperCase() !== "N" && lastScalar.name.toUpperCase() !== "M") {
           // Use last scalar if it doesn't look like N or M (usually loop bounds for setup)
           queryLoopVar = lastScalar.name;
         } else {
@@ -69,12 +58,7 @@ export class UniversalGenerator {
 
     const declaredVariables = new Set<string>();
     // Input Reading (and interleaved declaration)
-    const inputLines = this.generateInput(
-      format.children,
-      declarableVariables,
-      declaredVariables,
-      queryLoopVar,
-    );
+    const inputLines = this.generateInput(format.children, declarableVariables, declaredVariables, queryLoopVar);
     const inputPart = inputLines.map((line) => this.indent + line).join(this.newline);
 
     return {
@@ -87,7 +71,8 @@ export class UniversalGenerator {
       actual_arguments: this.generateActualArguments(declarableVariables),
       input_part: inputPart,
       multiple_cases: multipleCases,
-      multiple_lines: multipleLines || undefined,
+      multiple_columns: multipleColumns,
+      multiple_rows: multipleRows,
       query_cases: queryCases,
       query_loop_var: queryLoopVar,
       tools: {
@@ -241,11 +226,7 @@ export class UniversalGenerator {
     return `// TODO: input for ${node.name}`;
   }
 
-  private generateLoopInput(
-    node: LoopNode,
-    variables: Variable[],
-    declaredVariables: Set<string>,
-  ): string[] {
+  private generateLoopInput(node: LoopNode, variables: Variable[], declaredVariables: Set<string>): string[] {
     const lines: string[] = [];
     // Loop header
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
