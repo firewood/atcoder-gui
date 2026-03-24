@@ -148,13 +148,6 @@ export function matchFormat(
     }
   }
 
-  try {
-    processNode(node);
-  } catch (e) {
-    if (e instanceof MatchError) {
-      return { env, consumedAll: false };
-    }
-    throw e;
-  }
+  processNode(node);
   return { env, consumedAll: tokenIndex === tokens.length };
 }
