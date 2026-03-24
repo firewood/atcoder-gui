@@ -66,7 +66,7 @@ export function evalAST(node: ASTNode, env: Record<string, any>): number {
 export function matchFormat(
   node: FormatNode,
   input: string,
-): Record<string, any> {
+): { env: Record<string, any>; consumedAll: boolean } {
   // Tokenize input by whitespace
   const tokens = input.trim().split(/\s+/);
   if (tokens.length === 1 && tokens[0] === "") {
@@ -148,6 +148,13 @@ export function matchFormat(
     }
   }
 
-  processNode(node);
-  return env;
+  try {
+    processNode(node);
+  } catch (e) {
+    if (e instanceof MatchError) {
+      return { env, consumedAll: false };
+    }
+    throw e;
+  }
+  return { env, consumedAll: tokenIndex === tokens.length };
 }

@@ -87,6 +87,19 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   }
   // console.log('Inferred Types:', types);
 
+  // Check for unhandled dots
+  const checkUnhandledDots = (n: ASTNode) => {
+    if (n.type === "dots") {
+      throw new Error("Input format contains unhandled dots. Code generation for this pattern is not yet supported.");
+    }
+    if (n.type === "format") {
+      (n as FormatNode).children.forEach(checkUnhandledDots);
+    } else if (n.type === "loop") {
+      (n as LoopNode).body.forEach(checkUnhandledDots);
+    }
+  };
+  checkUnhandledDots(finalFormatTree);
+
   console.log("Extracting Variables...");
   const extractor = new VariableExtractor();
   extractor.setCollapsedVars(collapsedVars);
