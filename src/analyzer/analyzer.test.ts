@@ -89,4 +89,33 @@ describe("Analyzer", () => {
       expect((loop.end as any).name).toBe("n");
     }
   });
+
+  it("should normalize nested loops (matrix format)", () => {
+    const input = `C_{1,1} C_{1,2} ... C_{1,N}
+C_{2,1} C_{2,2} ... C_{2,N}
+...
+C_{N,1} C_{N,2} ... C_{N,N}`;
+    const rawAST = parse(input);
+    const analyzer = new Analyzer();
+    const result = analyzer.analyze(rawAST);
+
+    expect(result.children.length).toBe(1);
+    const outerLoop = result.children[0];
+    expect(outerLoop.type).toBe("loop");
+    if (outerLoop.type === "loop") {
+      expect((outerLoop.start as any).value).toBe(1);
+      expect((outerLoop.end as any).name).toBe("N");
+      expect(outerLoop.body.length).toBe(1);
+
+      const innerLoop = outerLoop.body[0];
+      expect(innerLoop.type).toBe("loop");
+      if (innerLoop.type === "loop") {
+        expect((innerLoop.start as any).value).toBe(1);
+        expect((innerLoop.end as any).name).toBe("N");
+        expect(innerLoop.body.length).toBe(1);
+        expect((innerLoop.body[0] as any).name).toBe("C");
+        expect((innerLoop.body[0] as any).indices.length).toBe(2);
+      }
+    }
+  });
 });
