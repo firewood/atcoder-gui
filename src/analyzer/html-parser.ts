@@ -138,26 +138,8 @@ export function parseHtml(html: string): ParseResult {
   for (const id of ids) {
     const s = tempSamples[id];
     if (s.input !== undefined && s.output !== undefined) {
-      let finalInput = s.input;
-      if (multipleCases) {
-        // Strip the first line
-        const lines = finalInput.split("\n");
-        // If the first line is empty (e.g. leading newline), keep stripping?
-        // Usually pre content starts immediately.
-        // The example shows:
-        // <pre>1
-        // 3...
-        // </pre>
-        // So text is "1\n3...".
-        // remove first line.
-        if (lines.length > 0) {
-          lines.shift();
-          finalInput = lines.join("\n");
-        }
-      }
-
       samples.push({
-        input: finalInput,
+        input: s.input,
         output: s.output,
       });
     }
