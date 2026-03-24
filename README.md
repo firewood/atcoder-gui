@@ -144,6 +144,13 @@ pnpm run lint:fix  # Auto-fix issues where possible
 - **ESLint** - Code linting
 - **conf** - Configuration management library
 
+## Acknowledgments
+
+This project is inspired by and incorporates ideas from the following excellent tools:
+
+- [atcoder-tools](https://github.com/magurofly/atcoder-tools): A powerful CLI tool for competitive programming on AtCoder.
+- [online-judge-tools/template-generator](https://github.com/online-judge-tools/template-generator): A tool for generating template code for competitive programming problems.
+
 ## License
 
 MIT
