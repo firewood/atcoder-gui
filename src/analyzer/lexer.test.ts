@@ -52,4 +52,12 @@ describe("Lexer", () => {
       "eof",
     ]);
   });
+
+  it("should handle hspace during normalization", () => {
+    const lexer = new Lexer("N\\hspace{0.4cm} M");
+    const tokens = lexer.tokenize();
+    expect(tokens.map((t) => t.type)).toEqual(["ident", "ident", "eof"]);
+    expect(tokens[0].value).toBe("N");
+    expect(tokens[1].value).toBe("M");
+  });
 });
