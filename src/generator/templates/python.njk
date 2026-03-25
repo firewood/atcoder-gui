@@ -64,6 +64,17 @@ def main():
         {%- else -%}
         print(*ans)
         {%- endif %}
+        {%- elif variable_array -%}
+        ans = solve({{ actual_arguments }})
+        if ans is None:
+            print(-1)
+        else:
+            print(len(ans))
+            {% if return_type == "bool" -%}
+            print(*(YES if a else NO for a in ans))
+            {%- else -%}
+            print(*ans)
+            {%- endif %}
         {%- else -%}
         ans = solve({{ actual_arguments }})
         {% if return_type == "bool" -%}
@@ -91,6 +102,17 @@ def main():
     {%- else -%}
     print(*ans)
     {%- endif %}
+    {%- elif variable_array -%}
+    ans = solve({{ actual_arguments }})
+    if ans is None:
+        print(-1)
+    else:
+        print(len(ans))
+        {% if return_type == "bool" -%}
+        print(*(YES if a else NO for a in ans))
+        {%- else -%}
+        print(*ans)
+        {%- endif %}
     {%- else -%}
     ans = solve({{ actual_arguments }})
     {% if return_type == "bool" -%}

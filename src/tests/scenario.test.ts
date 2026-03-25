@@ -43,6 +43,7 @@ describe("Scenario Tests: Expected Results", () => {
         noStr: _noStr,
         mod: _mod,
         errorTolerance: _errorTolerance,
+        variableArray: _variableArray,
         ...actual
       } = result;
 
