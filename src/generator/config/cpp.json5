@@ -3,6 +3,7 @@
   indent_type: "tab",
   insert_space_around_operators: false,
   global_prefix: "",
+  names_separator: ", ",
   loop: {
     header: "for (int64_t {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++) {",
     footer: "}",
@@ -51,5 +52,10 @@
     int: "std::cin >> {name};",
     float: "std::cin >> {name};",
     str: "std::cin >> {name};",
+  },
+  declare_group: {
+    int: "int64_t {names};",
+    float: "long double {names};",
+    str: "std::string {names};",
   },
 }

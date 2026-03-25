@@ -152,6 +152,33 @@ export class UniversalGenerator {
   ): string[] {
     const lines: string[] = [];
 
+    // Grouped declaration for scalars
+    if (this.config.declare_group) {
+      const varsInCurrentBlock = this.collectVariables(nodes, variables);
+      const scalarsToDeclare = varsInCurrentBlock
+        .map((name) => variables.find((v) => v.name === name)!)
+        .filter((v) => v.dims === 0 && !declaredVariables.has(v.name));
+
+      const groupedByColor: Record<string, string[]> = {};
+      for (const v of scalarsToDeclare) {
+        const typeKey = this.mapVarType(v.type);
+        if (this.config.declare_group[typeKey as keyof typeof this.config.declare_group]) {
+          if (!groupedByColor[typeKey]) groupedByColor[typeKey] = [];
+          groupedByColor[typeKey].push(v.name);
+        }
+      }
+
+      for (const [typeKey, names] of Object.entries(groupedByColor)) {
+        const template = this.config.declare_group[typeKey as keyof typeof this.config.declare_group]!;
+        lines.push(
+          this.formatString(template, {
+            names: names.join(this.config.names_separator || ", "),
+          }),
+        );
+        names.forEach((name) => declaredVariables.add(name));
+      }
+    }
+
     for (const node of nodes) {
       if (node.type === "item") {
         const itemNode = node as ItemNode;

@@ -162,28 +162,20 @@ describe("CPlusPlusGenerator", () => {
     // loop B
 
     const lines = code.split("\n");
-    const nDeclIndex = lines.findIndex((l) => l.includes("int64_t N;"));
+    const groupedDeclIndex = lines.findIndex((l) => l.includes("int64_t N, M;"));
     const nInputIndex = lines.findIndex((l) => l.includes("std::cin >> N;"));
     const aDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> A(N);"));
     const aLoopIndex = lines.findIndex((l) => l.includes("for (int64_t i = 0 ; i < N ; i++) {"));
-    const mDeclIndex = lines.findIndex((l) => l.includes("int64_t M;"));
     const mInputIndex = lines.findIndex((l) => l.includes("std::cin >> M;"));
     const bDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> B(M);"));
     const bLoopIndex = lines.findIndex((l) => l.includes("for (int64_t j = 0 ; j < M ; j++) {"));
 
-    expect(nDeclIndex).toBeLessThan(nInputIndex);
+    expect(groupedDeclIndex).toBeLessThan(nInputIndex);
     expect(nInputIndex).toBeLessThan(aDeclIndex); // N input before A declared (since A uses N)
     expect(aDeclIndex).toBeLessThan(aLoopIndex);
 
-    // Check that M and B appear after A's loop (rough check of interleaving, though strict order between A loop and M depends on generator)
-    // Actually, format is N, Loop A, M, Loop B.
-    // So M decl should be after Loop A? Or at least after N decl.
-    // With new logic, M is declared when M_Node is processed.
-    // M_Node is after Loop A in format.
-    // So M decl should be after Loop A.
-
-    expect(aLoopIndex).toBeLessThan(mDeclIndex);
-    expect(mDeclIndex).toBeLessThan(mInputIndex);
+    // Check that M and B appear after A's loop
+    expect(aLoopIndex).toBeLessThan(mInputIndex);
     expect(mInputIndex).toBeLessThan(bDeclIndex);
     expect(bDeclIndex).toBeLessThan(bLoopIndex);
   });

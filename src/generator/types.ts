@@ -4,6 +4,7 @@ export interface CodeGeneratorConfig {
   newline?: "lf" | "crlf";
   insert_space_around_operators?: boolean;
   global_prefix?: string;
+  names_separator?: string;
 
   loop: {
     header: string;
@@ -63,6 +64,12 @@ export interface CodeGeneratorConfig {
     int: string;
     float: string;
     str: string;
+  };
+
+  declare_group?: {
+    int?: string;
+    float?: string;
+    str?: string;
   };
 }
 
