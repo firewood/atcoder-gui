@@ -17,7 +17,7 @@ export class Lexer {
     { type: "space", regex: /^[ \t\u00a0]+/, skippable: true },
     // LaTeX style dots \ldots, \cdots, \dots. Also plain ... and …
     { type: "dots", regex: /^(\\ldots|\\cdots|\\dots|\.\.\.|…)/ },
-    { type: "vdots", regex: /^(\\vdots|⋮)/ },
+    { type: "vdots", regex: /^(\\vdots|⋮|:)/ },
     { type: "subscript", regex: /^(_)/ }, // Unicode subscripts are handled separately before matching
     { type: "number", regex: /^[0-9]+/ },
     { type: "ident", regex: /^[a-zA-Z][a-zA-Z0-9]*/ },

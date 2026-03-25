@@ -1,0 +1,38 @@
+{
+  "contestId": "abc032",
+  "problemId": "c",
+  "taskId": "abc032_c",
+  "url": "https://atcoder.jp/contests/abc032/tasks/abc032_c",
+  "multipleCases": false,
+  "queryType": false,
+  "returnType": "int",
+  "multipleColumns": false,
+  "multipleRows": false,
+  "variableArray": false,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "K",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "s",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        }
+      ]
+    }
+  ]
+}

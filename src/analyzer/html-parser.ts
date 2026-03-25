@@ -68,7 +68,7 @@ export function parseHtml(html: string): ParseResult {
     const text = $(element).text().trim();
     const section = $(element).closest("section");
 
-    if (text.match(/^Input(\s*Format)?$/i)) {
+    if (text.match(/^(?:Input(?:\s*Format)?|入力)$/i)) {
       const pres = section.find("pre");
       if (pres.length >= 3) {
         // Query type problem
@@ -96,7 +96,7 @@ export function parseHtml(html: string): ParseResult {
     } else if (text.match(/^Constraints|制約$/i)) {
       checkMod(section.text());
     } else {
-      const inputMatch = text.match(/^Sample Input\s*(\d+)?$/i);
+      const inputMatch = text.match(/^(?:Sample Input|入力例)\s*(\d+)?$/i);
       if (inputMatch) {
         const id = inputMatch[1] || "1";
         if (!tempSamples[id]) tempSamples[id] = {};
@@ -109,7 +109,7 @@ export function parseHtml(html: string): ParseResult {
         tempSamples[id].input = content;
       }
 
-      const outputMatch = text.match(/^Sample Output\s*(\d+)?$/i);
+      const outputMatch = text.match(/^(?:Sample Output|出力例)\s*(\d+)?$/i);
       if (outputMatch) {
         const id = outputMatch[1] || "1";
         if (!tempSamples[id]) tempSamples[id] = {};
