@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { formatLWPDate, expandHomeDir } from './utils.js';
+import { formatLWPDate, expandHomeDir, compactHomeDir } from './utils.js';
 import os from 'os';
 import path from 'path';
 
@@ -29,6 +29,37 @@ describe('expandHomeDir', () => {
 
   test('should NOT expand regular relative paths', () => {
     expect(expandHomeDir('src/main.ts')).toBe('src/main.ts');
+  });
+});
+
+describe('compactHomeDir', () => {
+  const home = os.homedir();
+
+  test('should compact home directory to ~', () => {
+    expect(compactHomeDir(home)).toBe('~');
+  });
+
+  test('should compact path inside home directory to ~/', () => {
+    expect(compactHomeDir(path.join(home, 'documents'))).toBe('~' + path.sep + 'documents');
+  });
+
+  test('should NOT compact paths outside home directory', () => {
+    // This assumes /tmp is outside the home directory, which is usually true on Unix.
+    // On Windows it might be different, but path.resolve handles it.
+    const outsidePath = path.resolve(path.sep + 'usr' + path.sep + 'bin');
+    if (!outsidePath.startsWith(home)) {
+      expect(compactHomeDir(outsidePath)).toBe(outsidePath);
+    }
+  });
+
+  test('should handle relative paths by resolving them', () => {
+    const relativePath = '.';
+    const absolutePath = path.resolve(relativePath);
+    if (absolutePath.startsWith(home)) {
+        expect(compactHomeDir(relativePath)).toMatch(/^~/);
+    } else {
+        expect(compactHomeDir(relativePath)).toBe(relativePath);
+    }
   });
 });
 

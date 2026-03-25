@@ -215,8 +215,12 @@ function inferReturnType(
     : parsedOutputs.flat();
 
   const isNumericAll = tokensToConsider.every(isNumeric);
+  const hasVeryLargeNumber = tokensToConsider.some((t) => {
+    const digitsOnly = t.replace(/^-/, "").split(".")[0];
+    return digitsOnly.length >= 20;
+  });
 
-  if (isNumericAll && tokensToConsider.length > 0) {
+  if (isNumericAll && !hasVeryLargeNumber && tokensToConsider.length > 0) {
     if (judgeType === "decimal") {
       returnType = "float";
     } else if (mod !== undefined) {

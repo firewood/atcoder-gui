@@ -19,6 +19,28 @@ export function expandHomeDir(filepath: string): string {
 }
 
 /**
+ * Compact home directory in a path to ~
+ * @param filepath Path to compact
+ * @returns Path with home directory replaced by ~ if it is a prefix
+ */
+export function compactHomeDir(filepath: string): string {
+  const home = os.homedir();
+  const absolutePath = path.resolve(filepath);
+  const absoluteHome = path.resolve(home);
+
+  if (absolutePath === absoluteHome) {
+    return '~';
+  }
+
+  const prefix = absoluteHome + path.sep;
+  if (absolutePath.startsWith(prefix)) {
+    return '~' + path.sep + absolutePath.slice(prefix.length);
+  }
+
+  return filepath;
+}
+
+/**
  * Format date for Python LWPCookieJar format: "2026-05-22 13:20:38Z"
  * @param date Date object to format
  * @returns Formatted date string in LWP format
