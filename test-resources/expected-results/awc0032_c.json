@@ -1,0 +1,62 @@
+{
+  "contestId": "awc0032",
+  "problemId": "c",
+  "taskId": "awc0032_c",
+  "url": "https://atcoder.jp/contests/awc0032/tasks/awc0032_c",
+  "multipleCases": false,
+  "queryType": false,
+  "returnType": "int",
+  "multipleColumns": false,
+  "multipleRows": true,
+  "variableArray": false,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "Q",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "Y",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        }
+      ]
+    },
+    {
+      "name": "P",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        }
+      ]
+    },
+    {
+      "name": "L",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "Q",
+          "indices": []
+        }
+      ]
+    }
+  ]
+}
