@@ -22,13 +22,12 @@
 {% endif %}
 
 using namespace std;
-
 {% set cpp_return_value_type = "void" %}
 {% set cpp_output_value = "ans" %}
 {% if mod %}
 {% set cpp_return_value_type = "mint" %}
 {% set cpp_output_value = "ans.val()" %}
-const long long MOD = {{ mod }};
+const int64_t MOD = {{ mod }};
 {% if mod == 998244353 or mod == 1000000007 %}
 using mint = atcoder::modint{{ mod }};
 {% endif %}
@@ -38,14 +37,19 @@ using mint = atcoder::modint{{ mod }};
 const string YES = "{{ yes_str }}";
 const string NO = "{{ no_str }}";
 {% elif return_type == "int" %}
-{% set cpp_return_value_type = "long long" %}
+{% if multiple_columns and multiple_rows %}
+{% set cpp_return_value_type = "pair<int64_t, int64_t>" %}
+{% set cpp_output_value = "ans.first << \" \" << ans.second" %}
+{% else %}
+{% set cpp_return_value_type = "int64_t" %}
+{% endif %}
 {% elif return_type == "float" %}
 {% set cpp_return_value_type = "long double" %}
 {% elif return_type == "string" %}
 {% set cpp_return_value_type = "string" %}
 {% endif %}
 {% if multiple_columns or multiple_rows %}
-{% set cpp_return_type = "vector<" + cpp_return_value_type + ">" %}
+{% set cpp_return_type = "std::vector<" + cpp_return_value_type + ">" %}
 {% else %}
 {% set cpp_return_type = cpp_return_value_type %}
 {% endif %}
