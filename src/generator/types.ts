@@ -70,6 +70,16 @@ export interface CodeGeneratorConfig {
     int?: string;
     float?: string;
     str?: string;
+    seq?: string;
+    "2d_seq"?: string;
+  };
+
+  declare_item?: {
+    int?: string;
+    float?: string;
+    str?: string;
+    seq?: string;
+    "2d_seq"?: string;
   };
 }
 

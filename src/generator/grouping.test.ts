@@ -94,4 +94,106 @@ describe("CPlusPlusGenerator Grouping", () => {
     expect(code).toContain("long double X;");
     expect(code).toContain("std::string S;");
   });
+
+  it("should group vector declarations of the same type and size", () => {
+    // N
+    // A_1 ... A_N
+    // B_1 ... B_N
+    const N_Ref: any = { type: "ident", value: "N" };
+    const format: FormatNode = {
+      type: "format",
+      children: [
+        { type: "item", name: "N", indices: [] } as any,
+        {
+          type: "loop",
+          variable: "i",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [{ type: "item", name: "A", indices: [{ type: "ident", value: "i" }] } as any],
+        } as any,
+        {
+          type: "loop",
+          variable: "j",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [{ type: "item", name: "B", indices: [{ type: "ident", value: "j" }] } as any],
+        } as any,
+      ],
+    };
+
+    const variables = [
+      { name: "N", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "A", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+      { name: "B", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+    ];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    expect(code).toContain("std::vector<int64_t> A(N), B(N);");
+    expect(code).not.toContain("std::vector<int64_t> A(N);");
+    expect(code).not.toContain("std::vector<int64_t> B(N);");
+  });
+
+  it("should not group vectors with different sizes", () => {
+    // N M
+    // A_1 ... A_N
+    // B_1 ... B_M
+    const N_Ref: any = { type: "ident", value: "N" };
+    const M_Ref: any = { type: "ident", value: "M" };
+    const format: FormatNode = {
+      type: "format",
+      children: [
+        { type: "item", name: "N", indices: [] } as any,
+        { type: "item", name: "M", indices: [] } as any,
+        {
+          type: "loop",
+          variable: "i",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [{ type: "item", name: "A", indices: [{ type: "ident", value: "i" }] } as any],
+        } as any,
+        {
+          type: "loop",
+          variable: "j",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "M" },
+          body: [{ type: "item", name: "B", indices: [{ type: "ident", value: "j" }] } as any],
+        } as any,
+      ],
+    };
+
+    const variables = [
+      { name: "N", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "M", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "A", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+      { name: "B", type: VarType.ValueInt, dims: 1, indices: [M_Ref] },
+    ];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    expect(code).toContain("std::vector<int64_t> A(N);");
+    expect(code).toContain("std::vector<int64_t> B(M);");
+    expect(code).not.toContain("A(N), B(M)");
+  });
+
+  it("should not produce duplicate names in a grouped declaration", () => {
+    // N N
+    const format: FormatNode = {
+      type: "format",
+      children: [
+        { type: "item", name: "N", indices: [] } as any,
+        { type: "item", name: "N", indices: [] } as any,
+      ],
+    };
+
+    const variables = [{ name: "N", type: VarType.ValueInt, dims: 0, indices: [] }];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    expect(code).toContain("int64_t N;");
+    expect(code).not.toContain("int64_t N, N;");
+  });
 });

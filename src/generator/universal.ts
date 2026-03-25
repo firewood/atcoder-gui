@@ -83,6 +83,47 @@ export class UniversalGenerator {
     };
   }
 
+  private getGroupKey(variable: Variable): string | undefined {
+    if (!this.config.declare_group || !this.config.declare_item) return undefined;
+    const typeKey = this.mapVarType(variable.type);
+    const dims = variable.dims;
+    const size = variable.indices.map((idx) => this.stringifyNode(idx)).join(",");
+    // Key should include type, dims, and size for compatibility
+    // e.g., "int:0:", "int:1:N", "int:2:N,M"
+    const groupKey = `${typeKey}:${dims}:${size}`;
+
+    const dimKey = dims === 0 ? typeKey : dims === 1 ? "seq" : dims === 2 ? "2d_seq" : undefined;
+    if (!dimKey) return undefined;
+
+    if (
+      this.config.declare_group[dimKey as keyof typeof this.config.declare_group] &&
+      this.config.declare_item[dimKey as keyof typeof this.config.declare_item]
+    ) {
+      return groupKey;
+    }
+    return undefined;
+  }
+
+  private generateDeclarationItem(variable: Variable): string {
+    const typeKey = this.mapVarType(variable.type);
+    const dims = variable.dims;
+    const dimKey = dims === 0 ? typeKey : dims === 1 ? "seq" : dims === 2 ? "2d_seq" : "unknown";
+    const template = this.config.declare_item?.[dimKey as keyof typeof this.config.declare_item];
+
+    if (!template) return this.generateDeclaration(variable);
+
+    const params: Record<string, string> = { name: variable.name };
+    if (dims >= 1) {
+      params.length = this.stringifyNode(variable.indices[0]);
+      params.type = this.config.type[typeKey as keyof typeof this.config.type];
+    }
+    if (dims >= 2) {
+      params.length_i = this.stringifyNode(variable.indices[0]);
+      params.length_j = this.stringifyNode(variable.indices[1]);
+    }
+    return this.formatString(template, params);
+  }
+
   private generateDeclaration(variable: Variable): string {
     const typeKey = this.mapVarType(variable.type);
     const defaultValue = this.config.default[typeKey as keyof typeof this.config.default] || "";
@@ -144,6 +185,51 @@ export class UniversalGenerator {
     return Array.from(vars);
   }
 
+  private declareGroup(
+    variable: Variable,
+    relevantVariables: string[],
+    variables: Variable[],
+    declaredVariables: Set<string>,
+  ): string | undefined {
+    if (declaredVariables.has(variable.name)) return undefined;
+
+    const groupKey = this.getGroupKey(variable);
+    if (groupKey) {
+      // Find all compatible variables in current scope that need declaration
+      const compatibleVars = relevantVariables
+        .map((name) => variables.find((v) => v.name === name)!)
+        .filter((v) => !declaredVariables.has(v.name) && this.getGroupKey(v) === groupKey);
+
+      // Use a Set to ensure unique names in the declaration (e.g., int64_t N, N; -> int64_t N;)
+      const uniqueVars: Variable[] = [];
+      const seenNames = new Set<string>();
+      for (const v of compatibleVars) {
+        if (!seenNames.has(v.name)) {
+          uniqueVars.push(v);
+          seenNames.add(v.name);
+        }
+      }
+
+      const typeKey = this.mapVarType(variable.type);
+      const dims = variable.dims;
+      const dimKey = dims === 0 ? typeKey : dims === 1 ? "seq" : dims === 2 ? "2d_seq" : "unknown";
+      const groupTemplate = this.config.declare_group![dimKey as keyof typeof this.config.declare_group]!;
+
+      const items = uniqueVars.map((v) => this.generateDeclarationItem(v));
+      const line = this.formatString(groupTemplate, {
+        names: items.join(this.config.names_separator || ", "),
+        type: this.config.type[typeKey as keyof typeof this.config.type],
+      });
+
+      uniqueVars.forEach((v) => declaredVariables.add(v.name));
+      return line;
+    } else {
+      const line = this.generateDeclaration(variable);
+      declaredVariables.add(variable.name);
+      return line;
+    }
+  }
+
   private generateInput(
     nodes: ASTNode[],
     variables: Variable[],
@@ -152,42 +238,16 @@ export class UniversalGenerator {
   ): string[] {
     const lines: string[] = [];
 
-    // Grouped declaration for scalars
-    if (this.config.declare_group) {
-      const varsInCurrentBlock = this.collectVariables(nodes, variables);
-      const scalarsToDeclare = varsInCurrentBlock
-        .map((name) => variables.find((v) => v.name === name)!)
-        .filter((v) => v.dims === 0 && !declaredVariables.has(v.name));
-
-      const groupedByColor: Record<string, string[]> = {};
-      for (const v of scalarsToDeclare) {
-        const typeKey = this.mapVarType(v.type);
-        if (this.config.declare_group[typeKey as keyof typeof this.config.declare_group]) {
-          if (!groupedByColor[typeKey]) groupedByColor[typeKey] = [];
-          groupedByColor[typeKey].push(v.name);
-        }
-      }
-
-      for (const [typeKey, names] of Object.entries(groupedByColor)) {
-        const template = this.config.declare_group[typeKey as keyof typeof this.config.declare_group]!;
-        lines.push(
-          this.formatString(template, {
-            names: names.join(this.config.names_separator || ", "),
-          }),
-        );
-        names.forEach((name) => declaredVariables.add(name));
-      }
-    }
+    const varsInCurrentBlock = this.collectVariables(nodes, variables);
 
     for (const node of nodes) {
       if (node.type === "item") {
         const itemNode = node as ItemNode;
         const variable = variables.find((v) => v.name === itemNode.name);
 
-        // Declare if needed
-        if (variable && !declaredVariables.has(variable.name)) {
-          lines.push(this.generateDeclaration(variable));
-          declaredVariables.add(variable.name);
+        if (variable) {
+          const declLine = this.declareGroup(variable, varsInCurrentBlock, variables, declaredVariables);
+          if (declLine) lines.push(declLine);
         }
 
         lines.push(this.generateItemInput(itemNode, variables));
@@ -198,16 +258,13 @@ export class UniversalGenerator {
         }
 
         // Check for variables inside the loop that need declaration
-        // We only care about variables that are in our 'variables' list (global inputs)
-        // Loop counters are local to the loop.
         const varsInLoop = this.collectVariables(loopNode.body, variables);
         for (const varName of varsInLoop) {
-          if (!declaredVariables.has(varName)) {
-            const variable = variables.find((v) => v.name === varName);
-            if (variable) {
-              lines.push(this.generateDeclaration(variable));
-              declaredVariables.add(varName);
-            }
+          const variable = variables.find((v) => v.name === varName);
+          if (variable) {
+            // Group with other variables in the current block if compatible
+            const declLine = this.declareGroup(variable, varsInCurrentBlock, variables, declaredVariables);
+            if (declLine) lines.push(declLine);
           }
         }
 

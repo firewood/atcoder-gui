@@ -54,8 +54,17 @@
     str: "std::cin >> {name};",
   },
   declare_group: {
-    int: "int64_t {names};",
-    float: "long double {names};",
-    str: "std::string {names};",
+    int: "{type} {names};",
+    float: "{type} {names};",
+    str: "{type} {names};",
+    seq: "std::vector<{type}> {names};",
+    "2d_seq": "std::vector<std::vector<{type}>> {names};",
+  },
+  declare_item: {
+    int: "{name}",
+    float: "{name}",
+    str: "{name}",
+    seq: "{name}({length})",
+    "2d_seq": "{name}({length_i}, std::vector<{type}>({length_j}))",
   },
 }
