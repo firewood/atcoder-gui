@@ -30,6 +30,7 @@ export class UniversalGenerator {
     returnType: string = "void",
     multipleColumns?: boolean,
     multipleRows?: boolean,
+    variableArray?: boolean,
   ): TemplateContext {
     let queryLoopVar: string | undefined = undefined;
     if (queryCases) {
@@ -73,6 +74,7 @@ export class UniversalGenerator {
       multiple_cases: multipleCases,
       multiple_columns: multipleColumns,
       multiple_rows: multipleRows,
+      variable_array: variableArray,
       query_cases: queryCases,
       query_loop_var: queryLoopVar,
       tools: {

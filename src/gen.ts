@@ -148,6 +148,7 @@ export class GenManager {
           returnType,
           multipleColumns,
           multipleRows,
+          variableArray,
           samples,
           variables,
           formatTree,
@@ -172,6 +173,7 @@ export class GenManager {
             returnType,
             multipleColumns,
             multipleRows,
+            variableArray,
           );
           filename = "main.py";
         } else {
@@ -188,6 +190,7 @@ export class GenManager {
             returnType,
             multipleColumns,
             multipleRows,
+            variableArray,
           );
           filename = "main.cpp";
         }

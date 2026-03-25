@@ -96,11 +96,14 @@ int main() {
     }
 {% elif multiple_columns %}
     auto answers = solve({{ actual_arguments }});
+{% if variable_array %}
+    cout << answers.size() << endl;
+{% endif %}
     for (int i = 0; i < answers.size(); i++) {
         const auto ans = answers[i];
         cout << (i > 0 ? " " : "") << {{cpp_output_value}};
     }
-    cout << endl;
+    if (!answers.empty()) cout << endl;
 {% else %}
     auto ans = solve({{ actual_arguments }});
     cout << {{cpp_output_value}} << endl;

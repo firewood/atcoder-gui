@@ -87,4 +87,13 @@ describe("return type inference", () => {
     const result = parseHtml(html);
     expect(result.returnType).toBe("string");
   });
+
+  it("should detect variableArray return type for ABC 233 F", () => {
+    const html = wrapHtml("N\nP_1 P_2 ... P_N\nM\na_1 b_1 ... a_M b_M", ["3\n4 2 1", "-1", "0", "4\n5 5 5 5"]);
+    const result = parseHtml(html);
+    expect(result.returnType).toBe("int");
+    expect(result.multipleColumns).toBe(true);
+    expect(result.multipleRows).toBe(false);
+    expect(result.variableArray).toBe(true);
+  });
 });

@@ -8,6 +8,7 @@
   "returnType": "int",
   "multipleColumns": true,
   "multipleRows": true,
+  "variableArray": false,
   "variables": [
     {
       "name": "N",
