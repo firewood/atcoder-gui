@@ -7,7 +7,7 @@ import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
-import { expandHomeDir } from "./utils.js";
+import { expandHomeDir, compactHomeDir } from "./utils.js";
 
 export class GenManager {
   private browserManager: BrowserManager;
@@ -93,7 +93,7 @@ export class GenManager {
       }
 
       process.chdir(contestDirPath);
-      console.log(`Current directory: ${process.cwd()}`);
+      console.log(`Current directory: ${compactHomeDir(process.cwd())}`);
       await this.browserManager.openUrl(`https://atcoder.jp/contests/${contestId}`);
     } else {
       const url = this.browserManager.getCurrentUrl();
