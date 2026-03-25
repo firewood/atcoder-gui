@@ -11,7 +11,7 @@ import { GenManager } from "./gen.js";
 import { BuildManager } from "./build.js";
 import { TestManager } from "./test.js";
 import { ProblemManager } from "./problem.js";
-import { expandHomeDir } from "./utils.js";
+import { expandHomeDir, compactHomeDir } from "./utils.js";
 import { execSync } from "child_process";
 
 export class AtCoderGUI {
@@ -102,7 +102,7 @@ export class AtCoderGUI {
     const workspaceDir = this.getConfig().workspaceDir;
     if (workspaceDir) {
       process.chdir(expandHomeDir(workspaceDir));
-      console.log(`Current directory: ${process.cwd()}`);
+      console.log(`Current directory: ${compactHomeDir(process.cwd())}`);
     }
 
     console.log('Type "help" for available commands or "exit" to quit');
@@ -253,7 +253,7 @@ export class AtCoderGUI {
             const expandedDir = expandHomeDir(dir);
             try {
               process.chdir(expandedDir);
-              console.log(`Current directory: ${process.cwd()}`);
+              console.log(`Current directory: ${compactHomeDir(process.cwd())}`);
             } catch (err) {
               console.error(`Error changing directory: ${err}`);
             }
