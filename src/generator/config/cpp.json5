@@ -3,6 +3,7 @@
   indent_type: "tab",
   insert_space_around_operators: false,
   global_prefix: "",
+  declare_group: true,
   loop: {
     header: "for (int64_t {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++) {",
     footer: "}",
@@ -33,19 +34,19 @@
     "2d_seq": "{name}[{index_i}][{index_j}]",
   },
   declare: {
-    int: "int64_t {name};",
-    float: "long double {name};",
-    str: "std::string {name};",
-    seq: "std::vector<{type}> {name};",
-    "2d_seq": "std::vector<std::vector<{type}>> {name};",
+    int: "int64_t {name}",
+    float: "long double {name}",
+    str: "std::string {name}",
+    seq: "std::vector<{type}> {name}",
+    "2d_seq": "std::vector<std::vector<{type}>> {name}",
   },
   allocate: {
     seq: "{name}.assign({length}, {default});",
     "2d_seq": "{name}.assign({length_i}, std::vector<{type}>({length_j}));",
   },
   declare_and_allocate: {
-    seq: "std::vector<{type}> {name}({length});",
-    "2d_seq": "std::vector<std::vector<{type}>> {name}({length_i}, std::vector<{type}>({length_j}));",
+    seq: "std::vector<{type}> {name}({length})",
+    "2d_seq": "std::vector<std::vector<{type}>> {name}({length_i}, std::vector<{type}>({length_j}))",
   },
   input: {
     int: "std::cin >> {name};",
