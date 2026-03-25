@@ -83,6 +83,9 @@ export class Lexer {
     // Replace LaTeX spacing commands like "\ ", "\,", "\;" with a single space
     currentInput = currentInput.replace(/\\[,;: ]/g, ' ');
 
+    // Replace \hspace{...} with a space
+    currentInput = currentInput.replace(/\\hspace\{[^}]*\}/g, ' ');
+
     let result = "";
     let inSubscript = false;
 
