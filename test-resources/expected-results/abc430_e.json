@@ -12,13 +12,13 @@
   "variables": [
     {
       "name": "A",
-      "type": "int",
+      "type": "string",
       "dims": 0,
       "indices": []
     },
     {
       "name": "B",
-      "type": "int",
+      "type": "string",
       "dims": 0,
       "indices": []
     }

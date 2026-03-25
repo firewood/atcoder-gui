@@ -12,7 +12,7 @@ import {
 describe("inferTypesFromInstances", () => {
   it("should infer scalar types", () => {
     // Format: N M S
-    // Input: 10 3.14 hello
+    // Input: 42 3.14 hello
     const format: FormatNode = {
       type: "format",
       children: [
@@ -21,7 +21,7 @@ describe("inferTypesFromInstances", () => {
         { type: "item", name: "S", indices: [] } as ItemNode,
       ],
     };
-    const instances = ["10 3.14 hello"];
+    const instances = ["42 3.14 hello"];
     const { types } = inferTypesFromInstances(format, instances);
 
     expect(types["N"]).toBe(VarType.ValueInt);
@@ -91,5 +91,47 @@ describe("inferTypesFromInstances", () => {
 
     expect(types["N"]).toBe(VarType.ValueInt);
     expect(types["A"]).toBe(VarType.Float); // 1, 2, 3.5 -> Float
+  });
+
+  it("should infer binary strings as String", () => {
+    const format: FormatNode = {
+      type: "format",
+      children: [{ type: "item", name: "S", indices: [] } as ItemNode],
+    };
+    const instances = ["10101"];
+    const { types } = inferTypesFromInstances(format, instances);
+    expect(types["S"]).toBe(VarType.String);
+  });
+
+  it("should infer tokens with leading zero as String", () => {
+    const format: FormatNode = {
+      type: "format",
+      children: [{ type: "item", name: "S", indices: [] } as ItemNode],
+    };
+    const instances = ["0123"];
+    const { types } = inferTypesFromInstances(format, instances);
+    expect(types["S"]).toBe(VarType.String);
+  });
+
+  it("should infer 0 or 1 as int by default if single digit", () => {
+    const format: FormatNode = {
+      type: "format",
+      children: [{ type: "item", name: "N", indices: [] } as ItemNode],
+    };
+    const instances = ["0", "1"];
+    const { types } = inferTypesFromInstances(format, instances);
+    expect(types["N"]).toBe(VarType.ValueInt);
+  });
+
+  it("should downgrade BinaryString to int if non-binary number is encountered", () => {
+    const format: FormatNode = {
+      type: "format",
+      children: [{ type: "item", name: "N", indices: [] } as ItemNode],
+    };
+    // If the format says N, but different instances provide 101 (binary candidate) and 5 (not binary).
+    // Usually this happens if they are on separate lines or in multiple samples.
+    const instances = ["101", "5"];
+    const { types } = inferTypesFromInstances(format, instances);
+    expect(types["N"]).toBe(VarType.ValueInt);
   });
 });
