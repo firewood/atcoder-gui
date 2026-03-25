@@ -185,7 +185,13 @@ function inferReturnType(
   );
   const isNumeric = (t: string): boolean => /^-?(?:\d+\.\d+|\d+)$/.test(t);
   const isNumericAll = parsedOutputs.every((tokens) => tokens.every(isNumeric));
-  if (isNumericAll) {
+  const hasVeryLargeNumber = parsedOutputs.some((tokens) =>
+    tokens.some((t) => {
+      const digitsOnly = t.replace(/^-/, "").split(".")[0];
+      return digitsOnly.length >= 20;
+    }),
+  );
+  if (isNumericAll && !hasVeryLargeNumber) {
     if (judgeType === "decimal") {
       returnType = "float";
     } else if (mod !== undefined) {
