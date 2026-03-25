@@ -96,4 +96,22 @@ describe("return type inference", () => {
     expect(result.multipleRows).toBe(false);
     expect(result.variableArray).toBe(true);
   });
+
+  it("should detect string for 0/1 only outputs with length > 1", () => {
+    const html = wrapHtml("N", ["1010", "011"]);
+    const result = parseHtml(html);
+    expect(result.returnType).toBe("string");
+  });
+
+  it("should still detect int for single 0 or 1", () => {
+    const html = wrapHtml("N", ["0", "1"]);
+    const result = parseHtml(html);
+    expect(result.returnType).toBe("int");
+  });
+
+  it("should detect string if any token has leading zero", () => {
+    const html = wrapHtml("N", ["01", "12"]);
+    const result = parseHtml(html);
+    expect(result.returnType).toBe("string");
+  });
 });

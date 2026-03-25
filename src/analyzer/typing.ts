@@ -14,6 +14,9 @@ function getVarType(value: any): VarType {
   }
   if (typeof value === "string") {
     if (/^-?\d+$/.test(value)) {
+      const abs = value.startsWith("-") ? value.slice(1) : value;
+      if (abs.length > 1 && abs.startsWith("0")) return VarType.String;
+      if (abs.length > 1 && /^[01]+$/.test(abs)) return VarType.BinaryString;
       return VarType.ValueInt;
     }
     if (/^-?\d+(\.\d+)?$/.test(value)) {
@@ -34,6 +37,14 @@ function unifyTypes(t1: VarType, t2: VarType): VarType {
   if (t1 === VarType.Char || t2 === VarType.Char) return VarType.String;
 
   const types = new Set([t1, t2]);
+
+  if (types.has(VarType.BinaryString)) {
+    if (types.has(VarType.ValueInt) || types.has(VarType.IndexInt))
+      return VarType.ValueInt;
+    if (types.has(VarType.Float)) return VarType.Float;
+    return VarType.BinaryString;
+  }
+
   if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt))
     return VarType.ValueInt;
   if (types.has(VarType.IndexInt) && types.has(VarType.Float))
@@ -98,6 +109,53 @@ function unifyVarTypes(
     }
   }
   return t3;
+}
+
+function collectIndexVariables(
+  node: ASTNode,
+  indices: Set<string> = new Set(),
+): Set<string> {
+  const traverseExpression = (expr: ASTNode) => {
+    if (expr.type === "item") {
+      indices.add((expr as ItemNode).name);
+      (expr as ItemNode).indices.forEach(traverseExpression);
+    } else if (expr.type === "binop") {
+      traverseExpression((expr as BinOpNode).left);
+      traverseExpression((expr as BinOpNode).right);
+    }
+  };
+
+  if (node.type === "format") {
+    (node as FormatNode).children.forEach((child) =>
+      collectIndexVariables(child, indices),
+    );
+  } else if (node.type === "item") {
+    (node as ItemNode).indices.forEach(traverseExpression);
+  } else if (node.type === "loop") {
+    const loop = node as LoopNode;
+    traverseExpression(loop.start);
+    traverseExpression(loop.end);
+    loop.body.forEach((child) => collectIndexVariables(child, indices));
+  }
+  return indices;
+}
+
+function resolveBinaryStrings(
+  types: Record<string, VarType>,
+  node: FormatNode,
+): Record<string, VarType> {
+  const indexVars = collectIndexVariables(node);
+  const resolved: Record<string, VarType> = { ...types };
+  for (const name of Object.keys(resolved)) {
+    if (resolved[name] === VarType.BinaryString) {
+      if (indexVars.has(name)) {
+        resolved[name] = VarType.ValueInt;
+      } else {
+        resolved[name] = VarType.String;
+      }
+    }
+  }
+  return resolved;
 }
 
 function collapseLoops(node: ASTNode): {
@@ -192,7 +250,7 @@ export function inferTypesFromInstances(
       finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
     }
     return {
-      types: finalTypes || {},
+      types: resolveBinaryStrings(finalTypes || {}, node),
       collapsedVars: new Set(),
       collapsedAst: node,
     };
@@ -210,7 +268,10 @@ export function inferTypesFromInstances(
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
       return {
-        types: finalTypes || {},
+        types: resolveBinaryStrings(
+          finalTypes || {},
+          collapsedAst as FormatNode,
+        ),
         collapsedVars,
         collapsedAst: collapsedAst as FormatNode,
       };

@@ -36,6 +36,7 @@ export const VarType = {
   String: "string",
   Char: "char",
   Query: "query",
+  BinaryString: "binary_string",
 } as const;
 
 // eslint-disable-next-line no-redeclare
