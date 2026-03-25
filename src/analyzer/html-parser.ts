@@ -9,8 +9,9 @@ type OutputType = {
   returnType: string;
   yesStr?: string;
   noStr?: string;
-  multipleColumns?: boolean;
-  multipleRows?: boolean;
+  multipleColumns: boolean;
+  multipleRows: boolean;
+  variableArray: boolean;
 };
 
 type ParseResult = OutputType & {
@@ -114,7 +115,7 @@ export function parseHtml(html: string): ParseResult {
         if (!tempSamples[id]) tempSamples[id] = {};
 
         let content = "";
-        const pre = section.find("pre");
+        const pre = section.find("pre:first"); // abc233_f
         if (pre.length > 0) {
           content = pre.text();
         }
@@ -176,22 +177,36 @@ function inferReturnType(
       .filter((s) => s.length > 0),
   );
 
-  const isSingleLine = outputs.every((out) => out.trim().split("\n").length === 1);
+  // Check for variableArray pattern (K elements preceded by K)
+  // Atcoder ABC 233 F style:
+  // K
+  // c1 c2 ... cK
+  // OR -1
+  const variableArray = parsedOutputs.every((tokens) => {
+    if (tokens.length === 0) return false;
+    if (tokens.length === 1 && tokens[0] === "-1") return true;
+    const K = parseInt(tokens[0]);
+    if (isNaN(K) || K < 0) return false;
+    return tokens.length === K + 1;
+  });
+
+  const isSingleLine = outputs.every((out) => out.trim().split("\n").length <= (variableArray ? 2 : 1));
   const isSingleValue = outputs.every((out) =>
     out
       .trim()
       .split("\n")
       .every((line) => line.split(/\s+/).length == 1),
   );
+  const tokensToConsider = variableArray ? parsedOutputs.map((tokens) => tokens.slice(1)).flat() : parsedOutputs.flat();
+
   const isNumeric = (t: string): boolean => /^-?(?:\d+\.\d+|\d+)$/.test(t);
-  const isNumericAll = parsedOutputs.every((tokens) => tokens.every(isNumeric));
-  const hasVeryLargeNumber = parsedOutputs.some((tokens) =>
-    tokens.some((t) => {
-      const digitsOnly = t.replace(/^-/, "").split(".")[0];
-      return digitsOnly.length >= 20;
-    }),
-  );
-  if (isNumericAll && !hasVeryLargeNumber) {
+  const isNumericAll = tokensToConsider.every(isNumeric);
+  const hasVeryLargeNumber = tokensToConsider.some((t) => {
+    const digitsOnly = t.replace(/^-/, "").split(".")[0];
+    return digitsOnly.length >= 20;
+  });
+
+  if (isNumericAll && !hasVeryLargeNumber && tokensToConsider.length > 0) {
     if (judgeType === "decimal") {
       returnType = "float";
     } else if (mod !== undefined) {
@@ -199,7 +214,7 @@ function inferReturnType(
     } else {
       returnType = "int";
     }
-  } else {
+  } else if (tokensToConsider.length > 0) {
     const yesNoPairs = [
       ["Yes", "No"],
       ["YES", "NO"],
@@ -209,7 +224,7 @@ function inferReturnType(
     ];
     for (const [y, n] of yesNoPairs) {
       const isBoolean = (t: string): boolean => t == y || t == n;
-      const isBooleanAll = parsedOutputs.every((tokens) => tokens.every(isBoolean));
+      const isBooleanAll = tokensToConsider.every(isBoolean);
       if (isBooleanAll) {
         returnType = "bool";
         yesStr = y;
@@ -217,5 +232,13 @@ function inferReturnType(
       }
     }
   }
-  return { returnType, multipleColumns: !isSingleValue, multipleRows: !isSingleLine && !multipleCases, yesStr, noStr };
+
+  return {
+    returnType,
+    multipleColumns: !isSingleValue,
+    multipleRows: !isSingleLine && !multipleCases,
+    variableArray,
+    yesStr,
+    noStr,
+  };
 }

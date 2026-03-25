@@ -78,6 +78,7 @@ export interface TemplateContext {
   multiple_cases?: boolean;
   multiple_columns?: boolean;
   multiple_rows?: boolean;
+  variable_array?: boolean;
   query_cases?: boolean;
   query_loop_var?: string;
   tools: {

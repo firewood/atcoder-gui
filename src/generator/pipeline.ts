@@ -21,6 +21,7 @@ export interface ParseResult {
   returnType: string;
   multipleColumns: boolean;
   multipleRows: boolean;
+  variableArray?: boolean;
   samples: Sample[];
   variables: VariableInfo[];
   formatTree?: FormatNode; // Optional, if we want to expose it
@@ -45,6 +46,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
     returnType,
     multipleColumns,
     multipleRows,
+    variableArray,
   } = parseHtml(html);
 
   if (!inputFormat) {
@@ -119,6 +121,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
     returnType,
     multipleColumns,
     multipleRows,
+    variableArray,
     samples,
     variables,
     formatTree: finalFormatTree,

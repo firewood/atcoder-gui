@@ -63,6 +63,7 @@ export class CPlusPlusGenerator {
     returnType: string = "void",
     multipleColumns?: boolean,
     multipleRows?: boolean,
+    variableArray?: boolean,
   ): string {
     const context = this.generator.generate(
       format,
@@ -75,6 +76,7 @@ export class CPlusPlusGenerator {
       returnType,
       multipleColumns,
       multipleRows,
+      variableArray,
     );
     return nunjucks.renderString(this.template, context);
   }

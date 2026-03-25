@@ -42,6 +42,7 @@ async function main() {
       returnType,
       multipleColumns,
       multipleRows,
+      variableArray,
       samples,
       variables,
       formatTree,
@@ -61,6 +62,7 @@ async function main() {
         returnType,
         multipleColumns,
         multipleRows,
+        variableArray,
         samples,
         variables,
       },
@@ -86,6 +88,7 @@ async function main() {
       returnType,
       multipleColumns,
       multipleRows,
+      variableArray,
     );
 
     fs.writeFileSync(cppPath, code);

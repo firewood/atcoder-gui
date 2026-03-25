@@ -61,6 +61,7 @@ export class PythonGenerator {
     returnType: string = "void",
     multipleColumns?: boolean,
     multipleRows?: boolean,
+    variableArray?: boolean,
   ): string {
     const context = this.generator.generate(
       format,
@@ -73,6 +74,7 @@ export class PythonGenerator {
       returnType,
       multipleColumns,
       multipleRows,
+      variableArray,
     );
     return nunjucks.renderString(this.template, context);
   }
