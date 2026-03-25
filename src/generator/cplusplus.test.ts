@@ -152,21 +152,19 @@ describe("CPlusPlusGenerator", () => {
     const code = generator.generate(format, variables);
 
     // Verify order:
-    // N declared
+    // int64_t N, M;
     // input N
-    // A declared (using N)
+    // std::vector<int64_t> A(N);
     // loop A
-    // M declared
     // input M
-    // B declared (using M)
+    // std::vector<int64_t> B(M);
     // loop B
 
     const lines = code.split("\n");
-    const nDeclIndex = lines.findIndex((l) => l.includes("int64_t N;"));
+    const nDeclIndex = lines.findIndex((l) => l.includes("int64_t N, M;"));
     const nInputIndex = lines.findIndex((l) => l.includes("std::cin >> N;"));
     const aDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> A(N);"));
     const aLoopIndex = lines.findIndex((l) => l.includes("for (int64_t i = 0 ; i < N ; i++) {"));
-    const mDeclIndex = lines.findIndex((l) => l.includes("int64_t M;"));
     const mInputIndex = lines.findIndex((l) => l.includes("std::cin >> M;"));
     const bDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> B(M);"));
     const bLoopIndex = lines.findIndex((l) => l.includes("for (int64_t j = 0 ; j < M ; j++) {"));
@@ -174,16 +172,7 @@ describe("CPlusPlusGenerator", () => {
     expect(nDeclIndex).toBeLessThan(nInputIndex);
     expect(nInputIndex).toBeLessThan(aDeclIndex); // N input before A declared (since A uses N)
     expect(aDeclIndex).toBeLessThan(aLoopIndex);
-
-    // Check that M and B appear after A's loop (rough check of interleaving, though strict order between A loop and M depends on generator)
-    // Actually, format is N, Loop A, M, Loop B.
-    // So M decl should be after Loop A? Or at least after N decl.
-    // With new logic, M is declared when M_Node is processed.
-    // M_Node is after Loop A in format.
-    // So M decl should be after Loop A.
-
-    expect(aLoopIndex).toBeLessThan(mDeclIndex);
-    expect(mDeclIndex).toBeLessThan(mInputIndex);
+    expect(aLoopIndex).toBeLessThan(mInputIndex);
     expect(mInputIndex).toBeLessThan(bDeclIndex);
     expect(bDeclIndex).toBeLessThan(bLoopIndex);
   });
@@ -218,5 +207,45 @@ describe("CPlusPlusGenerator", () => {
       // Clean up: remove the temporary directory
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
+  });
+
+  it("should group declarations for variables of the same type and dimensions", () => {
+    // Input: N, M, A_1 ... A_N, B_1 ... B_N
+    const N_Ref: any = { type: "ident", value: "N" };
+
+    const format: FormatNode = {
+      type: "format",
+      children: [
+        { type: "item", name: "N", indices: [] } as any,
+        { type: "item", name: "M", indices: [] } as any,
+        {
+          type: "loop",
+          variable: "i",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [{ type: "item", name: "A", indices: [{ type: "ident", value: "i" }] }],
+        } as any,
+        {
+          type: "loop",
+          variable: "j",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [{ type: "item", name: "B", indices: [{ type: "ident", value: "j" }] }],
+        } as any,
+      ],
+    };
+
+    const variables = [
+      { name: "N", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "M", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "A", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+      { name: "B", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+    ];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    expect(code).toContain("int64_t N, M;");
+    expect(code).toContain("std::vector<int64_t> A(N), B(N);");
   });
 });
