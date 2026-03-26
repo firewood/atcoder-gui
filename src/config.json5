@@ -15,6 +15,9 @@
 
   workspaceDir: '~/atcoder',
 
+  // Default language for code generation (e.g., 'cpp', 'python')
+  language: 'cpp',
+
   // Whether to create a directory for each contest
   create_contest_directory: true,
 
