@@ -4,6 +4,7 @@
   insert_space_around_operators: false,
   global_prefix: "",
   declare_group: true,
+  append_semicolon: true,
   loop: {
     header: "for (int64_t {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++) {",
     footer: "}",
