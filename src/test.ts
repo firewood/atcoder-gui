@@ -13,12 +13,7 @@ export class TestManager {
     this.buildManager = buildManager;
   }
 
-  private compareOutputs(
-    actual: string,
-    expected: string,
-    judgeType: string,
-    errorTolerance: number = 1e-6,
-  ): boolean {
+  private compareOutputs(actual: string, expected: string, judgeType: string, errorTolerance: number = 1e-6): boolean {
     const actualTokens = actual.split(/\s+/).filter((t) => t.length > 0);
     const expectedTokens = expected.split(/\s+/).filter((t) => t.length > 0);
 
@@ -72,7 +67,9 @@ export class TestManager {
       }
 
       let execCommand = "";
-      if (codeFilename.endsWith(".cpp")) {
+      if (codeFilename.endsWith(".py")) {
+        execCommand = `python ${codeFilename}`;
+      } else if (codeFilename.endsWith(".cpp")) {
         execCommand = process.platform === "win32" ? "main" : "./main";
       } else {
         console.log(`Testing not supported for ${codeFilename}`);
@@ -111,14 +108,7 @@ export class TestManager {
             timeout: timeoutMs,
           }).trim();
 
-          if (
-            this.compareOutputs(
-              stdout,
-              expectedOutput,
-              metadata.judge?.judge_type,
-              metadata.judge?.diff,
-            )
-          ) {
+          if (this.compareOutputs(stdout, expectedOutput, metadata.judge?.judge_type, metadata.judge?.diff)) {
             console.log(`# ${inFile} ... \x1b[32mPASSED\x1b[0m`);
             passedCount++;
           } else {

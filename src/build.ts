@@ -24,10 +24,11 @@ export class BuildManager {
         return;
       }
 
-      if (codeFilename.endsWith(".cpp")) {
+      if (codeFilename.endsWith(".py")) {
+        // needless to build
+      } else if (codeFilename.endsWith(".cpp")) {
         const buildCommand =
-          this.configManager.getConfig().buildCommand?.cpp ||
-          "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main";
+          this.configManager.getConfig().buildCommand?.cpp || "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main";
         console.log(`Executing build command: ${buildCommand}`);
         try {
           execSync(buildCommand, { encoding: "utf-8", stdio: "inherit" });
