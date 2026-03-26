@@ -19,7 +19,8 @@ export class GenManager {
   }
 
   async run(args: string[]): Promise<void> {
-    let lang = "cpp";
+    const config = this.configManager.getConfig();
+    let lang = config.language || "cpp";
     const langIdx = args.findIndex((arg) => arg === "--lang" || arg === "-l");
     if (langIdx !== -1 && langIdx + 1 < args.length) {
       lang = args[langIdx + 1].toLowerCase();
@@ -58,7 +59,6 @@ export class GenManager {
 
       console.log(`Found ${problems.length} problems.`);
 
-      const config = this.configManager.getConfig();
       const createContestDir = config.create_contest_directory ?? true;
 
       let workspaceDir = config.workspaceDir;

@@ -176,4 +176,78 @@ describe('GenManager with create_contest_directory config', () => {
     // Should chdir to contestDirPath
     expect(process.chdir).toHaveBeenCalledWith(contestPath);
   });
+
+  it('should use language from config when not specified in command line', async () => {
+    const contestId = 'abc123';
+    const workspaceDir = './temp';
+    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+      workspaceDir: workspaceDir,
+      language: 'python'
+    });
+
+    const mockHtml = `
+      <html>
+        <body>
+          <table>
+            <tbody>
+              <tr>
+                <td><a href="/contests/abc123/tasks/abc123_a">A</a></td>
+                <td><a href="/contests/abc123/tasks/abc123_a">Problem A</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+
+    await genManager.run(['gen', contestId]);
+
+    // generateCode should be called with 'python'
+    expect(genManager.generateCode).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      'python',
+      expect.any(String)
+    );
+  });
+
+  it('should override language from config with command line argument', async () => {
+    const contestId = 'abc123';
+    const workspaceDir = './temp';
+    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+      workspaceDir: workspaceDir,
+      language: 'python'
+    });
+
+    const mockHtml = `
+      <html>
+        <body>
+          <table>
+            <tbody>
+              <tr>
+                <td><a href="/contests/abc123/tasks/abc123_a">A</a></td>
+                <td><a href="/contests/abc123/tasks/abc123_a">Problem A</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
+
+    await genManager.run(['gen', contestId, '--lang', 'cpp']);
+
+    // generateCode should be called with 'cpp'
+    expect(genManager.generateCode).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      'cpp',
+      expect.any(String)
+    );
+  });
 });
