@@ -3,6 +3,7 @@
   "indent_type": "space",
   "insert_space_around_operators": true,
   "global_prefix": "",
+  "append_semicolon": false,
   "loop": {
     "header": "for {loop_var} in range({length}):",
     "footer": ""

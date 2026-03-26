@@ -175,7 +175,7 @@ export class UniversalGenerator {
     });
 
     let result = prefix + items.join(", ");
-    if (this.config.declare_group) {
+    if (this.config.declare_group && this.config.append_semicolon) {
       result += ";";
     }
     return result;
@@ -219,7 +219,13 @@ export class UniversalGenerator {
       decl = `// TODO: declaration for ${variable.name}`;
     }
 
-    if (!this.config.declare_group && decl && !decl.startsWith("//") && !decl.endsWith(";")) {
+    if (
+      !this.config.declare_group &&
+      this.config.append_semicolon &&
+      decl &&
+      !decl.startsWith("//") &&
+      !decl.endsWith(";")
+    ) {
       decl += ";";
     }
 

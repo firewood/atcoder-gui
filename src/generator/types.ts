@@ -4,6 +4,8 @@ export interface CodeGeneratorConfig {
   newline?: "lf" | "crlf";
   insert_space_around_operators?: boolean;
   global_prefix?: string;
+  declare_group?: boolean;
+  append_semicolon?: boolean;
 
   loop: {
     header: string;

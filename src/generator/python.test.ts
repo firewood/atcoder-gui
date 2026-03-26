@@ -29,6 +29,7 @@ describe("PythonGenerator", () => {
     const code = generator.generate(format, variables);
 
     expect(code).toContain("N: int");
+    expect(code).not.toContain("N: int;");
     expect(code).toContain("N = int(next(tokens))");
     expect(code).toContain("def solve(N: int):");
   });
