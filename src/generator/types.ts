@@ -6,6 +6,7 @@ export interface CodeGeneratorConfig {
   global_prefix?: string;
   declare_group?: boolean;
   append_semicolon?: boolean;
+  input_separator?: string;
 
   loop: {
     header: string;

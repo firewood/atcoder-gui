@@ -283,9 +283,56 @@ export class UniversalGenerator {
           }
         }
 
-        lines.push(this.generateItemInput(itemNode, variables));
-        if (variable) {
-          this.inputtedVariables.add(variable.name);
+        let groupedInput = "";
+        if (this.config.input_separator && this.config.declare_group) {
+          const parts = this.getInputTemplateParts(itemNode, variables);
+          if (parts) {
+            const group: ItemNode[] = [itemNode];
+            for (let j = i + 1; j < nodes.length; j++) {
+              const nextNode = nodes[j];
+              if (nextNode.type !== "item") break;
+              const nextItemNode = nextNode as ItemNode;
+              const nextParts = this.getInputTemplateParts(nextItemNode, variables);
+              if (!nextParts || nextParts.prefix !== parts.prefix || nextParts.suffix !== parts.suffix) break;
+
+              // Also ensure it doesn't need declaration (or it's already declared)
+              const nextVariable = variables.find((v) => v.name === nextItemNode.name);
+              if (nextVariable && !declaredVariables.has(nextVariable.name)) {
+                // If we need to declare it, we check if it belongs to the same group as the current var
+                // But simplified: we only group if it's already declared or being declared now.
+                // Actually, the current loop handles declaration for current item.
+                // If the next item needs declaration, it might not be in the same declaration group.
+                // To be safe, let's only group if the next variable doesn't need a new declaration line.
+                // (i.e. it was already declared, or it will be part of the same declaration group as a previous one)
+                // However, findVariablesInSameGroup is used for declaration grouping.
+                // Let's check if the next variable IS already declared or will be.
+                // Wait, if it's not in declaredVariables, it will be handled by the next iteration of the outer loop.
+                // So we should only consume it here if we can handle its declaration too.
+                break;
+              }
+
+              group.push(nextItemNode);
+            }
+
+            if (group.length > 1) {
+              const accesses = group.map((n) => this.generateItemAccess(n, variables));
+              groupedInput = parts.prefix + accesses.join(this.config.input_separator) + parts.suffix;
+              i += group.length - 1;
+              for (const n of group) {
+                const v = variables.find((var_) => var_.name === n.name);
+                if (v) this.inputtedVariables.add(v.name);
+              }
+            }
+          }
+        }
+
+        if (groupedInput) {
+          lines.push(groupedInput);
+        } else {
+          lines.push(this.generateItemInput(itemNode, variables));
+          if (variable) {
+            this.inputtedVariables.add(variable.name);
+          }
         }
       } else if (node.type === "loop") {
         const loopNode = node as LoopNode;
@@ -360,42 +407,54 @@ export class UniversalGenerator {
     return true;
   }
 
-  private generateItemInput(node: ItemNode, variables: Variable[]): string {
+  private generateItemAccess(node: ItemNode, variables: Variable[]): string {
     const variable = variables.find((v) => v.name === node.name);
-    if (!variable) return `// Unknown variable ${node.name}`;
-
-    if (variable.type === VarType.Query) {
-      return "// TODO";
-    }
-
-    const typeKey = this.mapVarType(variable.type);
+    if (!variable) return node.name;
 
     if (variable.dims === 0) {
-      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-        name: variable.name,
-      });
+      return variable.name;
     } else if (variable.dims === 1) {
-      // input array item like a[i]
-      // The AST for 'item' in a loop has indices.
-      const access = this.formatString(this.config.access.seq, {
+      return this.formatString(this.config.access.seq, {
         name: variable.name,
         index: this.stringifyNode(node.indices[0]),
       });
-      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-        name: access,
-      });
     } else if (variable.dims === 2) {
-      const access = this.formatString(this.config.access["2d_seq"], {
+      return this.formatString(this.config.access["2d_seq"], {
         name: variable.name,
         index_i: this.stringifyNode(node.indices[0]),
         index_j: this.stringifyNode(node.indices[1]),
       });
-      return this.formatString(this.config.input[typeKey as keyof typeof this.config.input], {
-        name: access,
-      });
     }
+    return variable.name;
+  }
 
-    return `// TODO: input for ${node.name}`;
+  private getInputTemplateParts(node: ItemNode, variables: Variable[]): { prefix: string; suffix: string } | null {
+    const variable = variables.find((v) => v.name === node.name);
+    if (!variable || variable.type === VarType.Query) return null;
+
+    const typeKey = this.mapVarType(variable.type);
+    const template = this.config.input[typeKey as keyof typeof this.config.input];
+    if (!template) return null;
+
+    const placeholder = "{name}";
+    const index = template.indexOf(placeholder);
+    if (index === -1) return null;
+
+    return {
+      prefix: template.substring(0, index),
+      suffix: template.substring(index + placeholder.length),
+    };
+  }
+
+  private generateItemInput(node: ItemNode, variables: Variable[]): string {
+    const parts = this.getInputTemplateParts(node, variables);
+    if (!parts) {
+      const variable = variables.find((v) => v.name === node.name);
+      if (variable && variable.type === VarType.Query) return "// TODO";
+      return `// Unknown variable ${node.name}`;
+    }
+    const access = this.generateItemAccess(node, variables);
+    return parts.prefix + access + parts.suffix;
   }
 
   private generateLoopInput(node: LoopNode, variables: Variable[], declaredVariables: Set<string>): string[] {
