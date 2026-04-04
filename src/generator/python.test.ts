@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { PythonGenerator } from "./python";
-import { VarType, FormatNode, ASTNode } from "../analyzer/types";
+import { FormatNode, VarType } from "../analyzer/types";
 
 describe("PythonGenerator", () => {
   it("should generate Python code for simple input", () => {

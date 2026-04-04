@@ -94,7 +94,10 @@ export class Parser {
 
   private parseAddSub(): ASTNode {
     let left = this.parseMulDiv();
-    while (this.peek().type === "binop" && (this.peek().value === "+" || this.peek().value === "-")) {
+    while (
+      this.peek().type === "binop" &&
+      (this.peek().value === "+" || this.peek().value === "-")
+    ) {
       const op = this.consume().value as string;
       const right = this.parseMulDiv();
       left = { type: "binop", op, left, right } as BinOpNode;
@@ -104,7 +107,10 @@ export class Parser {
 
   private parseMulDiv(): ASTNode {
     let left = this.parseAtom();
-    while (this.peek().type === "binop" && (this.peek().value === "*" || this.peek().value === "/")) {
+    while (
+      this.peek().type === "binop" &&
+      (this.peek().value === "*" || this.peek().value === "/")
+    ) {
       const op = this.consume().value as string;
       const right = this.parseAtom();
       left = { type: "binop", op, left, right } as BinOpNode;
