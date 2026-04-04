@@ -1,10 +1,8 @@
-import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode } from "./types";
+import { FormatNode, ItemNode, ASTNode, LoopNode, BinOpNode, NumberNode } from "./types";
 
 export class Analyzer {
   public analyze(root: FormatNode): FormatNode {
-    const childrenWithoutBreaks = root.children.filter(
-      (n) => n.type !== "break",
-    );
+    const childrenWithoutBreaks = root.children.filter((n) => n.type !== "break");
     let current = childrenWithoutBreaks;
     while (true) {
       const next = this.normalize(current);
@@ -50,10 +48,7 @@ export class Analyzer {
     return result.map((r) => r.node);
   }
 
-  private tryExtendLoop(
-    result: { node: ASTNode; count: number }[],
-    loopNode: LoopNode,
-  ): boolean {
+  private tryExtendLoop(result: { node: ASTNode; count: number }[], loopNode: LoopNode): boolean {
     if (loopNode.start.type !== "number") return false;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const currentStart = (loopNode.start as any).value;
@@ -75,17 +70,11 @@ export class Analyzer {
     return false;
   }
 
-  private matchLoopBody(
-    nodes: ASTNode[],
-    loopNode: LoopNode,
-    indexVal: number,
-  ): boolean {
+  private matchLoopBody(nodes: ASTNode[], loopNode: LoopNode, indexVal: number): boolean {
     if (nodes.length !== loopNode.body.length) return false;
 
     // Instantiate template by replacing loop variable with indexVal
-    const instantiatedBody = loopNode.body.map((template) =>
-      this.instantiate(template, loopNode.variable, indexVal),
-    );
+    const instantiatedBody = loopNode.body.map((template) => this.instantiate(template, loopNode.variable, indexVal));
 
     for (let i = 0; i < nodes.length; i++) {
       if (!this.areNodesEqual(nodes[i], instantiatedBody[i])) return false;
@@ -102,7 +91,7 @@ export class Analyzer {
       return {
         ...item,
         indices: item.indices.map((idx) => this.instantiate(idx, loopVar, indexVal)),
-      };
+      } as ItemNode; // Added explicit type assertion
     }
     if (node.type === "binop") {
       const bin = node as BinOpNode;
@@ -110,7 +99,7 @@ export class Analyzer {
         ...bin,
         left: this.instantiate(bin.left, loopVar, indexVal),
         right: this.instantiate(bin.right, loopVar, indexVal),
-      };
+      } as BinOpNode; // Added explicit type assertion
     }
     if (node.type === "loop") {
       const loop = node as LoopNode;
@@ -122,7 +111,7 @@ export class Analyzer {
         start: this.instantiate(loop.start, loopVar, indexVal),
         end: this.instantiate(loop.end, loopVar, indexVal),
         body: loop.body.map((child) => this.instantiate(child, loopVar, indexVal)),
-      };
+      } as LoopNode; // Added explicit type assertion
     }
     return node;
   }
@@ -169,8 +158,7 @@ export class Analyzer {
       if (l.type !== r.type) return false;
       if (l.type === "item") {
         if ((l as ItemNode).name !== (r as ItemNode).name) return false;
-        if ((l as ItemNode).indices.length !== (r as ItemNode).indices.length)
-          return false;
+        if ((l as ItemNode).indices.length !== (r as ItemNode).indices.length) return false;
       } else if (l.type === "loop") {
         const ll = l as LoopNode;
         const rr = r as LoopNode;
@@ -215,10 +203,7 @@ export class Analyzer {
           start = diff.left;
           end = diff.right;
         } else {
-          if (
-            !this.areNodesEqual(start, diff.left) ||
-            !this.areNodesEqual(end, diff.right)
-          ) {
+          if (!this.areNodesEqual(start, diff.left) || (end && !this.areNodesEqual(end, diff.right))) {
             // Inconsistent difference. For now, we only support one type of difference per loop.
             return null;
           }
@@ -237,7 +222,7 @@ export class Analyzer {
         type: "item",
         name: loopVar,
         indices: [],
-      } as ItemNode);
+      } as ItemNode); // Explicitly typed as ItemNode
     });
 
     return {
@@ -246,7 +231,7 @@ export class Analyzer {
       start,
       end,
       body: this.normalize(body),
-    };
+    } as LoopNode; // Explicitly typed as LoopNode
   }
 
   private findDiffs(
@@ -338,12 +323,7 @@ export class Analyzer {
     return newNode;
   }
 
-  private generateLoopVar(
-    start: ASTNode,
-    end: ASTNode,
-    left: ASTNode[],
-    right: ASTNode[],
-  ): string {
+  private generateLoopVar(start: ASTNode, end: ASTNode, left: ASTNode[], right: ASTNode[]): string {
     const used = new Set<string>();
     const extract = (node: ASTNode) => {
       if (!node) return;
@@ -397,11 +377,7 @@ export class Analyzer {
       const ba = a as any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bb = b as any;
-      return (
-        ba.op === bb.op &&
-        this.areNodesEqual(ba.left, bb.left) &&
-        this.areNodesEqual(ba.right, bb.right)
-      );
+      return ba.op === bb.op && this.areNodesEqual(ba.left, bb.left) && this.areNodesEqual(ba.right, bb.right);
     }
     return JSON.stringify(a) === JSON.stringify(b);
   }

@@ -1,4 +1,4 @@
-import { FormatNode, VarType, ASTNode, LoopNode, ItemNode } from "./types.js";
+import { FormatNode, VarType, ASTNode, LoopNode, ItemNode, BinOpNode } from "./types.js";
 import { matchFormat } from "./match.js";
 
 export class TypingError extends Error {
@@ -39,25 +39,19 @@ function unifyTypes(t1: VarType, t2: VarType): VarType {
   const types = new Set([t1, t2]);
 
   if (types.has(VarType.BinaryString)) {
-    if (types.has(VarType.ValueInt) || types.has(VarType.IndexInt))
-      return VarType.ValueInt;
+    if (types.has(VarType.ValueInt) || types.has(VarType.IndexInt)) return VarType.ValueInt;
     if (types.has(VarType.Float)) return VarType.Float;
     return VarType.BinaryString;
   }
 
-  if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt))
-    return VarType.ValueInt;
-  if (types.has(VarType.IndexInt) && types.has(VarType.Float))
-    return VarType.Float;
-  if (types.has(VarType.ValueInt) && types.has(VarType.Float))
-    return VarType.Float;
+  if (types.has(VarType.IndexInt) && types.has(VarType.ValueInt)) return VarType.ValueInt;
+  if (types.has(VarType.IndexInt) && types.has(VarType.Float)) return VarType.Float;
+  if (types.has(VarType.ValueInt) && types.has(VarType.Float)) return VarType.Float;
 
   return VarType.String;
 }
 
-function getVarTypesFromMatchResult(
-  values: Record<string, any>,
-): Record<string, VarType> {
+function getVarTypesFromMatchResult(values: Record<string, any>): Record<string, VarType> {
   const types: Record<string, VarType> = {};
 
   for (const name of Object.keys(values)) {
@@ -92,10 +86,7 @@ function getVarTypesFromMatchResult(
   return types;
 }
 
-function unifyVarTypes(
-  t1: Record<string, VarType>,
-  t2: Record<string, VarType>,
-): Record<string, VarType> {
+function unifyVarTypes(t1: Record<string, VarType>, t2: Record<string, VarType>): Record<string, VarType> {
   const t3: Record<string, VarType> = {};
   const allKeys = new Set([...Object.keys(t1), ...Object.keys(t2)]);
 
@@ -111,10 +102,7 @@ function unifyVarTypes(
   return t3;
 }
 
-function collectIndexVariables(
-  node: ASTNode,
-  indices: Set<string> = new Set(),
-): Set<string> {
+function collectIndexVariables(node: ASTNode, indices: Set<string> = new Set()): Set<string> {
   const traverseExpression = (expr: ASTNode) => {
     if (expr.type === "item") {
       indices.add((expr as ItemNode).name);
@@ -126,9 +114,7 @@ function collectIndexVariables(
   };
 
   if (node.type === "format") {
-    (node as FormatNode).children.forEach((child) =>
-      collectIndexVariables(child, indices),
-    );
+    (node as FormatNode).children.forEach((child) => collectIndexVariables(child, indices));
   } else if (node.type === "item") {
     (node as ItemNode).indices.forEach(traverseExpression);
   } else if (node.type === "loop") {
@@ -140,10 +126,7 @@ function collectIndexVariables(
   return indices;
 }
 
-function resolveBinaryStrings(
-  types: Record<string, VarType>,
-  node: FormatNode,
-): Record<string, VarType> {
+function resolveBinaryStrings(types: Record<string, VarType>, node: FormatNode): Record<string, VarType> {
   const indexVars = collectIndexVariables(node);
   const resolved: Record<string, VarType> = { ...types };
   for (const name of Object.keys(resolved)) {
@@ -167,7 +150,8 @@ function collapseLoops(node: ASTNode): {
   function transform(n: ASTNode): ASTNode {
     if (n.type === "format") {
       const fmt = n as FormatNode;
-      return { ...fmt, children: fmt.children.map(transform) };
+      // Ensured FormatNode type assertion here
+      return { ...fmt, children: fmt.children.map(transform) } as FormatNode;
     }
     if (n.type === "loop") {
       const loop = n as LoopNode;
@@ -210,18 +194,17 @@ function collapseLoops(node: ASTNode): {
           newIndices.splice(indexToRemove, 1);
 
           collapsedVars.add(originalItem.name);
-          return {
-            ...originalItem,
-            indices: newIndices,
-          };
+          // Ensured ItemNode type assertion here
+          return { ...originalItem, indices: newIndices } as ItemNode;
         }
       }
 
       // If not collapsible, recurse
+      // Ensured LoopNode type assertion here
       return {
         ...loop,
         body: loop.body.map(transform),
-      };
+      } as LoopNode;
     }
     return n;
   }
@@ -238,8 +221,7 @@ export function inferTypesFromInstances(
   collapsedVars: Set<string>;
   collapsedAst: FormatNode;
 } {
-  if (instances.length === 0)
-    return { types: {}, collapsedVars: new Set(), collapsedAst: node };
+  if (instances.length === 0) return { types: {}, collapsedVars: new Set(), collapsedAst: node };
 
   let firstError: any;
   try {
@@ -268,10 +250,7 @@ export function inferTypesFromInstances(
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
       return {
-        types: resolveBinaryStrings(
-          finalTypes || {},
-          collapsedAst as FormatNode,
-        ),
+        types: resolveBinaryStrings(finalTypes || {}, collapsedAst as FormatNode),
         collapsedVars,
         collapsedAst: collapsedAst as FormatNode,
       };

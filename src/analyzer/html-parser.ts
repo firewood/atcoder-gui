@@ -164,7 +164,8 @@ function inferReturnType(
   mod: number | undefined,
   multipleCases: boolean,
 ): OutputType {
-  if (outputs.length === 0) return { returnType: "void" };
+  if (outputs.length === 0)
+    return { returnType: "void", multipleColumns: false, multipleRows: false, variableArray: false };
 
   let returnType = "string";
   let yesStr: string | undefined = undefined;
@@ -209,9 +210,7 @@ function inferReturnType(
   const isBinaryOnly = (t: string): boolean => /^[01]+$/.test(t);
   const allBinary = tokensToConsider.length > 0 && tokensToConsider.every(isBinaryOnly);
   const hasLongBinary = tokensToConsider.some((t) => t.length > 1);
-  const hasLeadingZero = tokensToConsider.some(
-    (t) => t.length > 1 && t.startsWith("0") && !t.startsWith("0."),
-  );
+  const hasLeadingZero = tokensToConsider.some((t) => t.length > 1 && t.startsWith("0") && !t.startsWith("0."));
 
   if (isNumericAll && !hasVeryLargeNumber && tokensToConsider.length > 0) {
     if ((allBinary && hasLongBinary) || hasLeadingZero) {
