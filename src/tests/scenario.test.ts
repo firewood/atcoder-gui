@@ -33,6 +33,7 @@ describe("Scenario Tests: Expected Results", () => {
 
       const html = await fetchProblemContent(taskId);
       const result = generateParseResult(html, taskId, url);
+      await new Promise((_) => setTimeout(_, 500));
 
       // Remove formatTree, samples, judgeType and errorTolerance from result as they are not in the expected JSON
       const {
