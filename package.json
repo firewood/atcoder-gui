@@ -27,7 +27,7 @@
     "start": "tsx src/main.ts",
     "start:built": "node dist/main.js",
     "clean": "rm -rf dist",
-    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run test:run && pnpm run lint",
+    "prepublishOnly": "pnpm run clean && pnpm run build && pnpm run test && pnpm run lint",
     "prepare": "husky"
   },
   "repository": {
