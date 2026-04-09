@@ -207,12 +207,10 @@ function inferReturnType(
     return digitsOnly.length >= 20;
   });
 
-  const isBinaryOnly = (t: string): boolean => /^[01]+$/.test(t);
-  const allBinary = tokensToConsider.length > 0 && tokensToConsider.every(isBinaryOnly);
   const hasLeadingZero = tokensToConsider.some((t) => t.length > 1 && t.startsWith("0") && !t.startsWith("0."));
 
   if (isNumericAll && !hasVeryLargeNumber && tokensToConsider.length > 0) {
-    if (allBinary && hasLeadingZero) {
+    if (hasLeadingZero) {
       returnType = "string";
     } else if (judgeType === "decimal") {
       returnType = "float";
