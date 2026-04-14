@@ -17,7 +17,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && cp src/config.json5 dist/ && cp src/generator/config/*.json5 dist/ && cp src/generator/templates/*.njk dist/",
+    "build": "./build.sh",
     "dev": "tsc --watch",
     "test": "vitest run",
     "test:scenario": "vitest run src/tests/scenario.test.ts",
