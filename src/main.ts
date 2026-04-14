@@ -238,11 +238,17 @@ export class AtCoderGUI {
           }
           break;
 
+        case "su":
+        case "sub":
+        case "subm":
+        case "submi":
         case "submit":
           if (!(await this.submitManager.submitSolution(args[1]))) {
             break;
           }
         // eslint-disable-next-line no-fallthrough
+        case "te":
+        case "tes":
         case "test":
           await this.testManager.run(args);
           break;
