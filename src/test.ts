@@ -54,7 +54,10 @@ export class TestManager {
     }
 
     // Run build before testing
-    await this.buildManager.run(args);
+    const buildSuccess = await this.buildManager.run(args);
+    if (!buildSuccess) {
+      return;
+    }
 
     try {
       const metadata: AtCoderToolsMetadata = JSON.parse(fs.readFileSync("metadata.json", "utf-8"));
