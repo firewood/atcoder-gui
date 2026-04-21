@@ -11,7 +11,7 @@ import { GenManager } from "./gen.js";
 import { BuildManager } from "./build.js";
 import { TestManager } from "./test.js";
 import { ProblemManager } from "./problem.js";
-import { expandHomeDir, compactHomeDir } from "./utils.js";
+import { expandHomeDir, compactHomeDir, logError } from "./utils.js";
 import { execSync } from "child_process";
 
 export class AtCoderGUI {
@@ -61,7 +61,7 @@ export class AtCoderGUI {
       await this.browserManager.openUrl(url);
       console.log(`Opened URL: ${url}`);
     } catch (error) {
-      console.error(`Failed to open URL ${url}:`, error);
+      logError(`open URL: ${url}`, error);
     }
   }
 
@@ -153,7 +153,7 @@ export class AtCoderGUI {
       switch (command) {
         case "open":
           if (args.length < 2) {
-            console.log("Error: URL is required for open command");
+            logError("URL is required for open command");
             console.log("Usage: open <URL>");
             return;
           }
@@ -261,7 +261,7 @@ export class AtCoderGUI {
               process.chdir(expandedDir);
               console.log(`Current directory: ${compactHomeDir(process.cwd())}`);
             } catch (err) {
-              console.error(`Error changing directory: ${err}`);
+              logError("changing directory", err);
             }
           }
           break;
@@ -271,7 +271,7 @@ export class AtCoderGUI {
           console.log('Type "help" for available commands');
       }
     } catch (error) {
-      console.error("Error:", error);
+      logError("unexpected error", error);
     }
   }
 
@@ -342,7 +342,7 @@ async function main(): Promise<void> {
 // Run the CLI if this file is executed directly
 if (import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   main().catch((error) => {
-    console.error("Fatal error:", error);
+    logError("fatal error", error);
     process.exit(1);
   });
 }

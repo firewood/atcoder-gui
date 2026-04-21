@@ -2,8 +2,8 @@
  * Utility functions for atcoder-gui
  */
 
-import os from 'os';
-import path from 'path';
+import os from "os";
+import path from "path";
 
 /**
  * Expand home directory (~) in a path
@@ -11,9 +11,9 @@ import path from 'path';
  * @returns Path with ~ replaced by home directory
  */
 export function expandHomeDir(filepath: string): string {
-  if (filepath === '~' || filepath.startsWith('~/')) {
+  if (filepath === "~" || filepath.startsWith("~/")) {
     const home = os.homedir();
-    return filepath === '~' ? home : path.join(home, filepath.slice(2));
+    return filepath === "~" ? home : path.join(home, filepath.slice(2));
   }
   return filepath;
 }
@@ -29,12 +29,12 @@ export function compactHomeDir(filepath: string): string {
   const absoluteHome = path.resolve(home);
 
   if (absolutePath === absoluteHome) {
-    return '~';
+    return "~";
   }
 
   const prefix = absoluteHome + path.sep;
   if (absolutePath.startsWith(prefix)) {
-    return '~' + path.sep + absolutePath.slice(prefix.length);
+    return "~" + path.sep + absolutePath.slice(prefix.length);
   }
 
   return filepath;
@@ -47,11 +47,31 @@ export function compactHomeDir(filepath: string): string {
  */
 export function formatLWPDate(date: Date): string {
   const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
 
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}Z`;
+}
+
+/**
+ * Log a success message in green.
+ * @param message Message to log
+ */
+export function logSuccess(message: string): void {
+  console.log(`\x1b[32m${message}\x1b[0m`);
+}
+
+/**
+ * Log an error message in red.
+ * @param message Message to log
+ * @param error Optional error object to log
+ */
+export function logError(message: string, error?: unknown): void {
+  console.error(`\x1b[31m\x1b[7m ERROR \x1b[27m ${message}\x1b[0m`);
+  if (error) {
+    console.error(error);
+  }
 }

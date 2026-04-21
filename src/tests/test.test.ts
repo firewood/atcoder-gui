@@ -4,11 +4,13 @@ import { ConfigManager } from "../config.js";
 import { BuildManager } from "../build.js";
 import * as fs from "fs";
 import { execSync } from "child_process";
+import * as utils from "../utils.js";
 
 vi.mock("fs");
 vi.mock("child_process");
 vi.mock("../config.js");
 vi.mock("../build.js");
+vi.mock("../utils.js");
 
 describe("TestManager timeout handling", () => {
   let testManager: TestManager;
@@ -73,7 +75,7 @@ describe("TestManager timeout handling", () => {
     );
     // \x1b[33m is yellow (TLE)
     expect(console.log).toHaveBeenCalledWith(expect.stringContaining("# in_1.txt ... \x1b[33mTLE\x1b[0m"));
-    expect(console.log).toHaveBeenCalledWith("\x1b[31mSome cases FAILED\x1b[0m (passed 0 of 1)");
+    expect(utils.logError).toHaveBeenCalledWith("Some cases FAILED (passed 0 of 1)");
   });
 
   it("should handle WA when output does not match expected", async () => {
@@ -114,7 +116,7 @@ describe("TestManager timeout handling", () => {
     expect(console.log).toHaveBeenCalledWith("1");
     expect(console.log).toHaveBeenCalledWith("\x1b[95m[Received]\x1b[0m");
     expect(console.log).toHaveBeenCalledWith("2");
-    expect(console.log).toHaveBeenCalledWith("\x1b[31mSome cases FAILED\x1b[0m (passed 0 of 1)");
+    expect(utils.logError).toHaveBeenCalledWith("Some cases FAILED (passed 0 of 1)");
   });
 
   it("should print success message when all cases pass", async () => {
@@ -149,7 +151,7 @@ describe("TestManager timeout handling", () => {
     await testManager.run([]);
 
     expect(console.log).toHaveBeenCalledWith("# in_1.txt ... \x1b[32mPASSED\x1b[0m");
-    expect(console.log).toHaveBeenCalledWith("\x1b[32mPassed all test cases!!!\x1b[0m");
+    expect(utils.logSuccess).toHaveBeenCalledWith("Passed all test cases!!!");
   });
 
   it("should not run tests if build fails", async () => {

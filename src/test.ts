@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import { ConfigManager } from "./config.js";
 import { BuildManager } from "./build.js";
 import { AtCoderToolsMetadata } from "./types.js";
+import { logError, logSuccess } from "./utils.js";
 
 export class TestManager {
   private configManager: ConfigManager;
@@ -49,7 +50,7 @@ export class TestManager {
 
   async run(args: string[]): Promise<void> {
     if (!fs.existsSync("metadata.json")) {
-      console.error("Error: metadata.json not found in the current directory.");
+      logError("metadata.json not found in the current directory.");
       return;
     }
 
@@ -65,7 +66,7 @@ export class TestManager {
       const timeoutMs = metadata.timeout_ms;
 
       if (!codeFilename) {
-        console.error("Error: code_filename not found in metadata.json");
+        logError("code_filename not found in metadata.json");
         return;
       }
 
@@ -130,19 +131,19 @@ export class TestManager {
           } else {
             console.log(`# ${inFile} ... \x1b[33mRE\x1b[0m`);
             if (error.stderr) {
-              console.error(error.stderr);
+              logError("Runtime error output:", error.stderr);
             }
           }
         }
       }
 
       if (passedCount === totalCount) {
-        console.log("\x1b[32mPassed all test cases!!!\x1b[0m");
+        logSuccess("Passed all test cases!!!");
       } else {
-        console.log(`\x1b[31mSome cases FAILED\x1b[0m (passed ${passedCount} of ${totalCount})`);
+        logError(`Some cases FAILED (passed ${passedCount} of ${totalCount})`);
       }
     } catch (error) {
-      console.error("Error reading or parsing metadata.json:", error);
+      logError("Error reading or parsing metadata.json:", error);
     }
   }
 }

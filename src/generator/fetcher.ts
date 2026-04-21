@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { logError } from "../utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,16 +28,14 @@ export async function fetchProblemContent(taskId: string): Promise<string> {
     try {
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error(
-          `Failed to fetch: ${response.status} ${response.statusText}`,
-        );
+        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`);
       }
       const html = await response.text();
       fs.writeFileSync(cachePath, html);
       console.log(`Saved HTML to ${cachePath}`);
       return html;
     } catch (e) {
-      console.error(`Error fetching URL:`, e);
+      logError(`fetching URL: ${url}`, e);
       throw e;
     }
   }

@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import * as path from "path";
 import { BrowserManager } from "./browser.js";
 import { AtCoderCliContestConfig, AtCoderToolsMetadata } from "./types.js";
+import { logError } from "./utils.js";
 
 export class SubmitManager {
   private browserManager: BrowserManager;
@@ -18,9 +19,7 @@ export class SubmitManager {
       const atcoderToolsMetadataPath = "./metadata.json";
       const atcoderCliMetadataPath = "../contest.acc.json";
       if (existsSync(atcoderToolsMetadataPath)) {
-        const metadata: AtCoderToolsMetadata = JSON.parse(
-          readFileSync(atcoderToolsMetadataPath, "utf-8"),
-        );
+        const metadata: AtCoderToolsMetadata = JSON.parse(readFileSync(atcoderToolsMetadataPath, "utf-8"));
         this.pasteToBrowser(
           metadata.problem.contest.contest_id,
           metadata.problem.problem_id,
@@ -29,12 +28,10 @@ export class SubmitManager {
         return true;
       } else if (existsSync(atcoderCliMetadataPath)) {
         if (!filename) {
-          console.error("Error: filename is required");
+          logError("filename is required");
           return false;
         }
-        const metadata: AtCoderCliContestConfig = JSON.parse(
-          readFileSync(atcoderCliMetadataPath, "utf-8"),
-        );
+        const metadata: AtCoderCliContestConfig = JSON.parse(readFileSync(atcoderCliMetadataPath, "utf-8"));
         const problem_id = path.basename(process.cwd());
         for (const task of metadata.tasks) {
           if (task.directory?.path == problem_id) {
@@ -43,21 +40,17 @@ export class SubmitManager {
           }
         }
       } else {
-        console.error("Error: metadata not found in current directory");
+        logError("metadata not found in current directory");
       }
     } catch (error) {
-      console.error("Error during submission:", error);
+      logError("during submission", error);
     }
     return false;
   }
 
-  private async pasteToBrowser(
-    contestId: string,
-    problemId: string,
-    sourceCodePath: string,
-  ): Promise<void> {
+  private async pasteToBrowser(contestId: string, problemId: string, sourceCodePath: string): Promise<void> {
     if (!existsSync(sourceCodePath)) {
-      console.error(`Error: ${sourceCodePath} not found in current directory`);
+      logError(`${sourceCodePath} not found in current directory`);
       return;
     }
     const sourceCode = this.readSourceCode(sourceCodePath);
@@ -129,7 +122,7 @@ export class SubmitManager {
 
       console.log("✓ Copied!");
     } catch (error) {
-      console.error("Failed to fill source code area:", error);
+      logError("filling source code area", error);
     }
   }
 }

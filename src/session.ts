@@ -1,5 +1,6 @@
-import Conf from 'conf';
-import { BrowserContext } from 'playwright';
+import Conf from "conf";
+import { BrowserContext } from "playwright";
+import { logError } from "./utils.js";
 
 export interface SessionData {
   cookies: Array<{
@@ -10,7 +11,7 @@ export interface SessionData {
     expires: number;
     httpOnly: boolean;
     secure: boolean;
-    sameSite: 'Strict' | 'Lax' | 'None';
+    sameSite: "Strict" | "Lax" | "None";
   }>;
   origins: Array<{
     origin: string;
@@ -26,12 +27,12 @@ export class SessionManager {
 
   constructor() {
     this.conf = new Conf<SessionData>({
-      projectName: 'atcoder-gui',
-      configName: 'session',
+      projectName: "atcoder-gui",
+      configName: "session",
       defaults: {
         cookies: [],
-        origins: []
-      }
+        origins: [],
+      },
     });
   }
 
@@ -54,10 +55,10 @@ export class SessionManager {
       const storageState = await context.storageState();
 
       // Save cookies and origins directly at top level
-      this.conf.set('cookies', storageState.cookies || []);
-      this.conf.set('origins', storageState.origins || []);
+      this.conf.set("cookies", storageState.cookies || []);
+      this.conf.set("origins", storageState.origins || []);
     } catch (error) {
-      console.error('Failed to save browser state:', error);
+      logError("save browser state", error);
     }
   }
 
@@ -66,15 +67,15 @@ export class SessionManager {
    */
   clearSession(): void {
     this.conf.clear();
-    console.log('Session data cleared');
+    console.log("Session data cleared");
   }
 
   /**
    * Check if session data exists
    */
   hasSession(): boolean {
-    const cookies = this.conf.get('cookies');
-    const origins = this.conf.get('origins');
+    const cookies = this.conf.get("cookies");
+    const origins = this.conf.get("origins");
     return !!(cookies.length || origins.length);
   }
 
@@ -82,13 +83,13 @@ export class SessionManager {
    * Get session information
    */
   getSessionInfo(): { hasSession: boolean; cookieCount: number; originCount: number } {
-    const cookies = this.conf.get('cookies');
-    const origins = this.conf.get('origins');
+    const cookies = this.conf.get("cookies");
+    const origins = this.conf.get("origins");
 
     return {
       hasSession: this.hasSession(),
       cookieCount: cookies.length || 0,
-      originCount: origins.length || 0
+      originCount: origins.length || 0,
     };
   }
 

@@ -7,7 +7,7 @@ import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
-import { expandHomeDir, compactHomeDir } from "./utils.js";
+import { expandHomeDir, compactHomeDir, logError } from "./utils.js";
 
 export class GenManager {
   private browserManager: BrowserManager;
@@ -35,7 +35,7 @@ export class GenManager {
 
       const html = await this.browserManager.fetchRawHtml(contestUrl);
       if (!html) {
-        console.error("Error: Could not get page content.");
+        logError("Could not get page content.");
         return;
       }
 
@@ -53,7 +53,7 @@ export class GenManager {
       });
 
       if (problems.length === 0) {
-        console.error("No problems found on the contest page.");
+        logError("No problems found on the contest page.");
         return;
       }
 
@@ -63,7 +63,7 @@ export class GenManager {
 
       let workspaceDir = config.workspaceDir;
       if (!workspaceDir) {
-        console.error("Error: workspaceDir is not configured.");
+        logError("workspaceDir is not configured.");
         return;
       }
       workspaceDir = expandHomeDir(workspaceDir);
@@ -99,7 +99,7 @@ export class GenManager {
       const url = this.browserManager.getCurrentUrl();
       const match = url?.match(/\w+:\/\/atcoder\.jp\/contests\/(\w+)\/tasks\/(\w+)/);
       if (!match) {
-        console.error("Error: Could not extract task ID from the URL.");
+        logError("Could not extract task ID from the URL.");
         return;
       }
 
@@ -239,7 +239,7 @@ export class GenManager {
         return true;
       }
     } catch (e) {
-      console.error("Error during generation:", e);
+      logError("generation", e);
     }
     return false;
   }

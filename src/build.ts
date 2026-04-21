@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { execSync } from "child_process";
 import { ConfigManager } from "./config.js";
+import { logError } from "./utils.js";
 
 export class BuildManager {
   private configManager: ConfigManager;
@@ -11,7 +12,7 @@ export class BuildManager {
 
   async run(_args: string[]): Promise<boolean> {
     if (!fs.existsSync("metadata.json")) {
-      console.error("Error: metadata.json not found in the current directory.");
+      logError("metadata.json not found in the current directory.");
       return false;
     }
 
@@ -20,7 +21,7 @@ export class BuildManager {
       const codeFilename = metadata.code_filename;
 
       if (!codeFilename) {
-        console.error("Error: code_filename not found in metadata.json");
+        logError("code_filename not found in metadata.json");
         return false;
       }
 
@@ -35,6 +36,7 @@ export class BuildManager {
           execSync(buildCommand, { encoding: "utf-8", stdio: "inherit" });
           return true;
         } catch (_) {
+          logError("Build failed.");
           return false;
         }
       } else {
@@ -42,7 +44,7 @@ export class BuildManager {
         return true;
       }
     } catch (error) {
-      console.error("Error reading or parsing metadata.json:", error);
+      logError("reading or parsing metadata.json:", error);
       return false;
     }
   }

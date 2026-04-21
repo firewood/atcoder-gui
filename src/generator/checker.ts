@@ -5,6 +5,7 @@ import { CPlusPlusGenerator } from "./cplusplus.js";
 import { fetchProblemContent } from "./fetcher.js";
 import { generateParseResult } from "./pipeline.js";
 import { ConfigManager } from "../config.js";
+import { logError } from "../utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +19,7 @@ if (!fs.existsSync(TEMP_DIR)) {
 async function main() {
   const taskId = process.argv[2];
   if (!taskId) {
-    console.error("Please provide a task ID (e.g., abc400_a)");
+    logError("Please provide a task ID (e.g., abc400_a)");
     process.exit(1);
   }
 
@@ -94,7 +95,7 @@ async function main() {
     fs.writeFileSync(cppPath, code);
     console.log(`Saved C++ code to ${cppPath}`);
   } catch (e) {
-    console.error("Error during generation:", e);
+    logError("during generation", e);
     process.exit(1);
   }
 }
