@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { GenManager } from '../gen';
-import { BrowserManager } from '../browser';
-import { ConfigManager } from '../config';
-import fs from 'fs';
-import path from 'path';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { GenManager } from "../gen";
+import { BrowserManager } from "../browser";
+import { ConfigManager } from "../config";
+import fs from "fs";
+import path from "path";
 
-describe('GenManager with create_contest_directory config', () => {
+describe("GenManager with createContestDirectory config", () => {
   let browserManager: BrowserManager;
   let configManager: ConfigManager;
   let genManager: GenManager;
@@ -17,23 +17,23 @@ describe('GenManager with create_contest_directory config', () => {
     genManager = new GenManager(browserManager, configManager);
 
     // Mock dependencies
-    vi.spyOn(browserManager, 'fetchRawHtml').mockResolvedValue('');
-    vi.spyOn(browserManager, 'openUrl').mockResolvedValue(undefined);
-    vi.spyOn(fs, 'existsSync').mockReturnValue(false);
-    vi.spyOn(fs, 'mkdirSync').mockReturnValue(undefined);
-    vi.spyOn(fs, 'writeFileSync').mockImplementation(() => undefined);
-    vi.spyOn(process, 'chdir').mockImplementation(() => undefined);
-    vi.spyOn(genManager, 'generateCode').mockResolvedValue(true);
+    vi.spyOn(browserManager, "fetchRawHtml").mockResolvedValue("");
+    vi.spyOn(browserManager, "openUrl").mockResolvedValue(undefined);
+    vi.spyOn(fs, "existsSync").mockReturnValue(false);
+    vi.spyOn(fs, "mkdirSync").mockReturnValue(undefined);
+    vi.spyOn(fs, "writeFileSync").mockImplementation(() => undefined);
+    vi.spyOn(process, "chdir").mockImplementation(() => undefined);
+    vi.spyOn(genManager, "generateCode").mockResolvedValue(true);
     // Suppress console.log
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
-  it('should create problem directory directly under workspaceDir when create_contest_directory is false', async () => {
-    const contestId = 'abc123';
-    const workspaceDir = './temp';
-    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+  it("should create problem directory directly under workspaceDir when createContestDirectory is false", async () => {
+    const contestId = "abc123";
+    const workspaceDir = "./temp";
+    vi.spyOn(configManager, "getConfig").mockReturnValue({
       workspaceDir: workspaceDir,
-      create_contest_directory: false
+      createContestDirectory: false,
     });
 
     const mockHtml = `
@@ -53,35 +53,29 @@ describe('GenManager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await genManager.run(['gen', contestId]);
+    await genManager.run(["gen", contestId]);
 
     // Should NOT create contest directory
     const contestPath = path.join(workspaceDir, contestId);
     expect(fs.mkdirSync).not.toHaveBeenCalledWith(contestPath, { recursive: true });
 
     // Should create problem directory directly under workspaceDir using problem.alphabet
-    const problemDirPath = path.join(workspaceDir, 'A');
+    const problemDirPath = path.join(workspaceDir, "A");
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemDirPath, { recursive: true });
 
     // generateCode should be called with correct arguments
-    expect(genManager.generateCode).toHaveBeenCalledWith(
-      contestId,
-      'abc123_a',
-      problemDirPath,
-      'cpp',
-      'A'
-    );
+    expect(genManager.generateCode).toHaveBeenCalledWith(contestId, "abc123_a", problemDirPath, "cpp", "A");
 
     // Should chdir to workspaceDir
     expect(process.chdir).toHaveBeenCalledWith(workspaceDir);
   });
 
-  it('should delete existing sample files when create_contest_directory is false', async () => {
-    const contestId = 'abc123';
-    const workspaceDir = './temp';
-    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+  it("should delete existing sample files when createContestDirectory is false", async () => {
+    const contestId = "abc123";
+    const workspaceDir = "./temp";
+    vi.spyOn(configManager, "getConfig").mockReturnValue({
       workspaceDir: workspaceDir,
-      create_contest_directory: false
+      createContestDirectory: false,
     });
 
     const mockHtml = `
@@ -108,7 +102,7 @@ describe('GenManager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
     // Mock generateCode implementation to simulate the deletion behavior
-    vi.spyOn(genManager, 'generateCode').mockImplementation(async (cId, tId, savePath) => {
+    vi.spyOn(genManager, "generateCode").mockImplementation(async (cId, tId, savePath) => {
       if (fs.existsSync(savePath)) {
         const files = fs.readdirSync(savePath);
         for (const file of files) {
@@ -120,26 +114,26 @@ describe('GenManager with create_contest_directory config', () => {
       return true;
     });
 
-    vi.spyOn(fs, 'existsSync').mockReturnValue(true);
-    vi.spyOn(fs, 'readdirSync').mockReturnValue(['in_1.txt', 'out_1.txt', 'main.cpp', 'metadata.json'] as any);
-    const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
+    vi.spyOn(fs, "existsSync").mockReturnValue(true);
+    vi.spyOn(fs, "readdirSync").mockReturnValue(["in_1.txt", "out_1.txt", "main.cpp", "metadata.json"] as any);
+    const unlinkSpy = vi.spyOn(fs, "unlinkSync").mockImplementation(() => undefined);
 
-    await genManager.run(['gen', contestId]);
+    await genManager.run(["gen", contestId]);
 
     // Should delete old sample files
-    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining('in_1.txt'));
-    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining('out_1.txt'));
+    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining("in_1.txt"));
+    expect(unlinkSpy).toHaveBeenCalledWith(expect.stringContaining("out_1.txt"));
     // Should NOT delete other files
-    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining('main.cpp'));
-    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining('metadata.json'));
+    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining("main.cpp"));
+    expect(unlinkSpy).not.toHaveBeenCalledWith(expect.stringContaining("metadata.json"));
   });
 
-  it('should follow default behavior when create_contest_directory is true', async () => {
-    const contestId = 'abc123';
-    const workspaceDir = './temp';
-    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+  it("should follow default behavior when createContestDirectory is true", async () => {
+    const contestId = "abc123";
+    const workspaceDir = "./temp";
+    vi.spyOn(configManager, "getConfig").mockReturnValue({
       workspaceDir: workspaceDir,
-      create_contest_directory: true
+      createContestDirectory: true,
     });
 
     const mockHtml = `
@@ -159,10 +153,10 @@ describe('GenManager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation(() => undefined);
-    await genManager.run(['gen', contestId]);
+    const unlinkSpy = vi.spyOn(fs, "unlinkSync").mockImplementation(() => undefined);
+    await genManager.run(["gen", contestId]);
 
-    // Should NOT delete any files when create_contest_directory is true
+    // Should NOT delete any files when createContestDirectory is true
     expect(unlinkSpy).not.toHaveBeenCalled();
 
     // Should create contest directory
@@ -170,19 +164,19 @@ describe('GenManager with create_contest_directory config', () => {
     expect(fs.mkdirSync).toHaveBeenCalledWith(contestPath, { recursive: true });
 
     // Should create problem directory under contest directory using problem.alphabet
-    const problemDirPath = path.join(contestPath, 'A');
+    const problemDirPath = path.join(contestPath, "A");
     expect(fs.mkdirSync).toHaveBeenCalledWith(problemDirPath, { recursive: true });
 
     // Should chdir to contestDirPath
     expect(process.chdir).toHaveBeenCalledWith(contestPath);
   });
 
-  it('should use language from config when not specified in command line', async () => {
-    const contestId = 'abc123';
-    const workspaceDir = './temp';
-    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+  it("should use language from config when not specified in command line", async () => {
+    const contestId = "abc123";
+    const workspaceDir = "./temp";
+    vi.spyOn(configManager, "getConfig").mockReturnValue({
       workspaceDir: workspaceDir,
-      language: 'python'
+      language: "python",
     });
 
     const mockHtml = `
@@ -202,24 +196,24 @@ describe('GenManager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await genManager.run(['gen', contestId]);
+    await genManager.run(["gen", contestId]);
 
     // generateCode should be called with 'python'
     expect(genManager.generateCode).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
       expect.any(String),
-      'python',
-      expect.any(String)
+      "python",
+      expect.any(String),
     );
   });
 
-  it('should override language from config with command line argument', async () => {
-    const contestId = 'abc123';
-    const workspaceDir = './temp';
-    vi.spyOn(configManager, 'getConfig').mockReturnValue({
+  it("should override language from config with command line argument", async () => {
+    const contestId = "abc123";
+    const workspaceDir = "./temp";
+    vi.spyOn(configManager, "getConfig").mockReturnValue({
       workspaceDir: workspaceDir,
-      language: 'python'
+      language: "python",
     });
 
     const mockHtml = `
@@ -239,15 +233,15 @@ describe('GenManager with create_contest_directory config', () => {
 
     (browserManager.fetchRawHtml as any).mockResolvedValue(mockHtml);
 
-    await genManager.run(['gen', contestId, '--lang', 'cpp']);
+    await genManager.run(["gen", contestId, "--lang", "cpp"]);
 
     // generateCode should be called with 'cpp'
     expect(genManager.generateCode).toHaveBeenCalledWith(
       expect.any(String),
       expect.any(String),
       expect.any(String),
-      'cpp',
-      expect.any(String)
+      "cpp",
+      expect.any(String),
     );
   });
 });

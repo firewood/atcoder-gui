@@ -2,10 +2,10 @@
   // atcoder-gui configuration
 
   // UI Theme: 'light' or 'dark'
-  theme: 'light',
+  theme: "light",
 
   // Default URL to navigate to
-  defaultUrl: 'https://atcoder.jp',
+  defaultUrl: "https://atcoder.jp",
 
   // Browser window size
   windowSize: {
@@ -13,19 +13,19 @@
     height: 900,
   },
 
-  workspaceDir: '~/atcoder',
+  workspaceDir: "~/atcoder",
 
   // Default language for code generation (e.g., 'cpp', 'python')
-  language: 'cpp',
+  language: "cpp",
 
   // Whether to create a directory for each contest
-  create_contest_directory: true,
+  createContestDirectory: true,
 
-  testCommand: 'make test',
+  testCommand: "make test",
 
   // Default build commands
   buildCommand: {
     // Default build command for C++
-    cpp: 'g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main',
+    cpp: "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main",
   },
 }

@@ -59,7 +59,7 @@ export class GenManager {
 
       console.log(`Found ${problems.length} problems.`);
 
-      const createContestDir = config.create_contest_directory ?? true;
+      const createContestDir = config.createContestDirectory ?? true;
 
       let workspaceDir = config.workspaceDir;
       if (!workspaceDir) {
@@ -119,7 +119,7 @@ export class GenManager {
     alphabet?: string,
   ): Promise<boolean> {
     const config = this.configManager.getConfig();
-    const createContestDir = config.create_contest_directory ?? true;
+    const createContestDir = config.createContestDirectory ?? true;
 
     if (!createContestDir && fs.existsSync(savePath)) {
       const files = fs.readdirSync(savePath);

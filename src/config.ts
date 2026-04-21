@@ -23,7 +23,7 @@ export interface AppConfig {
   buildCommand?: {
     cpp?: string;
   };
-  create_contest_directory?: boolean;
+  createContestDirectory?: boolean;
 }
 
 export class ConfigManager {
