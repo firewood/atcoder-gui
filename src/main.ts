@@ -229,6 +229,7 @@ export class AtCoderGUI {
         case "make":
         case "pwd":
         case "rm":
+        case "code": // VSCode
           {
             const command_line = args.join(" ");
             try {
