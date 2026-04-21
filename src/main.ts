@@ -69,9 +69,8 @@ export class AtCoderGUI {
    * Close the application
    */
   async close(): Promise<void> {
-    if (this.rl) {
-      this.rl.close();
-    }
+    this.rl?.close();
+    this.rl = null;
     await this.browserManager.close();
   }
 
@@ -117,7 +116,7 @@ export class AtCoderGUI {
       }
 
       await this.handleCommand(trimmedInput);
-      this.rl!.prompt();
+      this.rl?.prompt();
     });
 
     this.rl.on("close", async () => {
