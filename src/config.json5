@@ -28,4 +28,12 @@
     // Default build command for C++
     cpp: "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main",
   },
+
+  preProcess: {
+    execOnEachProblemDir: "",
+  },
+
+  postProcess: {
+    execOnEachProblemDir: "",
+  },
 }

@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 import * as cheerio from "cheerio";
 import { BrowserManager } from "./browser.js";
 import { CPlusPlusGenerator } from "./generator/cplusplus.js";
@@ -133,6 +134,8 @@ export class GenManager {
 
     const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
 
+    this.executeCommand(config.preProcess?.execOnEachProblemDir, savePath);
+
     await new Promise((_) => setTimeout(_, 500));
     try {
       const html = await this.browserManager.fetchRawHtml(url);
@@ -236,11 +239,23 @@ export class GenManager {
           console.log(`Saved sample output to ${outFilename}`);
         });
 
+        this.executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
+
         return true;
       }
     } catch (e) {
       logError("generation", e);
     }
     return false;
+  }
+
+  private executeCommand(command: string | undefined, dir: string): void {
+    if (!command) return;
+    try {
+      console.log(`Executing: ${command} in ${dir}`);
+      execSync(command, { cwd: dir, stdio: "inherit" });
+    } catch (e) {
+      logError(`Failed to execute command: ${command}`, e);
+    }
   }
 }

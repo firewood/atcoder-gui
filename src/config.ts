@@ -24,6 +24,12 @@ export interface AppConfig {
     cpp?: string;
   };
   createContestDirectory?: boolean;
+  preProcess?: {
+    execOnEachProblemDir?: string;
+  };
+  postProcess?: {
+    execOnEachProblemDir?: string;
+  };
 }
 
 export class ConfigManager {
