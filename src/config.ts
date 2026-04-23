@@ -29,6 +29,9 @@ export interface AppConfig {
   postProcess?: {
     execOnEachProblemDir?: string;
   };
+  onEnter?: {
+    execOnEachProblemDir?: string;
+  };
 }
 
 export class ConfigManager {

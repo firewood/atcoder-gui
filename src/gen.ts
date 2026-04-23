@@ -1,6 +1,5 @@
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import * as cheerio from "cheerio";
 import { BrowserManager } from "./browser.js";
 import { CPlusPlusGenerator } from "./generator/cplusplus.js";
@@ -8,7 +7,7 @@ import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
-import { expandHomeDir, compactHomeDir, logError } from "./utils.js";
+import { expandHomeDir, compactHomeDir, logError, executeCommand } from "./utils.js";
 
 export class GenManager {
   private browserManager: BrowserManager;
@@ -134,7 +133,7 @@ export class GenManager {
 
     const url = `https://atcoder.jp/contests/${contestId}/tasks/${taskId}`;
 
-    this.executeCommand(config.preProcess?.execOnEachProblemDir, savePath);
+    executeCommand(config.preProcess?.execOnEachProblemDir, savePath);
 
     await new Promise((_) => setTimeout(_, 500));
     try {
@@ -239,7 +238,7 @@ export class GenManager {
           console.log(`Saved sample output to ${outFilename}`);
         });
 
-        this.executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
+        executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
 
         return true;
       }
@@ -247,15 +246,5 @@ export class GenManager {
       logError("generation", e);
     }
     return false;
-  }
-
-  private executeCommand(command: string | undefined, dir: string): void {
-    if (!command) return;
-    try {
-      console.log(`Executing: ${command} in ${dir}`);
-      execSync(command, { cwd: dir, stdio: "inherit" });
-    } catch (e) {
-      logError(`Failed to execute command: ${command}`, e);
-    }
   }
 }

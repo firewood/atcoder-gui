@@ -33,7 +33,7 @@ export class AtCoderGUI {
     this.genManager = new GenManager(this.browserManager, this.configManager);
     this.buildManager = new BuildManager(this.configManager);
     this.testManager = new TestManager(this.configManager, this.buildManager);
-    this.problemManager = new ProblemManager(this.browserManager);
+    this.problemManager = new ProblemManager(this.browserManager, this.configManager);
   }
 
   /**
@@ -259,7 +259,9 @@ export class AtCoderGUI {
             const expandedDir = expandHomeDir(dir);
             try {
               process.chdir(expandedDir);
-              console.log(`Current directory: ${compactHomeDir(process.cwd())}`);
+              const currentDir = process.cwd();
+              console.log(`Current directory: ${compactHomeDir(currentDir)}`);
+              await this.problemManager.onProblemDirectoryEnter(currentDir);
             } catch (err) {
               logError("changing directory", err);
             }

@@ -4,6 +4,7 @@
 
 import os from "os";
 import path from "path";
+import { execSync } from "child_process";
 
 /**
  * Expand home directory (~) in a path
@@ -73,5 +74,20 @@ export function logError(message: string, error?: unknown): void {
   console.error(`\x1b[31m\x1b[7m ERROR \x1b[27m ${message}\x1b[0m`);
   if (error) {
     console.error(error);
+  }
+}
+
+/**
+ * Execute a command in a directory.
+ * @param command Command string to execute
+ * @param dir Directory to execute the command in
+ */
+export function executeCommand(command: string | undefined, dir: string): void {
+  if (!command) return;
+  try {
+    console.log(`Executing: ${command} in ${dir}`);
+    execSync(command, { cwd: dir, stdio: "inherit" });
+  } catch (e) {
+    logError(`Failed to execute command: ${command}`, e);
   }
 }
