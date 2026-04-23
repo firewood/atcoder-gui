@@ -19,7 +19,6 @@ export interface AppConfig {
   };
   workspaceDir?: string;
   language?: string;
-  testCommand?: string;
   buildCommand?: {
     cpp?: string;
   };

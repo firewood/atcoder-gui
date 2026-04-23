@@ -21,8 +21,6 @@
   // Whether to create a directory for each contest
   createContestDirectory: true,
 
-  testCommand: "make test",
-
   // Default build commands
   buildCommand: {
     // Default build command for C++
