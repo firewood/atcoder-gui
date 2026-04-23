@@ -5,7 +5,7 @@
   theme: "light",
 
   // Default URL to navigate to
-  defaultUrl: "https://atcoder.jp",
+  defaultUrl: "https://atcoder.jp/home",
 
   // Browser window size
   windowSize: {
