@@ -13,7 +13,7 @@ vi.mock("../utils.js", async () => {
   };
 });
 
-import * as fs from "fs";
+import fs, { PathLike, PathOrFileDescriptor } from "fs";
 
 vi.mock("fs");
 vi.mock("../browser.js");
@@ -35,15 +35,24 @@ describe("ProblemManager onEnter hooks", () => {
 
     vi.spyOn(process, "chdir").mockImplementation(() => {});
 
-    vi.mocked(fs.existsSync).mockImplementation((p: string) => {
-      if (p.endsWith("metadata.json")) return true;
-      if (p.endsWith("contest.acc.json")) return true;
-      if (p.endsWith("/a") || p.endsWith("/A") || p === "a" || p === "A" || p.endsWith("\\a") || p.endsWith("\\A"))
+    vi.mocked(fs.existsSync).mockImplementation((p: PathLike) => {
+      const filePath = String(p);
+      if (filePath.endsWith("metadata.json")) return true;
+      if (filePath.endsWith("contest.acc.json")) return true;
+      if (
+        filePath.endsWith("/a") ||
+        filePath.endsWith("/A") ||
+        filePath === "a" ||
+        filePath === "A" ||
+        filePath.endsWith("\\a") ||
+        filePath.endsWith("\\A")
+      )
         return true;
       return false;
     });
-    vi.mocked(fs.readFileSync).mockImplementation(((p: string) => {
-      if (p.endsWith("metadata.json")) {
+    vi.mocked(fs.readFileSync).mockImplementation((p: PathOrFileDescriptor) => {
+      const filePath = String(p);
+      if (filePath.endsWith("metadata.json")) {
         return JSON.stringify({
           problem: {
             contest: { contest_id: "abc001" },
@@ -51,14 +60,14 @@ describe("ProblemManager onEnter hooks", () => {
           },
         });
       }
-      if (p.endsWith("contest.acc.json")) {
+      if (filePath.endsWith("contest.acc.json")) {
         return JSON.stringify({
           contest: { id: "abc001" },
           tasks: [],
         });
       }
       return "";
-    }) as any);
+    });
   });
 
   afterEach(() => {
