@@ -148,132 +148,119 @@ export class AtCoderGUI {
       return;
     }
 
-    try {
-      switch (command) {
-        case "open":
-          if (args.length < 2) {
-            logError("URL is required for open command");
-            console.log("Usage: open <URL>");
-            return;
+    switch (command) {
+      case "open":
+        if (args.length < 2) {
+          logError("URL is required for open command");
+          console.log("Usage: open <URL>");
+          return;
+        }
+        await this.openUrl(args[1]);
+        break;
+
+      case "config":
+        console.log("Current configuration:");
+        console.log(JSON.stringify(this.getConfig(), null, 2));
+        break;
+
+      case "help":
+        this.showHelp();
+        break;
+
+      case "exit":
+      case "quit":
+        this.rl?.close();
+        break;
+
+      case "acc":
+      case "oj":
+        {
+          const command_line = args.join(" ");
+          try {
+            execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
+          } catch (_) {}
+        }
+        break;
+
+      case "export":
+        if (args.length < 2) {
+          console.log("Error: Target is required for export command");
+          console.log("Usage: export <target>");
+          console.log("Available targets:");
+          console.log("  atcoder-tools    Export cookies to atcoder-tools cookie.txt");
+          console.log("  atcoder-cli      Export cookies to atcoder-cli session.json");
+          console.log("  oj               Export cookies to online-judge-tools cookie.jar");
+          return;
+        }
+
+        {
+          const target = args[1].toLowerCase();
+          switch (target) {
+            case "atcoder-tools":
+              await this.cookieExporter.exportCookiesForAtCoderTools();
+              break;
+            case "atcoder-cli":
+              await this.cookieExporter.exportCookiesForAtCoderCli();
+              break;
+            case "oj":
+              await this.cookieExporter.exportCookiesForOj();
+              break;
+            default:
+              console.log(`Unknown export target: ${target}`);
+              console.log("Available targets: atcoder-tools, atcoder-cli, oj");
           }
-          await this.openUrl(args[1]);
-          break;
+        }
+        break;
 
-        case "config":
-          console.log("Current configuration:");
-          console.log(JSON.stringify(this.getConfig(), null, 2));
-          break;
+      case "build":
+        await this.buildManager.run(args);
+        break;
 
-        case "help":
-          this.showHelp();
-          break;
+      case "gen":
+        await this.genManager.run(args);
+        break;
 
-        case "exit":
-        case "quit":
-          this.rl?.close();
+      case "su":
+      case "sub":
+      case "subm":
+      case "submi":
+      case "submit":
+        if (!(await this.submitManager.submitSolution(args[1]))) {
           break;
+        }
+      // eslint-disable-next-line no-fallthrough
+      case "te":
+      case "tes":
+      case "test":
+        await this.testManager.run(args);
+        break;
 
-        case "acc":
-        case "oj":
-          {
-            const command_line = args.join(" ");
-            try {
-              execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
-            } catch (_) {}
+      case "cd":
+        {
+          const dir = args.length >= 2 ? args[1] : this.getConfig().workspaceDir || "~";
+          const expandedDir = expandHomeDir(dir);
+          try {
+            process.chdir(expandedDir);
+            const currentDir = process.cwd();
+            console.log(`Current directory: ${compactHomeDir(currentDir)}`);
+            await this.problemManager.onProblemDirectoryEnter(currentDir);
+          } catch (err) {
+            logError("changing directory", err);
           }
-          break;
+        }
+        break;
 
-        case "export":
-          if (args.length < 2) {
-            console.log("Error: Target is required for export command");
-            console.log("Usage: export <target>");
-            console.log("Available targets:");
-            console.log("  atcoder-tools    Export cookies to atcoder-tools cookie.txt");
-            console.log("  atcoder-cli      Export cookies to atcoder-cli session.json");
-            console.log("  oj               Export cookies to online-judge-tools cookie.jar");
-            return;
-          }
-
-          {
-            const target = args[1].toLowerCase();
-            switch (target) {
-              case "atcoder-tools":
-                await this.cookieExporter.exportCookiesForAtCoderTools();
-                break;
-              case "atcoder-cli":
-                await this.cookieExporter.exportCookiesForAtCoderCli();
-                break;
-              case "oj":
-                await this.cookieExporter.exportCookiesForOj();
-                break;
-              default:
-                console.log(`Unknown export target: ${target}`);
-                console.log("Available targets: atcoder-tools, atcoder-cli, oj");
-            }
-          }
-          break;
-
-        case "build":
-          await this.buildManager.run(args);
-          break;
-
-        case "gen":
-          await this.genManager.run(args);
-          break;
-
-        case "cp":
-        case "copy":
-        case "del":
-        case "dir":
-        case "ls":
-        case "make":
-        case "pwd":
-        case "rm":
-        case "code": // VSCode
-          {
-            const command_line = args.join(" ");
-            try {
-              execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
-            } catch (_) {}
-          }
-          break;
-
-        case "su":
-        case "sub":
-        case "subm":
-        case "submi":
-        case "submit":
-          if (!(await this.submitManager.submitSolution(args[1]))) {
-            break;
-          }
-        // eslint-disable-next-line no-fallthrough
-        case "te":
-        case "tes":
-        case "test":
-          await this.testManager.run(args);
-          break;
-
-        case "cd":
-          {
-            const dir = args.length >= 2 ? args[1] : this.getConfig().workspaceDir || "~";
-            const expandedDir = expandHomeDir(dir);
-            try {
-              process.chdir(expandedDir);
-              const currentDir = process.cwd();
-              console.log(`Current directory: ${compactHomeDir(currentDir)}`);
-              await this.problemManager.onProblemDirectoryEnter(currentDir);
-            } catch (err) {
-              logError("changing directory", err);
-            }
-          }
-          break;
-
-        default:
-          console.log(`Unknown command: ${command}`);
+      default:
+        if (this.getConfig().allowedCommands?.includes(command)) {
+          const command_line = args.join(" ");
+          try {
+            execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
+          } catch (_) {}
+        } else {
+          logError(`Unknown command: ${command}`);
           console.log('Type "help" for available commands');
-      }
-    } catch (error) {
-      logError("unexpected error", error);
+        }
+        break;
     }
   }
 

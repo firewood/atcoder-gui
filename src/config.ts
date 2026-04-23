@@ -22,6 +22,7 @@ export interface AppConfig {
   buildCommand?: {
     cpp?: string;
   };
+  allowedCommands?: string[];
   createContestDirectory?: boolean;
   preProcess?: {
     execOnEachProblemDir?: string;
