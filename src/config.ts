@@ -170,4 +170,8 @@ export class ConfigManager {
   getVersion(): string {
     return version;
   }
+
+  getPackageRoot(): string {
+    return dirname(__dirname);
+  }
 }

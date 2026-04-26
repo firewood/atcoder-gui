@@ -3,6 +3,7 @@
 import * as readline from "readline";
 import { pathToFileURL } from "url";
 import * as fs from "fs";
+import * as path from "path";
 import { BrowserManager } from "./browser.js";
 import { ConfigManager, AppConfig } from "./config.js";
 import { SubmitManager } from "./submit.js";
@@ -322,6 +323,39 @@ async function main(): Promise<void> {
 
   if (args.includes("config-dir") || args.includes("--config-dir")) {
     console.log(configManager.getConfigDirPath());
+    return;
+  }
+
+  if (args[0] === "setup-vscode") {
+    const workspaceDir = args[1];
+    if (!workspaceDir) {
+      logError("workspace-dir is required");
+      console.log("Usage: atcoder-gui setup-vscode <workspace-dir>");
+      process.exit(1);
+    }
+
+    const expandedDir = expandHomeDir(workspaceDir);
+    if (!fs.existsSync(expandedDir)) {
+      fs.mkdirSync(expandedDir, { recursive: true });
+      console.log(`Created directory: ${expandedDir}`);
+    }
+
+    configManager.set("workspaceDir", workspaceDir);
+    console.log(`Updated workspaceDir in config: ${workspaceDir}`);
+
+    const packageRoot = configManager.getPackageRoot();
+    const vscodeTemplateDir = path.join(packageRoot, "examples", "project-files", ".vscode");
+    const targetVscodeDir = path.join(expandedDir, ".vscode");
+
+    if (fs.existsSync(vscodeTemplateDir)) {
+      if (!fs.existsSync(targetVscodeDir)) {
+        fs.mkdirSync(targetVscodeDir, { recursive: true });
+      }
+      fs.cpSync(vscodeTemplateDir, targetVscodeDir, { recursive: true });
+      console.log(`Copied .vscode templates to ${targetVscodeDir}`);
+    } else {
+      logError(`VSCode template directory not found at ${vscodeTemplateDir}`);
+    }
     return;
   }
 
