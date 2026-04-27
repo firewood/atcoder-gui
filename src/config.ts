@@ -1,6 +1,6 @@
 import Conf from "conf";
 import JSON5 from "json5";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
@@ -57,51 +57,33 @@ export class ConfigManager {
       defaults,
       cwd: useUserConfig ? undefined : os.tmpdir(),
     });
-
-    // Initialize user config with default template on first launch
-    if (this.userConfigEnabled) {
-      this.initializeUserConfigIfNeeded();
-    }
   }
 
   /**
-   * Initialize user config file with default template if it doesn't exist
+   * Initialize user config file with default template and specified language
    */
-  private initializeUserConfigIfNeeded(): void {
+  public setupUserConfig(language: string): void {
     try {
-      // Check if user config file already exists
-      if (!existsSync(this.conf.path)) {
-        console.log("First launch detected, creating config file with default template...");
+      // Set language which will automatically trigger save by 'conf' library
+      this.conf.set("language", language);
+      console.log(`Config file created at: ${this.conf.path}`);
 
-        // Ensure config directory exists
-        const configDir = dirname(this.conf.path);
-        if (!existsSync(configDir)) {
-          mkdirSync(configDir, { recursive: true });
-        }
+      // Copy language-specific configs and templates
+      const configDir = dirname(this.conf.path);
+      const languageFiles = [
+        { src: join(__dirname, "generator/config/cpp.json5"), dest: "cpp.json5" },
+        { src: join(__dirname, "generator/config/python.json5"), dest: "python.json5" },
+        { src: join(__dirname, "generator/templates/cpp.njk"), dest: "cpp.njk" },
+        { src: join(__dirname, "generator/templates/python.njk"), dest: "python.njk" },
+      ];
 
-        // Read default config.json5 template
-        const defaultTemplate = readFileSync(join(__dirname, "config.json5"), "utf-8");
-
-        // Write the template directly to user config path using fs
-        writeFileSync(this.conf.path, defaultTemplate, "utf-8");
-        console.log(`Config file created at: ${this.conf.path}`);
-
-        // Copy language-specific configs and templates
-        const languageFiles = [
-          { src: join(__dirname, "generator/config/cpp.json5"), dest: "cpp.json5" },
-          { src: join(__dirname, "generator/config/python.json5"), dest: "python.json5" },
-          { src: join(__dirname, "generator/templates/cpp.njk"), dest: "cpp.njk" },
-          { src: join(__dirname, "generator/templates/python.njk"), dest: "python.njk" },
-        ];
-
-        for (const { src, dest } of languageFiles) {
-          if (existsSync(src)) {
-            const destPath = join(configDir, dest);
-            // Only copy if it doesn't exist already
-            if (!existsSync(destPath)) {
-              writeFileSync(destPath, readFileSync(src));
-              console.log(`Template created at: ${destPath}`);
-            }
+      for (const { src, dest } of languageFiles) {
+        if (existsSync(src)) {
+          const destPath = join(configDir, dest);
+          // Only copy if it doesn't exist already
+          if (!existsSync(destPath)) {
+            writeFileSync(destPath, readFileSync(src));
+            console.log(`Template created at: ${destPath}`);
           }
         }
       }

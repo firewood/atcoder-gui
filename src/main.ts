@@ -83,9 +83,48 @@ export class AtCoderGUI {
   }
 
   /**
+   * Check if it is the first launch and prompt for language if needed
+   */
+  async checkFirstLaunch(): Promise<void> {
+    const config = this.configManager.getConfig();
+    if (!config.language) {
+      console.log("Welcome to AtCoder GUI!");
+      console.log("It seems like this is your first launch.");
+
+      const lang = await this.promptLanguage();
+      this.configManager.setupUserConfig(lang);
+    }
+  }
+
+  private async promptLanguage(): Promise<string> {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    return new Promise((resolve) => {
+      const ask = () => {
+        rl.question("Choose your default language (cpp/python) [cpp]: ", (answer) => {
+          const lang = answer.trim().toLowerCase() || "cpp";
+          if (lang === "cpp" || lang === "python") {
+            rl.close();
+            resolve(lang);
+          } else {
+            console.log("Please enter 'cpp' or 'python'.");
+            ask();
+          }
+        });
+      };
+      ask();
+    });
+  }
+
+  /**
    * Start interactive CLI
    */
   async startInteractiveCLI(): Promise<void> {
+    await this.checkFirstLaunch();
+
     // Launch browser automatically on startup
     await this.init();
 
@@ -304,8 +343,7 @@ Examples:
 /**
  * Main function to start the interactive CLI
  */
-async function ui_main(): Promise<void> {
-  const app = new AtCoderGUI();
+async function ui_main(app: AtCoderGUI): Promise<void> {
   await app.startInteractiveCLI();
 }
 
@@ -326,7 +364,10 @@ async function main(): Promise<void> {
     return;
   }
 
+  const app = new AtCoderGUI();
+
   if (args[0] === "setup-vscode") {
+    await app.checkFirstLaunch();
     const workspaceDir = args[1];
     if (!workspaceDir) {
       logError("workspace-dir is required");
@@ -359,7 +400,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  await ui_main();
+  await ui_main(app);
 }
 
 // Run the CLI if this file is executed directly
