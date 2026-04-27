@@ -85,7 +85,7 @@ describe("CPlusPlusGenerator", () => {
 
     // Check input loop
     expect(code).toContain("std::cin >> N;");
-    expect(code).toContain("for (int64_t i = 0 ; i < N ; i++) {");
+    expect(code).toContain("for (int64_t i = 0; i < N; i++) {");
     expect(code).toContain("std::cin >> A[i];");
 
     // Check arguments
@@ -164,10 +164,10 @@ describe("CPlusPlusGenerator", () => {
     const nDeclIndex = lines.findIndex((l) => l.includes("int64_t N, M;"));
     const nInputIndex = lines.findIndex((l) => l.includes("std::cin >> N;"));
     const aDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> A(N);"));
-    const aLoopIndex = lines.findIndex((l) => l.includes("for (int64_t i = 0 ; i < N ; i++) {"));
+    const aLoopIndex = lines.findIndex((l) => l.includes("for (int64_t i = 0; i < N; i++) {"));
     const mInputIndex = lines.findIndex((l) => l.includes("std::cin >> M;"));
     const bDeclIndex = lines.findIndex((l) => l.includes("std::vector<int64_t> B(M);"));
-    const bLoopIndex = lines.findIndex((l) => l.includes("for (int64_t j = 0 ; j < M ; j++) {"));
+    const bLoopIndex = lines.findIndex((l) => l.includes("for (int64_t j = 0; j < M; j++) {"));
 
     expect(nDeclIndex).toBeLessThan(nInputIndex);
     expect(nInputIndex).toBeLessThan(aDeclIndex); // N input before A declared (since A uses N)

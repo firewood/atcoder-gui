@@ -59,7 +59,7 @@ const string NO = "{{ no_str }}";
 {{ cpp_return_type }} solve({{ formal_arguments }}) {
     {{ cpp_return_type }} ans;
 {% if query_cases %}
-    for (int i = 0 ; i < {{ query_loop_var }}; i++) {
+    for (int i = 0; i < {{ query_loop_var }}; i++) {
         int type;
         cin >> type;
         if (type == 1) {
