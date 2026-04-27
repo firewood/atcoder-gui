@@ -13,7 +13,7 @@
     height: 900,
   },
 
-  workspaceDir: "~/atcoder",
+  workspaceDir: null,
 
   // Default language for code generation (e.g., 'cpp', 'python')
   language: null,

@@ -60,12 +60,13 @@ export class ConfigManager {
   }
 
   /**
-   * Initialize user config file with default template and specified language
+   * Initialize user config file with default template and specified settings
    */
-  public setupUserConfig(language: string): void {
+  public setupUserConfig(language: string, workspaceDir: string): void {
     try {
-      // Set language which will automatically trigger save by 'conf' library
+      // Set settings which will automatically trigger save by 'conf' library
       this.conf.set("language", language);
+      this.conf.set("workspaceDir", workspaceDir);
       console.log(`Config file created at: ${this.conf.path}`);
 
       // Copy language-specific configs and templates

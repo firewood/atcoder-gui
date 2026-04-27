@@ -83,31 +83,35 @@ export class AtCoderGUI {
   }
 
   /**
-   * Check if it is the first launch and prompt for language if needed
+   * Check if it is the first launch and prompt for settings if needed
    */
   async checkFirstLaunch(): Promise<void> {
     const config = this.configManager.getConfig();
-    if (!config.language) {
+    if (!config.language || !config.workspaceDir) {
       console.log("Welcome to AtCoder GUI!");
-      console.log("It seems like this is your first launch.");
+      console.log("It seems like this is your first launch or configuration is incomplete.");
 
-      const lang = await this.promptLanguage();
-      this.configManager.setupUserConfig(lang);
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+      });
+
+      try {
+        const lang = await this.promptLanguage(rl);
+        const workspaceDir = await this.promptWorkspaceDir(rl);
+        this.configManager.setupUserConfig(lang, workspaceDir);
+      } finally {
+        rl.close();
+      }
     }
   }
 
-  private async promptLanguage(): Promise<string> {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
+  private async promptLanguage(rl: readline.Interface): Promise<string> {
     return new Promise((resolve) => {
       const ask = () => {
         rl.question("Choose your default language (cpp/python) [cpp]: ", (answer) => {
           const lang = answer.trim().toLowerCase() || "cpp";
           if (lang === "cpp" || lang === "python") {
-            rl.close();
             resolve(lang);
           } else {
             console.log("Please enter 'cpp' or 'python'.");
@@ -116,6 +120,15 @@ export class AtCoderGUI {
         });
       };
       ask();
+    });
+  }
+
+  private async promptWorkspaceDir(rl: readline.Interface): Promise<string> {
+    return new Promise((resolve) => {
+      rl.question("Enter your workspace directory [~/atcoder]: ", (answer) => {
+        const dir = answer.trim() || "~/atcoder";
+        resolve(dir);
+      });
     });
   }
 

@@ -9,7 +9,7 @@ describe("ConfigManager setupUserConfig", () => {
     vi.clearAllMocks();
   });
 
-  it("should copy template files and set language in config", () => {
+  it("should copy template files and set language and workspaceDir in config", () => {
     // Mock existsSync
     (fs.existsSync as any).mockImplementation((p: string) => {
       const pathStr = p.toString();
@@ -25,10 +25,11 @@ describe("ConfigManager setupUserConfig", () => {
     (fs.readFileSync as any).mockReturnValue("{}");
 
     const configManager = new ConfigManager(true);
-    configManager.setupUserConfig("python");
+    configManager.setupUserConfig("python", "~/my-atcoder");
 
-    // Check if language is set in config manager
+    // Check if language and workspaceDir are set in config manager
     expect(configManager.get("language")).toBe("python");
+    expect(configManager.get("workspaceDir")).toBe("~/my-atcoder");
 
     // Check if language-specific files were copied
     const calls = (fs.writeFileSync as any).mock.calls;
