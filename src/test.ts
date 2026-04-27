@@ -71,10 +71,22 @@ export class TestManager {
       }
 
       let execCommand = "";
+      const runCommand = this.configManager.get("runCommand");
+
       if (codeFilename.endsWith(".py")) {
-        execCommand = `python ${codeFilename}`;
+        const pythonRunCommand = runCommand?.python;
+        if (pythonRunCommand) {
+          execCommand = pythonRunCommand.replace("main.py", codeFilename);
+        } else {
+          execCommand = `python3 ${codeFilename}`;
+        }
       } else if (codeFilename.endsWith(".cpp")) {
-        execCommand = process.platform === "win32" ? "main" : "./main";
+        const cppRunCommand = runCommand?.cpp;
+        if (cppRunCommand) {
+          execCommand = cppRunCommand;
+        } else {
+          execCommand = process.platform === "win32" ? "main" : "./main";
+        }
       } else {
         console.log(`Testing not supported for ${codeFilename}`);
         return;

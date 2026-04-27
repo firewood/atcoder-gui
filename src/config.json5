@@ -27,6 +27,10 @@
     cpp: "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main",
   },
 
+  runCommand: {
+    python: 'uv run main.py',
+  },
+
   // Commands allowed to be executed directly from the CLI
   allowedCommands: ["ls", "dir", "pwd", "code"],
 

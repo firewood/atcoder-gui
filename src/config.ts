@@ -24,6 +24,10 @@ export interface AppConfig {
   buildCommand?: {
     cpp?: string;
   };
+  runCommand?: {
+    python?: string;
+    cpp?: string;
+  };
   allowedCommands?: string[];
   createContestDirectory?: boolean;
   preProcess?: {
