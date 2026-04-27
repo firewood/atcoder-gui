@@ -1,11 +1,13 @@
 import Conf from "conf";
 import JSON5 from "json5";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
 import os from "os";
+import { expandHomeDir } from "./utils.js";
 const require = createRequire(import.meta.url);
+
 const { version } = require("../package.json");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -68,6 +70,13 @@ export class ConfigManager {
       this.conf.set("language", language);
       this.conf.set("workspaceDir", workspaceDir);
       console.log(`Config file created at: ${this.conf.path}`);
+
+      // Ensure workspace directory exists
+      const expandedDir = expandHomeDir(workspaceDir);
+      if (!existsSync(expandedDir)) {
+        mkdirSync(expandedDir, { recursive: true });
+        console.log(`Created workspace directory at: ${expandedDir}`);
+      }
 
       // Copy language-specific configs and templates
       const configDir = dirname(this.conf.path);

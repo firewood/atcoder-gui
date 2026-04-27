@@ -15,8 +15,9 @@ describe("ConfigManager setupUserConfig", () => {
       const pathStr = p.toString();
       // Source files exist
       if (pathStr.includes("/src/")) return true;
-      // Target directory exists
+      // Target directory exists for config files, but NOT for workspace
       if (pathStr.includes(".config") && !pathStr.includes(".")) return true;
+      if (pathStr.includes("my-atcoder")) return false;
       // Target files do not exist
       if (pathStr.includes(".config")) return false;
       return true;
@@ -30,6 +31,12 @@ describe("ConfigManager setupUserConfig", () => {
     // Check if language and workspaceDir are set in config manager
     expect(configManager.get("language")).toBe("python");
     expect(configManager.get("workspaceDir")).toBe("~/my-atcoder");
+
+    // Check if workspace directory was created
+    expect(fs.mkdirSync).toHaveBeenCalledWith(
+      expect.stringContaining("my-atcoder"),
+      expect.objectContaining({ recursive: true }),
+    );
 
     // Check if language-specific files were copied
     const calls = (fs.writeFileSync as any).mock.calls;
