@@ -85,6 +85,25 @@ export class ConfigManager {
         // Write the template directly to user config path using fs
         writeFileSync(this.conf.path, defaultTemplate, "utf-8");
         console.log(`Config file created at: ${this.conf.path}`);
+
+        // Copy language-specific configs and templates
+        const languageFiles = [
+          { src: join(__dirname, "generator/config/cpp.json5"), dest: "cpp.json5" },
+          { src: join(__dirname, "generator/config/python.json5"), dest: "python.json5" },
+          { src: join(__dirname, "generator/templates/cpp.njk"), dest: "cpp.njk" },
+          { src: join(__dirname, "generator/templates/python.njk"), dest: "python.njk" },
+        ];
+
+        for (const { src, dest } of languageFiles) {
+          if (existsSync(src)) {
+            const destPath = join(configDir, dest);
+            // Only copy if it doesn't exist already
+            if (!existsSync(destPath)) {
+              writeFileSync(destPath, readFileSync(src));
+              console.log(`Template created at: ${destPath}`);
+            }
+          }
+        }
       }
     } catch (error) {
       console.warn("Failed to initialize user config file:", error);
