@@ -187,6 +187,32 @@ export class AtCoderGUI {
   }
 
   /**
+   * Setup VSCode configuration files in the workspace directory
+   */
+  async setupVsCode(): Promise<void> {
+    const workspaceDir = this.getConfig().workspaceDir;
+    if (!workspaceDir) {
+      logError("workspaceDir is not set in config");
+      return;
+    }
+
+    const expandedDir = expandHomeDir(workspaceDir);
+    const packageRoot = this.configManager.getPackageRoot();
+    const vscodeTemplateDir = path.join(packageRoot, "examples", "project-files", ".vscode");
+    const targetVscodeDir = path.join(expandedDir, ".vscode");
+
+    if (fs.existsSync(vscodeTemplateDir)) {
+      if (!fs.existsSync(targetVscodeDir)) {
+        fs.mkdirSync(targetVscodeDir, { recursive: true });
+      }
+      fs.cpSync(vscodeTemplateDir, targetVscodeDir, { recursive: true });
+      console.log(`Copied .vscode templates to ${targetVscodeDir}`);
+    } else {
+      logError(`VSCode template directory not found at ${vscodeTemplateDir}`);
+    }
+  }
+
+  /**
    * Handle CLI commands
    */
   private async handleCommand(input: string): Promise<void> {
@@ -218,6 +244,10 @@ export class AtCoderGUI {
 
       case "help":
         this.showHelp();
+        break;
+
+      case "setup-vscode":
+        await this.setupVsCode();
         break;
 
       case "exit":
@@ -325,6 +355,7 @@ export class AtCoderGUI {
 Available commands:
   open <URL>           Open a URL in the browser
   config               Show current configuration
+  setup-vscode         Setup VSCode configuration files in the workspace directory
   submit <filename>    Submit solution to AtCoder
   gen <contest-id>     Generate main.cpp from current problem page or contest ID
   make <args>          Execute make command
@@ -381,35 +412,7 @@ async function main(): Promise<void> {
 
   if (args[0] === "setup-vscode") {
     await app.checkFirstLaunch();
-    const workspaceDir = args[1];
-    if (!workspaceDir) {
-      logError("workspace-dir is required");
-      console.log("Usage: atcoder-gui setup-vscode <workspace-dir>");
-      process.exit(1);
-    }
-
-    const expandedDir = expandHomeDir(workspaceDir);
-    if (!fs.existsSync(expandedDir)) {
-      fs.mkdirSync(expandedDir, { recursive: true });
-      console.log(`Created directory: ${expandedDir}`);
-    }
-
-    configManager.set("workspaceDir", workspaceDir);
-    console.log(`Updated workspaceDir in config: ${workspaceDir}`);
-
-    const packageRoot = configManager.getPackageRoot();
-    const vscodeTemplateDir = path.join(packageRoot, "examples", "project-files", ".vscode");
-    const targetVscodeDir = path.join(expandedDir, ".vscode");
-
-    if (fs.existsSync(vscodeTemplateDir)) {
-      if (!fs.existsSync(targetVscodeDir)) {
-        fs.mkdirSync(targetVscodeDir, { recursive: true });
-      }
-      fs.cpSync(vscodeTemplateDir, targetVscodeDir, { recursive: true });
-      console.log(`Copied .vscode templates to ${targetVscodeDir}`);
-    } else {
-      logError(`VSCode template directory not found at ${vscodeTemplateDir}`);
-    }
+    await app.setupVsCode();
     return;
   }
 
