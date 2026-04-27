@@ -206,7 +206,19 @@ export class AtCoderGUI {
         fs.mkdirSync(targetVscodeDir, { recursive: true });
       }
       fs.cpSync(vscodeTemplateDir, targetVscodeDir, { recursive: true });
-      console.log(`Copied .vscode templates to ${targetVscodeDir}`);
+      console.log(`Copied VSCode templates to ${targetVscodeDir}`);
+
+      // Set process commands in config
+      this.configManager.set("preProcess", {
+        execOnEachProblemDir: `cp -a ${workspaceDir}/.vscode .`,
+      });
+      this.configManager.set("postProcess", {
+        execOnEachProblemDir: "cp in_1.txt in.txt",
+      });
+      this.configManager.set("onEnter", {
+        execOnEachProblemDir: "code -r .",
+      });
+      console.log("Updated config with preProcess, postProcess, and onEnter commands");
     } else {
       logError(`VSCode template directory not found at ${vscodeTemplateDir}`);
     }
