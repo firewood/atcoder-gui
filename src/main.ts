@@ -198,7 +198,8 @@ export class AtCoderGUI {
 
     const expandedDir = expandHomeDir(workspaceDir);
     const packageRoot = this.configManager.getPackageRoot();
-    const vscodeTemplateDir = path.join(packageRoot, "examples", "project-files", ".vscode");
+    const language = this.getConfig().language || "cpp";
+    const vscodeTemplateDir = path.join(packageRoot, "vscode-project-files", language, ".vscode");
     const targetVscodeDir = path.join(expandedDir, ".vscode");
 
     if (fs.existsSync(vscodeTemplateDir)) {

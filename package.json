@@ -10,7 +10,7 @@
   },
   "files": [
     "dist/**/*",
-    "examples/**/*",
+    "vscode-project-files/**/*",
     "README.md",
     "LICENSE"
   ],
