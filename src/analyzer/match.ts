@@ -30,15 +30,17 @@ export function evalAST(node: ASTNode, env: Record<string, any>): number {
     }
     // If val is an object (array/map), we can't use it directly in arithmetic unless we have indices
     if (typeof val === "object") {
-      // If indices are provided, we should evaluate them.
-      // However, ASTNode for 'item' in LoopNode's start/end usually doesn't have complex indices in simplified AST?
-      // Let's handle simple cases first.
       if (item.indices.length > 0) {
-        // Recursive evaluation for indices?
-        // For now, let's assume scalar variables for loop bounds.
-        throw new MatchError(
-          `Array access in loop bounds not fully supported yet: ${item.name}`,
-        );
+        const indices: number[] = [];
+        for (const idxNode of item.indices) {
+          indices.push(evalAST(idxNode, env));
+        }
+        const key = indices.join(",");
+        const indexedVal = val[key];
+        if (indexedVal === undefined) {
+          throw new MatchError(`Index ${key} not found for variable ${item.name}`);
+        }
+        return Number(indexedVal);
       }
     }
     return Number(val);
