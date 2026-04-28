@@ -186,6 +186,7 @@ function inferReturnType(
   const variableArray = parsedOutputs.every((tokens) => {
     if (tokens.length === 0) return false;
     if (tokens.length === 1 && tokens[0] === "-1") return true;
+    if (!/^\d+$/.test(tokens[0])) return false; // Ensure it's a non-negative integer string
     const K = parseInt(tokens[0]);
     if (isNaN(K) || K < 0) return false;
     return tokens.length === K + 1;
