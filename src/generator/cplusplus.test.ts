@@ -248,4 +248,55 @@ describe("CPlusPlusGenerator", () => {
     expect(code).toContain("int64_t N, M;");
     expect(code).toContain("std::vector<int64_t> A(N), B(N);");
   });
+
+  it("should handle loop bounds depending on array elements (abc392_d style)", () => {
+    // Input:
+    // N
+    // K_1 A_{1,1} ... A_{1,K_1}
+    // ...
+    // K_N A_{N,1} ... A_{N,K_N}
+
+    const j_Node: any = { type: "ident", value: "j" };
+    const i_Node: any = { type: "ident", value: "i" };
+    const N_Ref: any = { type: "ident", value: "N" };
+    const Kj_Ref: any = { type: "item", name: "K", indices: [j_Node] };
+
+    const format: FormatNode = {
+      type: "format",
+      children: [
+        { type: "item", name: "N", indices: [] } as any,
+        {
+          type: "loop",
+          variable: "j",
+          start: { type: "number", value: 0 },
+          end: { type: "ident", value: "N" },
+          body: [
+            { type: "item", name: "K", indices: [j_Node] },
+            {
+              type: "loop",
+              variable: "i",
+              start: { type: "number", value: 0 },
+              end: Kj_Ref,
+              body: [{ type: "item", name: "A", indices: [j_Node, i_Node] }],
+            },
+          ],
+        } as any,
+      ],
+    };
+
+    const variables = [
+      { name: "N", type: VarType.ValueInt, dims: 0, indices: [] },
+      { name: "K", type: VarType.ValueInt, dims: 1, indices: [N_Ref] },
+      { name: "A", type: VarType.ValueInt, dims: 2, indices: [N_Ref, Kj_Ref] },
+    ];
+
+    const generator = new CPlusPlusGenerator();
+    const code = generator.generate(format, variables);
+
+    // K[j] should be used as loop bound
+    expect(code).toContain("for (int64_t i = 0; i < K[j]; i++) {");
+    // A should be declared. Note: currently it might be declared with K[j] which might not compile if j is not in scope,
+    // but at least it's better than just K which was definitely wrong.
+    expect(code).toContain("std::vector<std::vector<int64_t>> A(N, std::vector<int64_t>(K[j]));");
+  });
 });

@@ -96,7 +96,9 @@ export class UniversalGenerator {
         visit(bin.left);
         visit(bin.right);
       } else if (n.type === "item") {
-        deps.add((n as ItemNode).name);
+        const item = n as ItemNode;
+        deps.add(item.name);
+        item.indices.forEach(visit);
       }
     };
     visit(node);
@@ -115,7 +117,7 @@ export class UniversalGenerator {
     return true;
   }
 
-  private generateDeclarationGroup(variables: Variable[]): string {
+  private generateDeclarationGroup(variables: Variable[], allVariables: Variable[]): string {
     if (variables.length === 0) return "";
 
     const firstVar = variables[0];
@@ -136,7 +138,7 @@ export class UniversalGenerator {
 
     if (placeholderIndex === -1) {
       // Fallback if no {name} placeholder
-      return variables.map((v) => this.generateDeclaration(v)).join(this.newline);
+      return variables.map((v) => this.generateDeclaration(v, allVariables)).join(this.newline);
     }
 
     const innerType = this.config.type[typeKey as keyof typeof this.config.type];
@@ -153,7 +155,7 @@ export class UniversalGenerator {
           default: defaultValue,
         });
       } else if (v.dims === 1) {
-        const len = this.stringifyNode(v.indices[0]);
+        const len = this.stringifyNode(v.indices[0], allVariables);
         return this.formatString(itemTemplate, {
           name: v.name,
           type: innerType,
@@ -161,8 +163,8 @@ export class UniversalGenerator {
           default: defaultValue,
         });
       } else if (v.dims === 2) {
-        const lenI = this.stringifyNode(v.indices[0]);
-        const lenJ = this.stringifyNode(v.indices[1]);
+        const lenI = this.stringifyNode(v.indices[0], allVariables);
+        const lenJ = this.stringifyNode(v.indices[1], allVariables);
         return this.formatString(itemTemplate, {
           name: v.name,
           type: innerType,
@@ -181,7 +183,7 @@ export class UniversalGenerator {
     return result;
   }
 
-  private generateDeclaration(variable: Variable): string {
+  private generateDeclaration(variable: Variable, variables: Variable[]): string {
     const typeKey = this.mapVarType(variable.type);
     const defaultValue = this.config.default[typeKey as keyof typeof this.config.default] || "";
 
@@ -196,7 +198,7 @@ export class UniversalGenerator {
     } else if (variable.dims === 1) {
       // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
       // Assuming we know length from indices for now
-      const len = this.stringifyNode(variable.indices[0]);
+      const len = this.stringifyNode(variable.indices[0], variables);
 
       decl = this.formatString(this.config.declare_and_allocate.seq, {
         name: variable.name,
@@ -205,8 +207,8 @@ export class UniversalGenerator {
         default: defaultValue,
       });
     } else if (variable.dims === 2) {
-      const lenI = this.stringifyNode(variable.indices[0]);
-      const lenJ = this.stringifyNode(variable.indices[1]);
+      const lenI = this.stringifyNode(variable.indices[0], variables);
+      const lenJ = this.stringifyNode(variable.indices[1], variables);
 
       decl = this.formatString(this.config.declare_and_allocate["2d_seq"], {
         name: variable.name,
@@ -273,12 +275,12 @@ export class UniversalGenerator {
         if (variable && !declaredVariables.has(variable.name)) {
           if (this.config.declare_group) {
             const sameGroupVars = this.findVariablesInSameGroup(variables, declaredVariables, variable);
-            lines.push(this.generateDeclarationGroup(sameGroupVars));
+            lines.push(this.generateDeclarationGroup(sameGroupVars, variables));
             for (const v of sameGroupVars) {
               declaredVariables.add(v.name);
             }
           } else {
-            lines.push(this.generateDeclaration(variable));
+            lines.push(this.generateDeclaration(variable, variables));
             declaredVariables.add(variable.name);
           }
         }
@@ -336,7 +338,7 @@ export class UniversalGenerator {
         }
       } else if (node.type === "loop") {
         const loopNode = node as LoopNode;
-        if (skipLoopVar && this.stringifyNode(loopNode.end) === skipLoopVar) {
+        if (skipLoopVar && this.stringifyNode(loopNode.end, variables) === skipLoopVar) {
           continue;
         }
 
@@ -348,12 +350,12 @@ export class UniversalGenerator {
             if (variable) {
               if (this.config.declare_group) {
                 const sameGroupVars = this.findVariablesInSameGroup(variables, declaredVariables, variable);
-                lines.push(this.generateDeclarationGroup(sameGroupVars));
+                lines.push(this.generateDeclarationGroup(sameGroupVars, variables));
                 for (const v of sameGroupVars) {
                   declaredVariables.add(v.name);
                 }
               } else {
-                lines.push(this.generateDeclaration(variable));
+                lines.push(this.generateDeclaration(variable, variables));
                 declaredVariables.add(variable.name);
               }
             }
@@ -371,6 +373,9 @@ export class UniversalGenerator {
     declaredVariables: Set<string>,
     currentVar: Variable,
   ): Variable[] {
+    if (!this.areDependenciesMet(currentVar)) {
+      return [currentVar];
+    }
     const group: Variable[] = [currentVar];
 
     for (const variable of allVariables) {
@@ -380,7 +385,7 @@ export class UniversalGenerator {
         variable.type === currentVar.type &&
         variable.dims === currentVar.dims &&
         this.areDependenciesMet(variable) &&
-        this.areIndicesSame(variable, currentVar)
+        this.areIndicesSame(variable, currentVar, allVariables)
       ) {
         group.push(variable);
       }
@@ -397,10 +402,10 @@ export class UniversalGenerator {
     return result;
   }
 
-  private areIndicesSame(v1: Variable, v2: Variable): boolean {
+  private areIndicesSame(v1: Variable, v2: Variable, variables: Variable[]): boolean {
     if (v1.dims !== v2.dims) return false;
     for (let i = 0; i < v1.dims; i++) {
-      if (this.stringifyNode(v1.indices[i]) !== this.stringifyNode(v2.indices[i])) {
+      if (this.stringifyNode(v1.indices[i], variables) !== this.stringifyNode(v2.indices[i], variables)) {
         return false;
       }
     }
@@ -416,13 +421,13 @@ export class UniversalGenerator {
     } else if (variable.dims === 1) {
       return this.formatString(this.config.access.seq, {
         name: variable.name,
-        index: this.stringifyNode(node.indices[0]),
+        index: this.stringifyNode(node.indices[0], variables),
       });
     } else if (variable.dims === 2) {
       return this.formatString(this.config.access["2d_seq"], {
         name: variable.name,
-        index_i: this.stringifyNode(node.indices[0]),
-        index_j: this.stringifyNode(node.indices[1]),
+        index_i: this.stringifyNode(node.indices[0], variables),
+        index_j: this.stringifyNode(node.indices[1], variables),
       });
     }
     return variable.name;
@@ -463,7 +468,7 @@ export class UniversalGenerator {
     // "for(int {loop_var} = 0 ; {loop_var} < {length} ; {loop_var}++){"
 
     const loopVar = node.variable;
-    const length = this.stringifyNode(node.end); // Simplified
+    const length = this.stringifyNode(node.end, variables); // Simplified
 
     const header = this.formatString(this.config.loop.header, {
       loop_var: loopVar,
@@ -473,7 +478,9 @@ export class UniversalGenerator {
     lines.push(header);
 
     // Body
+    this.inputtedVariables.add(loopVar);
     const bodyLines = this.generateInput(node.body, variables, declaredVariables);
+    this.inputtedVariables.delete(loopVar);
     lines.push(...bodyLines.map((l) => this.indent + l)); // Add indent
 
     // Footer
@@ -550,7 +557,7 @@ export class UniversalGenerator {
     return template.replace(/{(\w+)}/g, (_, key) => params[key] || `{${key}}`);
   }
 
-  private stringifyNode(node: ASTNode): string {
+  private stringifyNode(node: ASTNode, variables: Variable[]): string {
     if (!node) return "";
     switch (node.type) {
       case "ident":
@@ -563,12 +570,12 @@ export class UniversalGenerator {
       // export interface BinOpNode { ... left, right, op ... }
 
       case "item":
-        return (node as ItemNode).name; // Should not happen in index expression usually, unless variable length
+        return this.generateItemAccess(node as ItemNode, variables);
       case "number":
         return String((node as NumberNode).value);
       case "binop": {
         const bin = node as BinOpNode;
-        return `${this.stringifyNode(bin.left)} ${bin.op} ${this.stringifyNode(bin.right)}`;
+        return `${this.stringifyNode(bin.left, variables)} ${bin.op} ${this.stringifyNode(bin.right, variables)}`;
       }
       default:
         // Check if it has 'name' (ItemNode acting as variable reference)
