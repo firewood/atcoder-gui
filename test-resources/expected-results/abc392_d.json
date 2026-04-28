@@ -1,0 +1,65 @@
+{
+  "contestId": "abc392",
+  "problemId": "d",
+  "taskId": "abc392_d",
+  "url": "https://atcoder.jp/contests/abc392/tasks/abc392_d",
+  "multipleCases": false,
+  "queryType": false,
+  "returnType": "string",
+  "multipleColumns": false,
+  "multipleRows": false,
+  "variableArray": true,
+  "samples": [
+    {
+      "input": "3\n3 1 2 3\n4 1 2 2 1\n6 1 2 3 4 5 6\n",
+      "output": "0.333333333333333\n"
+    },
+    {
+      "input": "3\n5 1 1 1 1 1\n4 2 2 2 2\n3 1 1 2\n",
+      "output": "0.666666666666667\n"
+    }
+  ],
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "K",
+      "type": "int",
+      "dims": 1,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        }
+      ]
+    },
+    {
+      "name": "A",
+      "type": "int",
+      "dims": 2,
+      "indices": [
+        {
+          "type": "item",
+          "name": "N",
+          "indices": []
+        },
+        {
+          "type": "item",
+          "name": "K",
+          "indices": [
+            {
+              "type": "item",
+              "name": "j",
+              "indices": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
