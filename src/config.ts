@@ -45,7 +45,7 @@ export class ConfigManager {
   private conf: Conf<AppConfig>;
   private userConfigEnabled: boolean;
 
-  constructor(useUserConfig: boolean = false) {
+  constructor(useUserConfig: boolean = false, cwd?: string) {
     this.userConfigEnabled = useUserConfig;
 
     // Read default config.json5 template for defaults
@@ -61,7 +61,7 @@ export class ConfigManager {
       serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
       deserialize: (text: string): AppConfig => JSON5.parse(text),
       defaults,
-      cwd: useUserConfig ? undefined : os.tmpdir(),
+      cwd: cwd || (useUserConfig && process.env.NODE_ENV !== "test" ? undefined : os.tmpdir()),
     });
   }
 

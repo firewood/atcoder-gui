@@ -15,11 +15,17 @@ describe("ConfigManager setupUserConfig", () => {
       const pathStr = p.toString();
       // Source files exist
       if (pathStr.includes("/src/")) return true;
-      // Target directory exists for config files, but NOT for workspace
-      if (pathStr.includes(".config") && !pathStr.includes(".")) return true;
+      // Workspace does not exist
       if (pathStr.includes("my-atcoder")) return false;
-      // Target files do not exist
-      if (pathStr.includes(".config")) return false;
+      // Target config files do not exist (they are either in .config or /tmp/ depending on environment)
+      if (
+        pathStr.includes("cpp.json5") ||
+        pathStr.includes("python.json5") ||
+        pathStr.includes("cpp.njk") ||
+        pathStr.includes("python.njk")
+      )
+        return false;
+      // Config directory exists
       return true;
     });
 
