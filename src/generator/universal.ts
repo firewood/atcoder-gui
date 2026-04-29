@@ -226,41 +226,10 @@ export class UniversalGenerator {
 
       if (variable.onDemandArray) {
         // For on-demand 2D arrays, we only allocate the first dimension
-        if (this.config.type.str === "str") {
-          // Python-ish
-          if (innerType === "int" || innerType === "int64_t") {
-            decl = this.formatString("{name} = [[0] * 0 for _ in range({length})]", {
-              name: variable.name,
-              length: lenI,
-            });
-          } else {
-             // Fallback for python
-             decl = this.formatString("{name} = [[] for _ in range({length})]", {
-              name: variable.name,
-              length: lenI,
-            });
-          }
-        } else {
-          // C++-ish
-          const innerTypeForSeq = "std::vector<" + innerType + ">";
-          decl = this.formatString(this.config.declare_and_allocate.seq, {
-            name: variable.name,
-            type: innerTypeForSeq,
-            length: lenI,
-          });
-        }
-
-        // We return it here to avoid the default assign/allocation below
-        if (
-          !this.config.declare_group &&
-          this.config.append_semicolon &&
-          decl &&
-          !decl.startsWith("//") &&
-          !decl.endsWith(";")
-        ) {
-          decl += ";";
-        }
-        return decl;
+        decl = this.formatString(this.config.declare_and_allocate["2d_outer_only"], {
+          name: variable.name,
+          length: lenI,
+        });
       } else {
         decl = this.formatString(this.config.declare_and_allocate["2d_seq"], {
           name: variable.name,

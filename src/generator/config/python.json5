@@ -46,7 +46,8 @@
   },
   "declare_and_allocate": {
     "seq": "{name} = [{default}] * {length}",
-    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]"
+    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]",
+    "2d_outer_only": "{name} = [[] for _ in range({length})]"
   },
   "input": {
     "int": "{name} = int(next(tokens))",
