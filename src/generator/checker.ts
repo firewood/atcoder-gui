@@ -73,27 +73,51 @@ async function main() {
     console.log("Parse result:", parseResult);
     fs.writeFileSync(resultPath, parseResult);
 
-    console.log("Generating C++ Code...");
     if (!formatTree) throw new Error("Format tree is undefined");
 
-    const configManager = new ConfigManager();
-    const generator = new CPlusPlusGenerator(configManager);
-    const code = generator.generate(
-      formatTree,
-      variables,
-      multipleCases,
-      queryType,
-      yesStr,
-      noStr,
-      mod,
-      returnType,
-      multipleColumns,
-      multipleRows,
-      variableArray,
-    );
+    const lang = process.argv.includes("--lang") ? process.argv[process.argv.indexOf("--lang") + 1] : "cpp";
 
-    fs.writeFileSync(cppPath, code);
-    console.log(`Saved C++ code to ${cppPath}`);
+    const configManager = new ConfigManager();
+    let code = "";
+    if (lang === "python") {
+      console.log("Generating Python Code...");
+      const { PythonGenerator } = await import("./python.js");
+      const generator = new PythonGenerator(configManager);
+      code = generator.generate(
+        formatTree,
+        variables,
+        multipleCases,
+        queryType,
+        yesStr,
+        noStr,
+        mod,
+        returnType,
+        multipleColumns,
+        multipleRows,
+        variableArray,
+      );
+      const pyPath = path.join(TEMP_DIR, `${taskId}.py`);
+      fs.writeFileSync(pyPath, code);
+      console.log(`Saved Python code to ${pyPath}`);
+    } else {
+      console.log("Generating C++ Code...");
+      const generator = new CPlusPlusGenerator(configManager);
+      code = generator.generate(
+        formatTree,
+        variables,
+        multipleCases,
+        queryType,
+        yesStr,
+        noStr,
+        mod,
+        returnType,
+        multipleColumns,
+        multipleRows,
+        variableArray,
+      );
+      fs.writeFileSync(cppPath, code);
+      console.log(`Saved C++ code to ${cppPath}`);
+    }
   } catch (e) {
     logError("during generation", e);
     process.exit(1);
