@@ -47,6 +47,7 @@ export interface ItemNode extends ASTNode {
   name: string;
   indices: ASTNode[]; // For array access like a[i]
   inferredType?: VarType;
+  onDemandArray?: boolean;
 }
 
 export interface DotsNode extends ASTNode {

@@ -11,12 +11,18 @@ export interface VariableInfo {
   type: VarType;
   dims: number;
   indices: ASTNode[];
+  onDemandArray?: boolean;
 }
 
 export class VariableExtractor {
   private vars = new Map<
     string,
-    { dims: number; indices: ASTNode[]; loopDepth: number }
+    {
+      dims: number;
+      indices: ASTNode[];
+      loopDepth: number;
+      onDemandArray?: boolean;
+    }
   >();
   private collapsedVars = new Set<string>();
 
@@ -26,6 +32,28 @@ export class VariableExtractor {
 
   extract(node: FormatNode): void {
     this.visit(node, []);
+  }
+
+  private dependsOnLoopVariable(node: ASTNode, activeLoops: LoopNode[]): boolean {
+    const loopVars = new Set(activeLoops.map((l) => l.variable));
+    let depends = false;
+    const visit = (n: ASTNode) => {
+      if (!n || depends) return;
+      if (n.type === "item") {
+        if (loopVars.has((n as ItemNode).name)) {
+          depends = true;
+          return;
+        }
+        (n as ItemNode).indices.forEach(visit);
+      } else if (n.type === "binop") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const bin = n as any;
+        visit(bin.left);
+        visit(bin.right);
+      }
+    };
+    visit(node);
+    return depends;
   }
 
   private visit(node: ASTNode, loops: LoopNode[]) {
@@ -54,6 +82,7 @@ export class VariableExtractor {
       // E.g. A_i ... A_N implies A is vector.
       if (item.indices.length >= existing.dims) {
         const indices: ASTNode[] = [];
+        let onDemandArray = false;
         for (const idx of item.indices) {
           let resolvedSize: ASTNode = idx;
           // Try to resolve index to a loop bound
@@ -66,6 +95,14 @@ export class VariableExtractor {
             }
           }
           indices.push(resolvedSize);
+
+          if (this.dependsOnLoopVariable(resolvedSize, loops)) {
+            onDemandArray = true;
+          }
+        }
+
+        if (onDemandArray) {
+          item.onDemandArray = true;
         }
 
         // Keep the MAX loop depth seen for this variable (or should we strictly bind depth to definition?)
@@ -75,6 +112,7 @@ export class VariableExtractor {
           dims: item.indices.length,
           indices,
           loopDepth: currentLoopDepth,
+          onDemandArray: onDemandArray || existing.onDemandArray,
         });
       }
     } else if (node.type === "binop") {
@@ -90,6 +128,7 @@ export class VariableExtractor {
       let dims = info.dims;
       let indices = info.indices;
       const type = types[name] || VarType.ValueInt;
+      let onDemandArray = info.onDemandArray;
 
       // Rule 1: Explicitly collapsed variables (Standard match failed, Collapse succeeded)
       if (this.collapsedVars.has(name) && dims > 0) {
@@ -112,11 +151,18 @@ export class VariableExtractor {
         }
       }
 
+      // If dimensions were reduced, onDemandArray status might need re-evaluation,
+      // but usually the outermost dimensions are the ones that could be on-demand in a way that matters for allocation.
+      // Actually, if we collapsed a loop, it was likely the innermost dimension.
+      // If the NEW last dimension is dependent on a loop variable that's still active...
+      // For now, let's keep the flag if it was ever set.
+
       return {
         name,
         type,
         dims,
         indices,
+        onDemandArray,
       };
     });
   }
