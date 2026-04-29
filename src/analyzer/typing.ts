@@ -227,8 +227,8 @@ export function inferTypesFromInstances(
   try {
     let finalTypes: Record<string, VarType> | null = null;
     for (const instance of instances) {
-      const values = matchFormat(node, instance);
-      const types = getVarTypesFromMatchResult(values);
+      const { env } = matchFormat(node, instance);
+      const types = getVarTypesFromMatchResult(env);
       finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
     }
     return {
@@ -245,8 +245,8 @@ export function inferTypesFromInstances(
     try {
       let finalTypes: Record<string, VarType> | null = null;
       for (const instance of instances) {
-        const values = matchFormat(collapsedAst as FormatNode, instance);
-        const types = getVarTypesFromMatchResult(values);
+        const { env } = matchFormat(collapsedAst as FormatNode, instance);
+        const types = getVarTypesFromMatchResult(env);
         finalTypes = finalTypes ? unifyVarTypes(finalTypes, types) : types;
       }
       return {
