@@ -70,8 +70,8 @@ export class ProblemManager {
    * Returns true if successful navigation occurred
    */
   async navigateToProblem(command: string): Promise<boolean> {
-    // Only handle single alphabetic characters
-    if (command.length !== 1 || !/^[a-zA-Z]$/.test(command)) {
+    // 1 char: a-z, 2 chars: aa-bz
+    if (!/^[a-z]$|^[ab][a-z]$/i.test(command)) {
       return false;
     }
 
