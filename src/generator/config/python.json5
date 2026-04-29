@@ -1,57 +1,57 @@
 {
-  "indent_width": 4,
-  "indent_type": "space",
-  "insert_space_around_operators": true,
-  "global_prefix": "",
-  "append_semicolon": false,
-  "loop": {
-    "header": "for {loop_var} in range({length}):",
-    "footer": ""
+  indent_width: 4,
+  indent_type: "space",
+  insert_space_around_operators: true,
+  global_prefix: "",
+  append_semicolon: false,
+  loop: {
+    header: "for {loop_var} in range({length}):",
+    footer: "",
   },
-  "type": {
-    "int": "int",
-    "float": "float",
-    "str": "str"
+  type: {
+    int: "int",
+    float: "float",
+    str: "str",
   },
-  "default": {
-    "int": "0",
-    "float": "0.0",
-    "str": "''"
+  default: {
+    int: "0",
+    float: "0.0",
+    str: "''",
   },
-  "arg": {
-    "int": "{name}: int",
-    "float": "{name}: float",
-    "str": "{name}: str",
-    "seq": "{name}: List[{type}]",
-    "2d_seq": "{name}: List[List[{type}]]"
+  arg: {
+    int: "{name}: int",
+    float: "{name}: float",
+    str: "{name}: str",
+    seq: "{name}: List[{type}]",
+    "2d_seq": "{name}: List[List[{type}]]",
   },
-  "actual_arg": {
-    "seq": "{name}",
-    "2d_seq": "{name}"
+  actual_arg: {
+    seq: "{name}",
+    "2d_seq": "{name}",
   },
-  "access": {
-    "seq": "{name}[{index}]",
-    "2d_seq": "{name}[{index_i}][{index_j}]"
+  access: {
+    seq: "{name}[{index}]",
+    "2d_seq": "{name}[{index_i}][{index_j}]",
   },
-  "declare": {
-    "int": "{name}: int",
-    "float": "{name}: float",
-    "str": "{name}: str",
-    "seq": "{name}: List[{type}]",
-    "2d_seq": "{name}: List[List[{type}]]"
+  declare: {
+    int: "{name}: int",
+    float: "{name}: float",
+    str: "{name}: str",
+    seq: "{name}: List[{type}]",
+    "2d_seq": "{name}: List[List[{type}]]",
   },
-  "allocate": {
-    "seq": "{name} = [{default}] * {length}",
-    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]"
-  },
-  "declare_and_allocate": {
-    "seq": "{name} = [{default}] * {length}",
+  allocate: {
+    seq: "{name} = [{default}] * {length}",
     "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]",
-    "2d_outer_only": "{name} = [[] for _ in range({length})]"
   },
-  "input": {
-    "int": "{name} = int(next(tokens))",
-    "float": "{name} = float(next(tokens))",
-    "str": "{name} = next(tokens)"
-  }
+  declare_and_allocate: {
+    seq: "{name} = [{default}] * {length}",
+    "2d_seq": "{name} = [[{default}] * {length_j} for _ in range({length_i})]",
+    "2d_outer_only": "{name} = [[] for _ in range({length})]",
+  },
+  input: {
+    int: "{name} = int(next(tokens))",
+    float: "{name} = float(next(tokens))",
+    str: "{name} = next(tokens)",
+  },
 }
