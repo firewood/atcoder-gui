@@ -12,7 +12,7 @@ import { GenManager } from "./gen.js";
 import { BuildManager } from "./build.js";
 import { TestManager } from "./test.js";
 import { ProblemManager } from "./problem.js";
-import { expandHomeDir, compactHomeDir, logError } from "./utils.js";
+import { expandHomeDir, compactHomeDir, logError, getSourceFilename } from "./utils.js";
 import { execSync } from "child_process";
 
 export class AtCoderGUI {
@@ -201,6 +201,7 @@ export class AtCoderGUI {
     const language = this.getConfig().language || "cpp";
     const vscodeTemplateDir = path.join(packageRoot, "vscode-project-files", language, ".vscode");
     const targetVscodeDir = path.join(expandedDir, ".vscode");
+    const codeFilename = getSourceFilename(language);
 
     if (fs.existsSync(vscodeTemplateDir)) {
       if (!fs.existsSync(targetVscodeDir)) {
@@ -217,7 +218,7 @@ export class AtCoderGUI {
         execOnEachProblemDir: "cp in_1.txt in.txt",
       });
       this.configManager.set("onEnter", {
-        execOnEachProblemDir: "code -r .",
+        execOnEachProblemDir: `code -r . && code ${codeFilename}`,
       });
       console.log("Updated config with preProcess, postProcess, and onEnter commands");
     } else {
@@ -370,7 +371,7 @@ Available commands:
   config               Show current configuration
   setup-vscode         Setup VSCode configuration files in the workspace directory
   submit <filename>    Submit solution to AtCoder
-  gen <contest-id>     Generate main.cpp from current problem page or contest ID
+  gen <contest-id>     Generate source code from current problem page or contest ID
   make <args>          Execute make command
   test                 Execute test command
   build                Build the source code specified in metadata.json

@@ -7,7 +7,7 @@ import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
-import { expandHomeDir, compactHomeDir, logError, executeCommand } from "./utils.js";
+import { expandHomeDir, compactHomeDir, logError, executeCommand, getSourceFilename } from "./utils.js";
 
 export class GenManager {
   private browserManager: BrowserManager;
@@ -105,7 +105,7 @@ export class GenManager {
 
       const contestId = match[1],
         taskId = match[2];
-      const code_filename = lang === "python" || lang === "py" ? "main.py" : "main.cpp";
+      const code_filename = getSourceFilename(lang);
       console.log(`Generating ${code_filename} for task: ${taskId}`);
       await this.generateCode(contestId, taskId, ".", lang);
     }
@@ -159,7 +159,7 @@ export class GenManager {
         if (!formatTree) throw new Error("Format tree is undefined");
 
         let code = "";
-        let filename = "main.cpp";
+        const filename = getSourceFilename(lang);
 
         if (lang === "python" || lang === "py") {
           console.log("Generating Python Code...");
@@ -177,7 +177,6 @@ export class GenManager {
             multipleRows,
             variableArray,
           );
-          filename = "main.py";
         } else {
           console.log("Generating C++ Code...");
           const generator = new CPlusPlusGenerator(this.configManager);
@@ -194,7 +193,6 @@ export class GenManager {
             multipleRows,
             variableArray,
           );
-          filename = "main.cpp";
         }
 
         fs.writeFileSync(path.join(savePath, filename), code);

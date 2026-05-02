@@ -1,118 +1,118 @@
-import { describe, test, expect } from 'vitest';
-import { formatLWPDate, expandHomeDir, compactHomeDir } from './utils.js';
-import os from 'os';
-import path from 'path';
+import { describe, test, expect } from "vitest";
+import { formatLWPDate, expandHomeDir, compactHomeDir, getSourceFilename } from "./utils.js";
+import os from "os";
+import path from "path";
 
 /**
  * Test suite for utils.ts
  * Tests utility functions used throughout the application
  */
 
-describe('expandHomeDir', () => {
+describe("expandHomeDir", () => {
   const home = os.homedir();
 
-  test('should expand ~ to home directory', () => {
-    expect(expandHomeDir('~')).toBe(home);
+  test("should expand ~ to home directory", () => {
+    expect(expandHomeDir("~")).toBe(home);
   });
 
-  test('should expand ~/path to home directory with path', () => {
-    expect(expandHomeDir('~/documents')).toBe(path.join(home, 'documents'));
+  test("should expand ~/path to home directory with path", () => {
+    expect(expandHomeDir("~/documents")).toBe(path.join(home, "documents"));
   });
 
-  test('should NOT expand path/~/other', () => {
-    expect(expandHomeDir('documents/~/other')).toBe('documents/~/other');
+  test("should NOT expand path/~/other", () => {
+    expect(expandHomeDir("documents/~/other")).toBe("documents/~/other");
   });
 
-  test('should NOT expand absolute paths', () => {
-    expect(expandHomeDir('/usr/bin')).toBe('/usr/bin');
+  test("should NOT expand absolute paths", () => {
+    expect(expandHomeDir("/usr/bin")).toBe("/usr/bin");
   });
 
-  test('should NOT expand regular relative paths', () => {
-    expect(expandHomeDir('src/main.ts')).toBe('src/main.ts');
+  test("should NOT expand regular relative paths", () => {
+    expect(expandHomeDir("src/main.ts")).toBe("src/main.ts");
   });
 });
 
-describe('compactHomeDir', () => {
+describe("compactHomeDir", () => {
   const home = os.homedir();
 
-  test('should compact home directory to ~', () => {
-    expect(compactHomeDir(home)).toBe('~');
+  test("should compact home directory to ~", () => {
+    expect(compactHomeDir(home)).toBe("~");
   });
 
-  test('should compact path inside home directory to ~/', () => {
-    expect(compactHomeDir(path.join(home, 'documents'))).toBe('~' + path.sep + 'documents');
+  test("should compact path inside home directory to ~/", () => {
+    expect(compactHomeDir(path.join(home, "documents"))).toBe("~" + path.sep + "documents");
   });
 
-  test('should NOT compact paths outside home directory', () => {
+  test("should NOT compact paths outside home directory", () => {
     // This assumes /tmp is outside the home directory, which is usually true on Unix.
     // On Windows it might be different, but path.resolve handles it.
-    const outsidePath = path.resolve(path.sep + 'usr' + path.sep + 'bin');
+    const outsidePath = path.resolve(path.sep + "usr" + path.sep + "bin");
     if (!outsidePath.startsWith(home)) {
       expect(compactHomeDir(outsidePath)).toBe(outsidePath);
     }
   });
 
-  test('should handle relative paths by resolving them', () => {
-    const relativePath = '.';
+  test("should handle relative paths by resolving them", () => {
+    const relativePath = ".";
     const absolutePath = path.resolve(relativePath);
     if (absolutePath.startsWith(home)) {
-        expect(compactHomeDir(relativePath)).toMatch(/^~/);
+      expect(compactHomeDir(relativePath)).toMatch(/^~/);
     } else {
-        expect(compactHomeDir(relativePath)).toBe(relativePath);
+      expect(compactHomeDir(relativePath)).toBe(relativePath);
     }
   });
 });
 
-describe('formatLWPDate', () => {
-  test('should format date in Python LWPCookieJar format', () => {
+describe("formatLWPDate", () => {
+  test("should format date in Python LWPCookieJar format", () => {
     // Test with a known date: 2026-05-22T13:20:38.000Z
-    const testDate = new Date('2026-05-22T13:20:38.000Z');
+    const testDate = new Date("2026-05-22T13:20:38.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2026-05-22 13:20:38Z');
+    expect(result).toBe("2026-05-22 13:20:38Z");
   });
 
-  test('should handle single digit months and days with zero padding', () => {
+  test("should handle single digit months and days with zero padding", () => {
     // Test with January 5th: 2026-01-05T09:05:03.000Z
-    const testDate = new Date('2026-01-05T09:05:03.000Z');
+    const testDate = new Date("2026-01-05T09:05:03.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2026-01-05 09:05:03Z');
+    expect(result).toBe("2026-01-05 09:05:03Z");
   });
 
-  test('should handle December 31st correctly', () => {
+  test("should handle December 31st correctly", () => {
     // Test with December 31st: 2025-12-31T23:59:59.000Z
-    const testDate = new Date('2025-12-31T23:59:59.000Z');
+    const testDate = new Date("2025-12-31T23:59:59.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2025-12-31 23:59:59Z');
+    expect(result).toBe("2025-12-31 23:59:59Z");
   });
 
-  test('should handle leap year February 29th', () => {
+  test("should handle leap year February 29th", () => {
     // Test with leap year: 2024-02-29T12:30:45.000Z
-    const testDate = new Date('2024-02-29T12:30:45.000Z');
+    const testDate = new Date("2024-02-29T12:30:45.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2024-02-29 12:30:45Z');
+    expect(result).toBe("2024-02-29 12:30:45Z");
   });
 
-  test('should handle midnight (00:00:00)', () => {
+  test("should handle midnight (00:00:00)", () => {
     // Test with midnight: 2026-06-15T00:00:00.000Z
-    const testDate = new Date('2026-06-15T00:00:00.000Z');
+    const testDate = new Date("2026-06-15T00:00:00.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2026-06-15 00:00:00Z');
+    expect(result).toBe("2026-06-15 00:00:00Z");
   });
 
-  test('should handle single digit hour/minute/second with zero padding', () => {
+  test("should handle single digit hour/minute/second with zero padding", () => {
     // Test with single digit components: 2026-03-07T01:02:03.000Z
-    const testDate = new Date('2026-03-07T01:02:03.000Z');
+    const testDate = new Date("2026-03-07T01:02:03.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2026-03-07 01:02:03Z');
+    expect(result).toBe("2026-03-07 01:02:03Z");
   });
 
-  test('should always use UTC timezone', () => {
+  test("should always use UTC timezone", () => {
     // Create date in different timezone context
     const testDate = new Date(2026, 4, 22, 13, 20, 38); // Local time: May 22, 2026 13:20:38
 
@@ -121,45 +121,67 @@ describe('formatLWPDate', () => {
 
     // Result should be in UTC (format should match UTC components)
     expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z$/);
-    expect(result.endsWith('Z')).toBe(true);
+    expect(result.endsWith("Z")).toBe(true);
   });
 
-  test('should handle far future dates', () => {
+  test("should handle far future dates", () => {
     // Test with year 2050: 2050-12-25T18:30:15.000Z
-    const testDate = new Date('2050-12-25T18:30:15.000Z');
+    const testDate = new Date("2050-12-25T18:30:15.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2050-12-25 18:30:15Z');
+    expect(result).toBe("2050-12-25 18:30:15Z");
   });
 
-  test('should handle past dates', () => {
+  test("should handle past dates", () => {
     // Test with past date: 2020-03-14T08:45:30.000Z
-    const testDate = new Date('2020-03-14T08:45:30.000Z');
+    const testDate = new Date("2020-03-14T08:45:30.000Z");
     const result = formatLWPDate(testDate);
 
-    expect(result).toBe('2020-03-14 08:45:30Z');
+    expect(result).toBe("2020-03-14 08:45:30Z");
   });
 
-  test('should maintain format consistency across different dates', () => {
+  test("should maintain format consistency across different dates", () => {
     const testDates = [
-      new Date('2023-01-01T00:00:00.000Z'),
-      new Date('2023-06-15T12:30:45.000Z'),
-      new Date('2023-12-31T23:59:59.000Z'),
-      new Date('2024-02-29T06:15:30.000Z'), // Leap year
-      new Date('2025-07-04T14:20:10.000Z')
+      new Date("2023-01-01T00:00:00.000Z"),
+      new Date("2023-06-15T12:30:45.000Z"),
+      new Date("2023-12-31T23:59:59.000Z"),
+      new Date("2024-02-29T06:15:30.000Z"), // Leap year
+      new Date("2025-07-04T14:20:10.000Z"),
     ];
 
-    testDates.forEach(date => {
+    testDates.forEach((date) => {
       const result = formatLWPDate(date);
 
       // Check format pattern: YYYY-MM-DD HH:MM:SSZ
       expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z$/);
 
       // Check that all components are properly padded
-      const parts = result.split(' ');
+      const parts = result.split(" ");
       expect(parts).toHaveLength(2);
       expect(parts[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/); // Date part
       expect(parts[1]).toMatch(/^\d{2}:\d{2}:\d{2}Z$/); // Time part
     });
+  });
+});
+
+describe("getSourceFilename", () => {
+  test("should return main.cpp for cpp", () => {
+    expect(getSourceFilename("cpp")).toBe("main.cpp");
+  });
+
+  test("should return main.py for python", () => {
+    expect(getSourceFilename("python")).toBe("main.py");
+  });
+
+  test("should return main.py for py", () => {
+    expect(getSourceFilename("py")).toBe("main.py");
+  });
+
+  test("should return main.cpp for unknown languages", () => {
+    expect(getSourceFilename("rust")).toBe("main.cpp");
+  });
+
+  test("should return main.cpp for default", () => {
+    expect(getSourceFilename("")).toBe("main.cpp");
   });
 });

@@ -87,13 +87,13 @@ export class SubmitManager {
   }
 
   /**
-   * Read source code from main.cpp
+   * Read source code from file
    */
-  private readSourceCode(mainCppPath: string): string {
+  private readSourceCode(sourcePath: string): string {
     try {
-      return readFileSync(mainCppPath, "utf-8");
+      return readFileSync(sourcePath, "utf-8");
     } catch (error) {
-      throw new Error(`Failed to read main.cpp: ${error}`);
+      throw new Error(`Failed to read ${sourcePath}: ${error}`);
     }
   }
 

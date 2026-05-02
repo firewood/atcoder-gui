@@ -91,3 +91,15 @@ export function executeCommand(command: string | undefined, dir: string): void {
     logError(`Failed to execute command: ${command}`, e);
   }
 }
+
+/**
+ * Get source filename for a given language.
+ * @param language Language name (e.g., "cpp", "python")
+ * @returns Filename (e.g., "main.cpp", "main.py")
+ */
+export function getSourceFilename(language: string): string {
+  if (language === "python" || language === "py") {
+    return "main.py";
+  }
+  return "main.cpp";
+}
