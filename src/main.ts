@@ -244,7 +244,7 @@ export class AtCoderGUI {
     try {
       console.log(`Initializing uv project in ${workspaceDir}...`);
       execSync("uv init", { cwd: workspaceDir, stdio: "inherit" });
-      execSync("uv add numpy scipy ac-library-python", { cwd: workspaceDir, stdio: "inherit" });
+      execSync("uv add numpy scipy ac-library-python acl-cpp-python", { cwd: workspaceDir, stdio: "inherit" });
       console.log("Initialized Python project (numpy, scipy, ac-library-python)");
     } catch (error) {
       logError("Failed to initialize uv project. Ensure 'uv' is installed and on PATH.", error);
