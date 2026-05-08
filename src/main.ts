@@ -210,6 +210,10 @@ export class AtCoderGUI {
       fs.cpSync(vscodeTemplateDir, targetVscodeDir, { recursive: true });
       console.log(`Copied VSCode templates to ${targetVscodeDir}`);
 
+      if (language === "python") {
+        this.setupPythonProject(expandedDir);
+      }
+
       // Set process commands in config
       this.configManager.set("preProcess", {
         execOnEachProblemDir: `cp -a ${workspaceDir}/.vscode .`,
@@ -223,6 +227,27 @@ export class AtCoderGUI {
       console.log("Updated config with preProcess, postProcess, and onEnter commands");
     } else {
       logError(`VSCode template directory not found at ${vscodeTemplateDir}`);
+    }
+  }
+
+  /**
+   * Initialize a uv project in the workspace if pyproject.toml is missing.
+   * Subdirectory `uv run` invocations walk up to this pyproject.toml.
+   */
+  private setupPythonProject(workspaceDir: string): void {
+    const pyprojectPath = path.join(workspaceDir, "pyproject.toml");
+    if (fs.existsSync(pyprojectPath)) {
+      console.log(`pyproject.toml already exists at ${pyprojectPath}, skipping uv init`);
+      return;
+    }
+
+    try {
+      console.log(`Initializing uv project in ${workspaceDir}...`);
+      execSync("uv init", { cwd: workspaceDir, stdio: "inherit" });
+      execSync("uv add numpy scipy ac-library-python", { cwd: workspaceDir, stdio: "inherit" });
+      console.log("Initialized Python project (numpy, scipy, ac-library-python)");
+    } catch (error) {
+      logError("Failed to initialize uv project. Ensure 'uv' is installed and on PATH.", error);
     }
   }
 
