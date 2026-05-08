@@ -266,6 +266,14 @@ export class AtCoderGUI {
       return;
     }
 
+    if (this.getConfig().allowedCommands?.includes(command)) {
+      const command_line = args.join(" ");
+      try {
+        execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
+      } catch (_) {}
+      return;
+    }
+
     switch (command) {
       case "open":
         if (args.length < 2) {
@@ -373,15 +381,8 @@ export class AtCoderGUI {
         break;
 
       default:
-        if (this.getConfig().allowedCommands?.includes(command)) {
-          const command_line = args.join(" ");
-          try {
-            execSync(command_line, { encoding: "utf-8", stdio: "inherit" });
-          } catch (_) {}
-        } else {
-          logError(`Unknown command: ${command}`);
-          console.log('Type "help" for available commands');
-        }
+        logError(`Unknown command: ${command}`);
+        console.log('Type "help" for available commands');
         break;
     }
   }
