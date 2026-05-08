@@ -1,16 +1,20 @@
-import Conf from "conf";
 import JSON5 from "json5";
+import { modify, applyEdits, parse as parseJsonc, ParseError } from "jsonc-parser";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { createRequire } from "module";
-import os from "os";
+import { FileStore } from "./file-store.js";
 import { expandHomeDir } from "./utils.js";
 const require = createRequire(import.meta.url);
 
 const { version } = require("../package.json");
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const FORMATTING = {
+  formattingOptions: { tabSize: 2, insertSpaces: true },
+};
 
 export interface AppConfig {
   theme?: "light" | "dark";
@@ -41,28 +45,18 @@ export interface AppConfig {
   };
 }
 
-export class ConfigManager {
-  private conf: Conf<AppConfig>;
+export class ConfigManager extends FileStore<AppConfig> {
+  private templateSource: string;
   private userConfigEnabled: boolean;
 
   constructor(useUserConfig: boolean = false, cwd?: string) {
+    const templatePath = join(__dirname, "config.json5");
+    const templateSource = readFileSync(templatePath, "utf-8");
+    const defaults = (JSON5.parse(templateSource) ?? {}) as AppConfig;
+
+    super("config.json5", defaults, useUserConfig, cwd);
+    this.templateSource = templateSource;
     this.userConfigEnabled = useUserConfig;
-
-    // Read default config.json5 template for defaults
-    const defaultTemplatePath = join(__dirname, "config.json5");
-    const defaultTemplate = readFileSync(defaultTemplatePath, "utf-8");
-    const defaults = JSON5.parse(defaultTemplate);
-
-    this.conf = new Conf<AppConfig>({
-      projectName: "atcoder-gui",
-      projectVersion: version,
-      configName: "config",
-      fileExtension: "json5",
-      serialize: (value: AppConfig): string => JSON5.stringify(value, null, 2),
-      deserialize: (text: string): AppConfig => JSON5.parse(text),
-      defaults,
-      cwd: cwd || (useUserConfig && process.env.NODE_ENV !== "test" ? undefined : os.tmpdir()),
-    });
   }
 
   /**
@@ -70,20 +64,17 @@ export class ConfigManager {
    */
   public setupUserConfig(language: string, workspaceDir: string): void {
     try {
-      // Set settings which will automatically trigger save by 'conf' library
-      this.conf.set("language", language);
-      this.conf.set("workspaceDir", workspaceDir);
-      console.log(`Config file created at: ${this.conf.path}`);
+      this.set("language", language);
+      this.set("workspaceDir", workspaceDir);
+      console.log(`Config file created at: ${this.path}`);
 
-      // Ensure workspace directory exists
       const expandedDir = expandHomeDir(workspaceDir);
       if (!existsSync(expandedDir)) {
         mkdirSync(expandedDir, { recursive: true });
         console.log(`Created workspace directory at: ${expandedDir}`);
       }
 
-      // Copy language-specific configs and templates
-      const configDir = dirname(this.conf.path);
+      const configDir = dirname(this.path);
       const languageFiles = [
         { src: join(__dirname, "generator/config/cpp.json5"), dest: "cpp.json5" },
         { src: join(__dirname, "generator/config/python.json5"), dest: "python.json5" },
@@ -94,7 +85,6 @@ export class ConfigManager {
       for (const { src, dest } of languageFiles) {
         if (existsSync(src)) {
           const destPath = join(configDir, dest);
-          // Only copy if it doesn't exist already
           if (!existsSync(destPath)) {
             writeFileSync(destPath, readFileSync(src));
             console.log(`Template created at: ${destPath}`);
@@ -106,76 +96,31 @@ export class ConfigManager {
     }
   }
 
-  /**
-   * Get the entire configuration object
-   */
   getConfig(): AppConfig {
-    return this.conf.store;
+    return this.store;
   }
 
-  /**
-   * Get a specific configuration value
-   */
-  get<K extends keyof AppConfig>(key: K): AppConfig[K] {
-    return this.conf.get(key);
-  }
-
-  /**
-   * Set a specific configuration value
-   */
-  set<K extends keyof AppConfig>(key: K, value: AppConfig[K]): void {
-    this.conf.set(key, value);
-  }
-
-  /**
-   * Set multiple configuration values
-   */
   setMultiple(config: Partial<AppConfig>): void {
     for (const [key, value] of Object.entries(config)) {
-      this.conf.set(key as keyof AppConfig, value);
+      this.set(key as keyof AppConfig, value as AppConfig[keyof AppConfig]);
     }
   }
 
-  /**
-   * Delete a configuration value (revert to default)
-   */
-  delete<K extends keyof AppConfig>(key: K): void {
-    this.conf.delete(key);
-  }
-
-  /**
-   * Clear all configuration (revert to defaults)
-   */
   clear(): void {
-    this.conf.clear();
+    this.store = (JSON5.parse(this.templateSource) ?? {}) as AppConfig;
+    this.atomicWrite(this.templateSource);
   }
 
-  /**
-   * Check if a configuration key exists
-   */
-  has<K extends keyof AppConfig>(key: K): boolean {
-    return this.conf.has(key);
-  }
-
-  /**
-   * Get the path to the configuration file
-   */
   getConfigPath(): string {
-    return this.conf.path;
+    return this.path;
   }
 
-  /**
-   * Get the path to the configuration directory
-   */
   getConfigDirPath(): string {
-    return dirname(this.conf.path);
+    return dirname(this.path);
   }
 
-  /**
-   * Get the configuration file size
-   */
   getSize(): number {
-    return this.conf.size;
+    return Object.keys(this.store).length;
   }
 
   isUserConfigEnabled(): boolean {
@@ -188,5 +133,39 @@ export class ConfigManager {
 
   getPackageRoot(): string {
     return dirname(__dirname);
+  }
+
+  protected deserialize(text: string): Partial<AppConfig> {
+    return JSON5.parse(text) as Partial<AppConfig>;
+  }
+
+  protected persist(key: string, value: unknown): void {
+    let source: string;
+    if (existsSync(this.path)) {
+      source = readFileSync(this.path, "utf-8");
+      // If existing file isn't valid JSONC (e.g., legacy unquoted keys),
+      // rebuild from template with all current store values applied.
+      const errors: ParseError[] = [];
+      parseJsonc(source, errors, { allowTrailingComma: true });
+      if (errors.length > 0) {
+        source = this.renderFromTemplate();
+      }
+    } else {
+      source = this.templateSource;
+    }
+
+    const edits = modify(source, [key], value, FORMATTING);
+    const next = applyEdits(source, edits);
+    this.atomicWrite(next);
+  }
+
+  private renderFromTemplate(): string {
+    let s = this.templateSource;
+    for (const [k, v] of Object.entries(this.store)) {
+      if (v === undefined) continue;
+      const edits = modify(s, [k], v, FORMATTING);
+      s = applyEdits(s, edits);
+    }
+    return s;
   }
 }

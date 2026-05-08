@@ -1,5 +1,5 @@
-import Conf from "conf";
 import { BrowserContext } from "playwright";
+import { FileStore } from "./file-store.js";
 import { logError } from "./utils.js";
 
 export interface SessionData {
@@ -22,29 +22,24 @@ export interface SessionData {
   }>;
 }
 
-export class SessionManager {
-  private conf: Conf<SessionData>;
+const SESSION_DEFAULTS: SessionData = {
+  cookies: [],
+  origins: [],
+};
 
-  constructor() {
-    this.conf = new Conf<SessionData>({
-      projectName: "atcoder-gui",
-      configName: "session",
-      defaults: {
-        cookies: [],
-        origins: [],
-      },
-    });
+export class SessionManager extends FileStore<SessionData> {
+  constructor(useUserConfig: boolean = true, cwd?: string) {
+    super("session.json", SESSION_DEFAULTS, useUserConfig, cwd);
   }
 
   /**
    * Get the stored browser state for restoration
    */
   getStorageState(): SessionData | undefined {
-    const sessionData = this.conf.store;
-    if (!sessionData || (!sessionData.cookies.length && !sessionData.origins.length)) {
+    if (!this.store.cookies.length && !this.store.origins.length) {
       return undefined;
     }
-    return sessionData;
+    return this.store;
   }
 
   /**
@@ -53,10 +48,8 @@ export class SessionManager {
   async saveStorageState(context: BrowserContext): Promise<void> {
     try {
       const storageState = await context.storageState();
-
-      // Save cookies and origins directly at top level
-      this.conf.set("cookies", storageState.cookies || []);
-      this.conf.set("origins", storageState.origins || []);
+      this.set("cookies", storageState.cookies || []);
+      this.set("origins", storageState.origins || []);
     } catch (error) {
       logError("save browser state", error);
     }
@@ -66,7 +59,8 @@ export class SessionManager {
    * Clear the stored session data
    */
   clearSession(): void {
-    this.conf.clear();
+    this.store = { ...SESSION_DEFAULTS };
+    this.flush();
     console.log("Session data cleared");
   }
 
@@ -74,22 +68,17 @@ export class SessionManager {
    * Check if session data exists
    */
   hasSession(): boolean {
-    const cookies = this.conf.get("cookies");
-    const origins = this.conf.get("origins");
-    return !!(cookies.length || origins.length);
+    return !!(this.store.cookies.length || this.store.origins.length);
   }
 
   /**
    * Get session information
    */
   getSessionInfo(): { hasSession: boolean; cookieCount: number; originCount: number } {
-    const cookies = this.conf.get("cookies");
-    const origins = this.conf.get("origins");
-
     return {
       hasSession: this.hasSession(),
-      cookieCount: cookies.length || 0,
-      originCount: origins.length || 0,
+      cookieCount: this.store.cookies.length || 0,
+      originCount: this.store.origins.length || 0,
     };
   }
 
@@ -97,6 +86,18 @@ export class SessionManager {
    * Get the path to the session file
    */
   getSessionPath(): string {
-    return this.conf.path;
+    return this.path;
+  }
+
+  protected deserialize(text: string): Partial<SessionData> {
+    return JSON.parse(text) as Partial<SessionData>;
+  }
+
+  protected persist(): void {
+    this.flush();
+  }
+
+  private flush(): void {
+    this.atomicWrite(JSON.stringify(this.store, null, 2));
   }
 }

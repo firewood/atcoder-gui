@@ -2,47 +2,47 @@
   // atcoder-gui configuration
 
   // UI Theme: 'light' or 'dark'
-  theme: "light",
+  "theme": "light",
 
   // Default URL to navigate to
-  defaultUrl: "https://atcoder.jp/home",
+  "defaultUrl": "https://atcoder.jp/home",
 
   // Browser window size
-  windowSize: {
-    width: 1200,
-    height: 900,
+  "windowSize": {
+    "width": 1200,
+    "height": 900,
   },
 
-  workspaceDir: null,
+  "workspaceDir": null,
 
   // Default language for code generation (e.g., 'cpp', 'python')
-  language: null,
+  "language": null,
 
   // Whether to create a directory for each contest
-  createContestDirectory: true,
+  "createContestDirectory": true,
 
   // Default build commands
-  buildCommand: {
+  "buildCommand": {
     // Default build command for C++
-    cpp: "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main",
+    "cpp": "g++ -O3 -std=c++23 -DNDEBUG main.cpp -o main",
   },
 
-  runCommand: {
-    python: 'uv run main.py',
+  "runCommand": {
+    "python": "uv run main.py",
   },
 
   // Commands allowed to be executed directly from the CLI
-  allowedCommands: ["ls", "dir", "pwd", "code"],
+  "allowedCommands": ["ls", "dir", "pwd", "code"],
 
-  preProcess: {
-    execOnEachProblemDir: "",
+  "preProcess": {
+    "execOnEachProblemDir": "",
   },
 
-  postProcess: {
-    execOnEachProblemDir: "",
+  "postProcess": {
+    "execOnEachProblemDir": "",
   },
 
-  onEnter: {
-    execOnEachProblemDir: "",
+  "onEnter": {
+    "execOnEachProblemDir": "",
   },
 }
