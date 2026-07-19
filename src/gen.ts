@@ -4,7 +4,7 @@ import * as cheerio from "cheerio";
 import { BrowserManager } from "./browser.js";
 import { CPlusPlusGenerator } from "./generator/cplusplus.js";
 import { PythonGenerator } from "./generator/python.js";
-import { generateParseResult } from "./generator/pipeline.js";
+import { generateParseResult, ParseResult } from "./generator/pipeline.js";
 import { parseHtml, Sample } from "./analyzer/html-parser.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
@@ -138,72 +138,73 @@ export class GenManager {
 
     await new Promise((_) => setTimeout(_, 500));
 
-    const html = await this.browserManager.fetchRawHtml(url);
-    if (!html) {
-      logError(`Could not get page content for ${taskId}.`);
-      return false;
-    }
-
-    const isPython = lang === "python" || lang === "py";
-    const filename = getSourceFilename(lang);
-
-    let code = "";
-    let samples: Sample[] = [];
-    let judgeType = "normal";
-    let errorTolerance: number | undefined;
-    let predictionSuccess = true;
-
     try {
-      const result = generateParseResult(html, taskId, url);
-      if (!result.formatTree) throw new Error("Format tree is undefined");
+      const html = await this.browserManager.fetchRawHtml(url);
+      if (!html) {
+        logError(`Could not get page content for ${taskId}.`);
+        return false;
+      }
 
-      samples = result.samples;
-      judgeType = result.judgeType;
-      errorTolerance = result.errorTolerance;
-
-      console.log(isPython ? "Generating Python Code..." : "Generating C++ Code...");
+      const isPython = lang === "python" || lang === "py";
+      const filename = getSourceFilename(lang);
       const generator = isPython ? new PythonGenerator(this.configManager) : new CPlusPlusGenerator(this.configManager);
-      code = generator.generate(
-        result.formatTree,
-        result.variables,
-        result.multipleCases,
-        result.queryType,
-        result.yesStr,
-        result.noStr,
-        result.mod,
-        result.returnType,
-        result.multipleColumns,
-        result.multipleRows,
-        result.variableArray,
-      );
-    } catch (e) {
-      // Input-format prediction failed: still emit a skeleton (prediction=false)
-      // using whatever we could parse from the page (samples, output shape, ...).
-      logError("format prediction", e);
-      predictionSuccess = false;
 
-      const parsed = parseHtml(html);
-      samples = parsed.samples;
-      judgeType = parsed.judgeType;
-      errorTolerance = parsed.errorTolerance;
+      // Only parsing/analysis failures fall back to a skeleton. Everything else
+      // (fetch, code generation, file writes) is a hard error handled below.
+      let parseResult: ParseResult | null = null;
+      try {
+        parseResult = generateParseResult(html, taskId, url);
+        if (!parseResult.formatTree) throw new Error("Format tree is undefined");
+      } catch (e) {
+        logError("format prediction", e);
+        parseResult = null;
+      }
 
-      const fallbackOptions = {
-        multipleCases: parsed.multipleCases,
-        yesStr: parsed.yesStr,
-        noStr: parsed.noStr,
-        mod: parsed.mod,
-        returnType: parsed.returnType,
-        multipleColumns: parsed.multipleColumns,
-        multipleRows: parsed.multipleRows,
-        variableArray: parsed.variableArray,
-      };
+      let code: string;
+      let samples: Sample[];
+      let judgeType: string;
+      let errorTolerance: number | undefined;
 
-      console.log(isPython ? "Generating Python skeleton..." : "Generating C++ skeleton...");
-      const generator = isPython ? new PythonGenerator(this.configManager) : new CPlusPlusGenerator(this.configManager);
-      code = generator.generateFallback(fallbackOptions);
-    }
+      if (parseResult) {
+        samples = parseResult.samples;
+        judgeType = parseResult.judgeType;
+        errorTolerance = parseResult.errorTolerance;
 
-    try {
+        console.log(isPython ? "Generating Python Code..." : "Generating C++ Code...");
+        code = generator.generate(
+          parseResult.formatTree!,
+          parseResult.variables,
+          parseResult.multipleCases,
+          parseResult.queryType,
+          parseResult.yesStr,
+          parseResult.noStr,
+          parseResult.mod,
+          parseResult.returnType,
+          parseResult.multipleColumns,
+          parseResult.multipleRows,
+          parseResult.variableArray,
+        );
+      } else {
+        // Input-format prediction failed: still emit a skeleton (prediction=false)
+        // using whatever we could parse from the page (samples, output shape, ...).
+        const parsed = parseHtml(html);
+        samples = parsed.samples;
+        judgeType = parsed.judgeType;
+        errorTolerance = parsed.errorTolerance;
+
+        console.log(isPython ? "Generating Python skeleton..." : "Generating C++ skeleton...");
+        code = generator.generateFallback({
+          multipleCases: parsed.multipleCases,
+          yesStr: parsed.yesStr,
+          noStr: parsed.noStr,
+          mod: parsed.mod,
+          returnType: parsed.returnType,
+          multipleColumns: parsed.multipleColumns,
+          multipleRows: parsed.multipleRows,
+          variableArray: parsed.variableArray,
+        });
+      }
+
       fs.writeFileSync(path.join(savePath, filename), code);
       console.log(`Saved ${lang} code to ${filename}`);
 
@@ -246,14 +247,14 @@ export class GenManager {
       });
 
       executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
+
+      if (!parseResult) {
+        console.log(`\x1b[33mInput format prediction failed for ${taskId}; generated a skeleton instead.\x1b[0m`);
+      }
+      return parseResult !== null;
     } catch (e) {
       logError("generation", e);
       return false;
     }
-
-    if (!predictionSuccess) {
-      console.log(`\x1b[33mInput format prediction failed for ${taskId}; generated a skeleton instead.\x1b[0m`);
-    }
-    return predictionSuccess;
   }
 }
