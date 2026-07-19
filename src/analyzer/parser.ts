@@ -80,8 +80,11 @@ export class Parser {
           this.consume();
         }
       } else {
-        // Single expression index
-        indices.push(this.parseExpression());
+        // Non-braced subscript binds to a single atom only, so that e.g.
+        // `A_{N_x-1}` parses as `(N_x) - 1` rather than pulling `-1` into the
+        // subscript of `x`. Braced subscripts (`_{...}`) still take a full
+        // expression above.
+        indices.push(this.parseAtom());
       }
     }
 
@@ -94,10 +97,7 @@ export class Parser {
 
   private parseAddSub(): ASTNode {
     let left = this.parseMulDiv();
-    while (
-      this.peek().type === "binop" &&
-      (this.peek().value === "+" || this.peek().value === "-")
-    ) {
+    while (this.peek().type === "binop" && (this.peek().value === "+" || this.peek().value === "-")) {
       const op = this.consume().value as string;
       const right = this.parseMulDiv();
       left = { type: "binop", op, left, right } as BinOpNode;
@@ -107,10 +107,7 @@ export class Parser {
 
   private parseMulDiv(): ASTNode {
     let left = this.parseAtom();
-    while (
-      this.peek().type === "binop" &&
-      (this.peek().value === "*" || this.peek().value === "/")
-    ) {
+    while (this.peek().type === "binop" && (this.peek().value === "*" || this.peek().value === "/")) {
       const op = this.consume().value as string;
       const right = this.parseAtom();
       left = { type: "binop", op, left, right } as BinOpNode;
