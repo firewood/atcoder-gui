@@ -39,6 +39,24 @@ You can define custom shell commands that are allowed to be executed directly fr
 allowedCommands: ["cp", "copy", "del", "dir", "ls", "make", "pwd", "rm", "code"],
 ```
 
+## Development
+
+### Testing
+
+Run the test suite with:
+
+```bash
+pnpm test
+```
+
+#### Parser regression tests
+
+Input-format prediction is covered by **scenario tests**: every JSON file under `test-resources/expected-results/` is automatically picked up by `src/tests/scenario.test.ts`, which fetches the problem HTML and compares the parsed result against the JSON.
+
+**Principle: whenever you add handling for a problem whose input format previously failed to parse (or was parsed incorrectly), add a corresponding `test-resources/expected-results/<taskId>.json` capturing the expected parse result.** This locks in the fix and guards against future regressions.
+
+You can generate the expected JSON by running `generateParseResult` on the problem and dropping the `formatTree`, `samples`, `judgeType`, `yesStr`, `noStr`, `mod`, and `errorTolerance` fields (see `src/tests/scenario.test.ts` for the exact shape that is compared).
+
 ## Technology Stack
 
 - **Node.js**

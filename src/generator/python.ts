@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import JSON5 from "json5";
-import { UniversalGenerator } from "./universal.js";
+import { UniversalGenerator, buildFallbackContext, FallbackOptions } from "./universal.js";
 import { CodeGeneratorConfig } from "./types.js";
 import { FormatNode, VarType, ASTNode } from "../analyzer/types.js";
 import { ConfigManager } from "../config.js";
@@ -77,5 +77,10 @@ export class PythonGenerator {
       variableArray,
     );
     return nunjucks.renderString(this.template, context);
+  }
+
+  /** Render a skeleton when input-format prediction failed. */
+  generateFallback(opts: FallbackOptions): string {
+    return nunjucks.renderString(this.template, buildFallbackContext(opts));
   }
 }

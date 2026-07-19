@@ -1,6 +1,44 @@
 import { ASTNode, FormatNode, ItemNode, LoopNode, VarType, BinOpNode, NumberNode } from "../analyzer/types.js";
 import { CodeGeneratorConfig, TemplateContext } from "./types.js";
 
+export interface FallbackOptions {
+  multipleCases?: boolean;
+  yesStr?: string;
+  noStr?: string;
+  mod?: number;
+  returnType?: string;
+  multipleColumns?: boolean;
+  multipleRows?: boolean;
+  variableArray?: boolean;
+}
+
+/**
+ * Build a template context for when input-format prediction failed.
+ * The template renders a skeleton (no solve() body, no input reading) but
+ * still honours whatever we could infer about the output (mod, yes/no, ...).
+ */
+export function buildFallbackContext(opts: FallbackOptions): TemplateContext {
+  return {
+    prediction_success: false,
+    mod: opts.mod,
+    return_type: opts.returnType ?? "void",
+    yes_str: opts.yesStr,
+    no_str: opts.noStr,
+    formal_arguments: "",
+    actual_arguments: "",
+    input_part: "",
+    multiple_cases: opts.multipleCases,
+    multiple_columns: opts.multipleColumns,
+    multiple_rows: opts.multipleRows,
+    variable_array: opts.variableArray,
+    query_cases: false,
+    query_loop_var: undefined,
+    tools: {
+      version: "1.0.0", // TODO: Get from package.json
+    },
+  };
+}
+
 type Variable = {
   name: string;
   type: VarType;
