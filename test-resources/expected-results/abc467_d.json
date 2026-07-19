@@ -1,0 +1,62 @@
+{
+  "contestId": "abc467",
+  "problemId": "d",
+  "taskId": "abc467_d",
+  "url": "https://atcoder.jp/contests/abc467/tasks/abc467_d",
+  "multipleCases": true,
+  "queryType": false,
+  "returnType": "bool",
+  "multipleColumns": false,
+  "multipleRows": false,
+  "variableArray": false,
+  "variables": [
+    {
+      "name": "P_x",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "P_y",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "Q_x",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "Q_y",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "R_x",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "R_y",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "S_x",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "S_y",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    }
+  ]
+}
