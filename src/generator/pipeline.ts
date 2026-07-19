@@ -4,22 +4,7 @@ import { Parser } from "../analyzer/parser.js";
 import { Analyzer } from "../analyzer/analyzer.js";
 import { inferTypesFromInstances } from "../analyzer/typing.js";
 import { VariableExtractor, VariableInfo } from "./variable-extractor.js";
-import { ASTNode, FormatNode, ItemNode, LoopNode, VarType } from "../analyzer/types.js";
-
-/**
- * Collect the names of every loop variable declared anywhere in the tree.
- * These are genuine indices (introduced by loop detection); everything else
- * that appears as a subscript identifier is a literal part of the name.
- */
-function collectLoopVars(node: ASTNode, vars: Set<string>): void {
-  if (node.type === "format") {
-    (node as FormatNode).children.forEach((child) => collectLoopVars(child, vars));
-  } else if (node.type === "loop") {
-    const loop = node as LoopNode;
-    vars.add(loop.variable);
-    loop.body.forEach((child) => collectLoopVars(child, vars));
-  }
-}
+import { ASTNode, BinOpNode, FormatNode, ItemNode, LoopNode, VarType } from "../analyzer/types.js";
 
 /**
  * Fold literal alphabetic subscripts into the variable name.
@@ -28,27 +13,57 @@ function collectLoopVars(node: ASTNode, vars: Set<string>): void {
  * The parser treats `P_x` as variable `P` indexed by `x`, but `x` is a
  * constant letter, not a loop index, so evaluation later fails with
  * "Variable x not found". When a subscript is a bare identifier that is not a
- * loop variable, it is really part of the name, so merge it in: `P_x`.
+ * loop variable *in scope*, it is really part of the name, so merge it in: `P_x`.
+ *
+ * `activeLoopVars` holds only the loop variables currently in scope: a loop's
+ * variable is in scope inside its body, but not in its own bounds nor in
+ * sibling/ancestor scopes. This is threaded through the recursion (rather than
+ * collected globally) so that an `i` used as a real index in one loop does not
+ * suppress folding of an unrelated literal `P_i` elsewhere. Loop bounds
+ * (`start`/`end`) and arithmetic subscripts (`binop`) are folded too, so a bound
+ * like `A_1 ... A_{N_x}` stays consistent with the scalar `N_x`.
  */
-function foldLiteralSubscripts(node: ASTNode, loopVars: Set<string>): ASTNode {
+function foldLiteralSubscripts(node: ASTNode, activeLoopVars: Set<string>): ASTNode {
   if (node.type === "format") {
     const fmt = node as FormatNode;
-    return { ...fmt, children: fmt.children.map((child) => foldLiteralSubscripts(child, loopVars)) } as FormatNode;
+    return {
+      ...fmt,
+      children: fmt.children.map((child) => foldLiteralSubscripts(child, activeLoopVars)),
+    } as FormatNode;
   }
   if (node.type === "loop") {
     const loop = node as LoopNode;
-    return { ...loop, body: loop.body.map((child) => foldLiteralSubscripts(child, loopVars)) } as LoopNode;
+    // The loop variable is only in scope within the body, not in the bounds.
+    const bodyLoopVars = new Set(activeLoopVars).add(loop.variable);
+    return {
+      ...loop,
+      start: foldLiteralSubscripts(loop.start, activeLoopVars),
+      end: foldLiteralSubscripts(loop.end, activeLoopVars),
+      body: loop.body.map((child) => foldLiteralSubscripts(child, bodyLoopVars)),
+    } as LoopNode;
+  }
+  if (node.type === "binop") {
+    const bin = node as BinOpNode;
+    return {
+      ...bin,
+      left: foldLiteralSubscripts(bin.left, activeLoopVars),
+      right: foldLiteralSubscripts(bin.right, activeLoopVars),
+    } as BinOpNode;
   }
   if (node.type === "item") {
     const item = node as ItemNode;
     let name = item.name;
     const indices: ASTNode[] = [];
     for (const idx of item.indices) {
-      if (idx.type === "item" && (idx as ItemNode).indices.length === 0 && !loopVars.has((idx as ItemNode).name)) {
+      if (
+        idx.type === "item" &&
+        (idx as ItemNode).indices.length === 0 &&
+        !activeLoopVars.has((idx as ItemNode).name)
+      ) {
         // Literal subscript (e.g. the `x` in `P_x`): merge into the name.
         name += `_${(idx as ItemNode).name}`;
       } else {
-        indices.push(foldLiteralSubscripts(idx, loopVars));
+        indices.push(foldLiteralSubscripts(idx, activeLoopVars));
       }
     }
     return { ...item, name, indices } as ItemNode;
@@ -121,9 +136,7 @@ export function generateParseResult(html: string, taskId: string, url: string): 
   console.log("Analyzing...");
   const analyzer = new Analyzer();
   let formatTree = analyzer.analyze(rawAst);
-  const loopVars = new Set<string>();
-  collectLoopVars(formatTree, loopVars);
-  formatTree = foldLiteralSubscripts(formatTree, loopVars) as FormatNode;
+  formatTree = foldLiteralSubscripts(formatTree, new Set<string>()) as FormatNode;
   console.log("Inferring Types...");
   let sampleInputs = samples.map((s) => s.input);
   if (multipleCases) {
