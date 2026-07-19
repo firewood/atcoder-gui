@@ -5,6 +5,7 @@ import { BrowserManager } from "./browser.js";
 import { CPlusPlusGenerator } from "./generator/cplusplus.js";
 import { PythonGenerator } from "./generator/python.js";
 import { generateParseResult } from "./generator/pipeline.js";
+import { parseHtml, Sample } from "./analyzer/html-parser.js";
 import { ConfigManager } from "./config.js";
 import { AtCoderToolsMetadata } from "./types";
 import { expandHomeDir, compactHomeDir, logError, executeCommand, getSourceFilename } from "./utils.js";
@@ -136,113 +137,123 @@ export class GenManager {
     executeCommand(config.preProcess?.execOnEachProblemDir, savePath);
 
     await new Promise((_) => setTimeout(_, 500));
+
+    const html = await this.browserManager.fetchRawHtml(url);
+    if (!html) {
+      logError(`Could not get page content for ${taskId}.`);
+      return false;
+    }
+
+    const isPython = lang === "python" || lang === "py";
+    const filename = getSourceFilename(lang);
+
+    let code = "";
+    let samples: Sample[] = [];
+    let judgeType = "normal";
+    let errorTolerance: number | undefined;
+    let predictionSuccess = true;
+
     try {
-      const html = await this.browserManager.fetchRawHtml(url);
-      if (html) {
-        const {
-          multipleCases,
-          queryType,
-          judgeType,
-          errorTolerance,
-          yesStr,
-          noStr,
-          mod,
-          returnType,
-          multipleColumns,
-          multipleRows,
-          variableArray,
-          samples,
-          variables,
-          formatTree,
-        } = generateParseResult(html, taskId, url);
+      const result = generateParseResult(html, taskId, url);
+      if (!result.formatTree) throw new Error("Format tree is undefined");
 
-        if (!formatTree) throw new Error("Format tree is undefined");
+      samples = result.samples;
+      judgeType = result.judgeType;
+      errorTolerance = result.errorTolerance;
 
-        let code = "";
-        const filename = getSourceFilename(lang);
+      console.log(isPython ? "Generating Python Code..." : "Generating C++ Code...");
+      const generator = isPython ? new PythonGenerator(this.configManager) : new CPlusPlusGenerator(this.configManager);
+      code = generator.generate(
+        result.formatTree,
+        result.variables,
+        result.multipleCases,
+        result.queryType,
+        result.yesStr,
+        result.noStr,
+        result.mod,
+        result.returnType,
+        result.multipleColumns,
+        result.multipleRows,
+        result.variableArray,
+      );
+    } catch (e) {
+      // Input-format prediction failed: still emit a skeleton (prediction=false)
+      // using whatever we could parse from the page (samples, output shape, ...).
+      logError("format prediction", e);
+      predictionSuccess = false;
 
-        if (lang === "python" || lang === "py") {
-          console.log("Generating Python Code...");
-          const generator = new PythonGenerator(this.configManager);
-          code = generator.generate(
-            formatTree,
-            variables,
-            multipleCases,
-            queryType,
-            yesStr,
-            noStr,
-            mod,
-            returnType,
-            multipleColumns,
-            multipleRows,
-            variableArray,
-          );
-        } else {
-          console.log("Generating C++ Code...");
-          const generator = new CPlusPlusGenerator(this.configManager);
-          code = generator.generate(
-            formatTree,
-            variables,
-            multipleCases,
-            queryType,
-            yesStr,
-            noStr,
-            mod,
-            returnType,
-            multipleColumns,
-            multipleRows,
-            variableArray,
-          );
+      const parsed = parseHtml(html);
+      samples = parsed.samples;
+      judgeType = parsed.judgeType;
+      errorTolerance = parsed.errorTolerance;
+
+      const fallbackOptions = {
+        multipleCases: parsed.multipleCases,
+        yesStr: parsed.yesStr,
+        noStr: parsed.noStr,
+        mod: parsed.mod,
+        returnType: parsed.returnType,
+        multipleColumns: parsed.multipleColumns,
+        multipleRows: parsed.multipleRows,
+        variableArray: parsed.variableArray,
+      };
+
+      console.log(isPython ? "Generating Python skeleton..." : "Generating C++ skeleton...");
+      const generator = isPython ? new PythonGenerator(this.configManager) : new CPlusPlusGenerator(this.configManager);
+      code = generator.generateFallback(fallbackOptions);
+    }
+
+    try {
+      fs.writeFileSync(path.join(savePath, filename), code);
+      console.log(`Saved ${lang} code to ${filename}`);
+
+      const metadata: AtCoderToolsMetadata = {
+        code_filename: filename,
+        judge: {
+          judge_type: judgeType,
+          error_type: "absolute_or_relative",
+          diff: errorTolerance,
+        },
+        lang: isPython ? "python" : "cpp",
+        problem: {
+          alphabet: alphabet || taskId.split("_").pop()?.toUpperCase() || "",
+          contest: {
+            contest_id: contestId,
+          },
+          problem_id: taskId,
+        },
+        sample_in_pattern: "in_*.txt",
+        sample_out_pattern: "out_*.txt",
+        timeout_ms: 2000,
+      };
+
+      fs.writeFileSync(path.join(savePath, "metadata.json"), JSON.stringify(metadata, null, 2));
+      console.log(`Saved metadata.json to ${savePath}`);
+
+      samples.forEach((sample, index) => {
+        const inFilename = `in_${index + 1}.txt`;
+        const outFilename = `out_${index + 1}.txt`;
+        let input = sample.input;
+        let output = sample.output;
+        if (process.platform === "win32") {
+          input = input.replace(/\r?\n/g, "\r\n");
+          output = output.replace(/\r?\n/g, "\r\n");
         }
+        fs.writeFileSync(path.join(savePath, inFilename), input);
+        fs.writeFileSync(path.join(savePath, outFilename), output);
+        console.log(`Saved sample input to ${inFilename}`);
+        console.log(`Saved sample output to ${outFilename}`);
+      });
 
-        fs.writeFileSync(path.join(savePath, filename), code);
-        console.log(`Saved ${lang} code to ${filename}`);
-
-        const metadata: AtCoderToolsMetadata = {
-          code_filename: filename,
-          judge: {
-            judge_type: judgeType,
-            error_type: "absolute_or_relative",
-            diff: errorTolerance,
-          },
-          lang: lang === "python" || lang === "py" ? "python" : "cpp",
-          problem: {
-            alphabet: alphabet || taskId.split("_").pop()?.toUpperCase() || "",
-            contest: {
-              contest_id: contestId,
-            },
-            problem_id: taskId,
-          },
-          sample_in_pattern: "in_*.txt",
-          sample_out_pattern: "out_*.txt",
-          timeout_ms: 2000,
-        };
-
-        fs.writeFileSync(path.join(savePath, "metadata.json"), JSON.stringify(metadata, null, 2));
-        console.log(`Saved metadata.json to ${savePath}`);
-
-        samples.forEach((sample, index) => {
-          const inFilename = `in_${index + 1}.txt`;
-          const outFilename = `out_${index + 1}.txt`;
-          let input = sample.input;
-          let output = sample.output;
-          if (process.platform === "win32") {
-            input = input.replace(/\r?\n/g, "\r\n");
-            output = output.replace(/\r?\n/g, "\r\n");
-          }
-          fs.writeFileSync(path.join(savePath, inFilename), input);
-          fs.writeFileSync(path.join(savePath, outFilename), output);
-          console.log(`Saved sample input to ${inFilename}`);
-          console.log(`Saved sample output to ${outFilename}`);
-        });
-
-        executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
-
-        return true;
-      }
+      executeCommand(config.postProcess?.execOnEachProblemDir, savePath);
     } catch (e) {
       logError("generation", e);
+      return false;
     }
-    return false;
+
+    if (!predictionSuccess) {
+      console.log(`\x1b[33mInput format prediction failed for ${taskId}; generated a skeleton instead.\x1b[0m`);
+    }
+    return predictionSuccess;
   }
 }
