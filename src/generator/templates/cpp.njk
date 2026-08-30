@@ -39,8 +39,7 @@ const string YES = "{{ yes_str }}";
 const string NO = "{{ no_str }}";
 {% elif return_type == "int" %}
 {% if multiple_columns and multiple_rows %}
-{% set cpp_return_value_type = "pair<int64_t, int64_t>" %}
-{% set cpp_output_value = "ans.first << \" \" << ans.second" %}
+{% set cpp_return_value_type = "std::vector<int64_t>" %}
 {% else %}
 {% set cpp_return_value_type = "int64_t" %}
 {% endif %}
@@ -93,7 +92,14 @@ int main() {
 {% elif multiple_rows %}
     auto answers = solve({{ actual_arguments }});
     for (const auto ans : answers) {
+{% if multiple_columns %}
+        for (size_t i = 0; i < ans.size(); i++) {
+            cout << (i > 0 ? " " : "") << ans[i];
+        }
+        cout << endl;
+{% else %}
         cout << {{cpp_output_value}} << endl;
+{% endif %}
     }
 {% elif multiple_columns %}
     auto answers = solve({{ actual_arguments }});
