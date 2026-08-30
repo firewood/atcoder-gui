@@ -52,6 +52,9 @@ export class UniversalGenerator {
   private indent: string;
   private newline: string;
   private inputtedVariables: Set<string> = new Set();
+  // `${name} ${dim}` -> range of the literal subscripts used in that dimension,
+  // or null when the dimension is not purely literal. See collectLiteralIndexBases.
+  private literalIndexBases: Map<string, { min: number; max: number } | null> = new Map();
 
   constructor(config: CodeGeneratorConfig) {
     this.config = config;
@@ -99,6 +102,7 @@ export class UniversalGenerator {
 
     const declaredVariables = new Set<string>();
     this.inputtedVariables.clear();
+    this.collectLiteralIndexBases(format);
     // Input Reading (and interleaved declaration)
     const inputLines = this.generateInput(format.children, declarableVariables, declaredVariables, queryLoopVar);
     const inputPart = inputLines.map((line) => this.indent + line).join(this.newline);
@@ -122,6 +126,62 @@ export class UniversalGenerator {
         version: "1.0.0", // TODO: Get from package.json
       },
     };
+  }
+
+  /**
+   * Record, per (variable, dimension), the range of literal subscripts used there.
+   *
+   * AtCoder writes fixed-width rows with 1-based literal subscripts, e.g.
+   * `P_{i,1} P_{i,2} P_{i,3}`, while the generated code allocates `P` with 3
+   * columns and reads it 0-based. Emitting the literals verbatim would index
+   * `P[i][3]` and run off the end of the row, so accesses are shifted down by
+   * `min` and the dimension is sized `max - min + 1`. Dimensions driven by a loop
+   * variable need no adjustment — the generated loop header already starts at 0 —
+   * so a dimension is recorded (non-null) only when *every* occurrence of it is a
+   * plain number. The minimum is used rather than a hard-coded 1 so a statement
+   * that is already 0-based (`A_0 A_1 A_2`) keeps its subscripts.
+   */
+  private collectLiteralIndexBases(format: FormatNode): void {
+    this.literalIndexBases.clear();
+
+    const visit = (node: ASTNode) => {
+      if (!node) return;
+      if (node.type === "format") {
+        (node as FormatNode).children.forEach(visit);
+      } else if (node.type === "loop") {
+        const loop = node as LoopNode;
+        visit(loop.start);
+        visit(loop.end);
+        loop.body.forEach(visit);
+      } else if (node.type === "binop") {
+        const bin = node as BinOpNode;
+        visit(bin.left);
+        visit(bin.right);
+      } else if (node.type === "item") {
+        const item = node as ItemNode;
+        item.indices.forEach((idx, dim) => {
+          const key = `${item.name} ${dim}`;
+          const current = this.literalIndexBases.get(key);
+          if (idx.type === "number") {
+            const value = (idx as NumberNode).value;
+            // `current === null` means a non-literal usage already disqualified it.
+            if (current === undefined) {
+              this.literalIndexBases.set(key, { min: value, max: value });
+            } else if (current !== null) {
+              this.literalIndexBases.set(key, {
+                min: Math.min(current.min, value),
+                max: Math.max(current.max, value),
+              });
+            }
+          } else {
+            this.literalIndexBases.set(key, null);
+          }
+          visit(idx);
+        });
+      }
+    };
+
+    visit(format);
   }
 
   private getDependencies(node: ASTNode): string[] {
@@ -192,7 +252,7 @@ export class UniversalGenerator {
           default: defaultValue,
         });
       } else if (v.dims === 1) {
-        const len = this.stringifyNode(v.indices[0], allVariables);
+        const len = this.stringifyLength(v, 0, allVariables);
         return this.formatString(itemTemplate, {
           name: v.name,
           type: innerType,
@@ -200,8 +260,8 @@ export class UniversalGenerator {
           default: defaultValue,
         });
       } else if (v.dims === 2) {
-        const lenI = this.stringifyNode(v.indices[0], allVariables);
-        const lenJ = this.stringifyNode(v.indices[1], allVariables);
+        const lenI = this.stringifyLength(v, 0, allVariables);
+        const lenJ = this.stringifyLength(v, 1, allVariables);
 
         if (v.onDemandArray) {
           // Re-use 1D template but with 2D inner type
@@ -250,7 +310,7 @@ export class UniversalGenerator {
     } else if (variable.dims === 1) {
       // For vectors, we use declare_and_allocate if possible, or just declare if length is not known (simplified here)
       // Assuming we know length from indices for now
-      const len = this.stringifyNode(variable.indices[0], allVariables);
+      const len = this.stringifyLength(variable, 0, allVariables);
 
       decl = this.formatString(this.config.declare_and_allocate.seq, {
         name: variable.name,
@@ -259,8 +319,8 @@ export class UniversalGenerator {
         default: defaultValue,
       });
     } else if (variable.dims === 2) {
-      const lenI = this.stringifyNode(variable.indices[0], allVariables);
-      const lenJ = this.stringifyNode(variable.indices[1], allVariables);
+      const lenI = this.stringifyLength(variable, 0, allVariables);
+      const lenJ = this.stringifyLength(variable, 1, allVariables);
 
       if (variable.onDemandArray) {
         // For on-demand 2D arrays, we only allocate the first dimension
@@ -499,16 +559,48 @@ export class UniversalGenerator {
     } else if (variable.dims === 1) {
       return this.formatString(this.config.access.seq, {
         name: variable.name,
-        index: this.stringifyNode(node.indices[0], variables),
+        index: this.stringifyIndex(node, 0, variables),
       });
     } else if (variable.dims === 2) {
       return this.formatString(this.config.access["2d_seq"], {
         name: variable.name,
-        index_i: this.stringifyNode(node.indices[0], variables),
-        index_j: this.stringifyNode(node.indices[1], variables),
+        index_i: this.stringifyIndex(node, 0, variables),
+        index_j: this.stringifyIndex(node, 1, variables),
       });
     }
     return variable.name;
+  }
+
+  /**
+   * Stringify the subscript of `node` at `dim` for use as an array index,
+   * shifting literal 1-based subscripts down to 0 (see collectLiteralIndexBases).
+   * Only used for accesses — array lengths keep the original literal.
+   */
+  private stringifyIndex(node: ItemNode, dim: number, variables: Variable[]): string {
+    const index = node.indices[dim];
+    if (index && index.type === "number") {
+      const base = this.literalIndexBases.get(`${node.name} ${dim}`);
+      if (base) {
+        return String((index as NumberNode).value - base.min);
+      }
+    }
+    return this.stringifyNode(index, variables);
+  }
+
+  /**
+   * Stringify the length of `variable`'s `dim`-th dimension for a declaration.
+   * A purely literal dimension spans `min..max`, so it holds `max - min + 1`
+   * elements — the raw subscript would be one short for a 0-based statement.
+   */
+  private stringifyLength(variable: Variable, dim: number, allVariables: Variable[]): string {
+    const index = variable.indices[dim];
+    if (index && index.type === "number") {
+      const base = this.literalIndexBases.get(`${variable.name} ${dim}`);
+      if (base) {
+        return String(base.max - base.min + 1);
+      }
+    }
+    return this.stringifyNode(index, allVariables);
   }
 
   private getInputTemplateParts(node: ItemNode, variables: Variable[]): { prefix: string; suffix: string } | null {
