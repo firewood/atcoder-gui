@@ -60,6 +60,8 @@ export interface CodeGeneratorConfig {
   declare_and_allocate: {
     seq: string;
     "2d_seq": string;
+    // Allocates only the outer dimension; inner rows are sized on demand.
+    "2d_outer_only": string;
   };
 
   input: {

@@ -523,7 +523,7 @@ export class UniversalGenerator {
         variable.type === currentVar.type &&
         variable.dims === currentVar.dims &&
         this.areDependenciesMet(variable) &&
-        this.areIndicesSame(variable, currentVar)
+        this.areIndicesSame(variable, currentVar, allVariables)
       ) {
         group.push(variable);
       }
