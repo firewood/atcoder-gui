@@ -1,0 +1,26 @@
+{
+  "contestId": "abc473",
+  "problemId": "d",
+  "taskId": "abc473_d",
+  "url": "https://atcoder.jp/contests/abc473/tasks/abc473_d",
+  "multipleCases": false,
+  "queryType": false,
+  "returnType": "int",
+  "multipleColumns": true,
+  "multipleRows": true,
+  "variableArray": false,
+  "variables": [
+    {
+      "name": "N",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    },
+    {
+      "name": "K",
+      "type": "int",
+      "dims": 0,
+      "indices": []
+    }
+  ]
+}
